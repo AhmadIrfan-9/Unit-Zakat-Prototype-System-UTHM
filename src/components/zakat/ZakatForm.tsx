@@ -1,22 +1,20 @@
 // src/components/zakat/ZakatForm.tsx
 //
-// "use client" — the server/client boundary. Nothing in this file touches Prisma,
-// auth secrets, or process.env. All side-effects cross the boundary via the
-// Server Action reference passed through useActionState.
+// "use client" - React 19 Client Component for the UTHM Zakat Salary Deduction Form.
+// Implements Bahagian A (Maklumat Peribadi), Bahagian C (Jenis Potongan with dynamic conditional inputs),
+// and Bahagian D (Lafaz with reactive dynamic previews and useActionState integration).
 
 "use client";
 
 import { useActionState, useState, useCallback } from "react";
-import {
-  submitZakatApplicationAction,
-  type ZakatActionResult,
-} from "@/app/actions/zakat";
-import { MALAY_MONTHS, type DeductionType } from "@/lib/validations/zakat";
+import { submitZakatFormAction, type ZakatActionResult } from "@/app/actions/zakat";
+import { MALAY_MONTHS, NEGERI_LIST, type ZakatFieldErrors } from "@/lib/validations/zakat";
 
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
 import { Label }    from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -33,26 +31,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-// ─── Month Option Generator ────────────────────────────────────────────────────
-// Generates "Bulan Tahun" strings for current year ±1.
-// Covers advance applications and same-month corrections.
-function generateMonthOptions(): string[] {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const options: string[] = [];
-  for (const year of [currentYear - 1, currentYear, currentYear + 1]) {
-    for (const month of MALAY_MONTHS) {
-      options.push(`${month} ${year}`);
-    }
-  }
-  return options;
-}
-const MONTH_OPTIONS = generateMonthOptions();
-
-// ─── RM Currency Input ─────────────────────────────────────────────────────────
-// Standardised input component for all monetary fields.
-// The "RM" prefix is rendered as a visual-only adornment inside the input wrapper,
-// never included in the actual FormData value — avoids Zod parse failures.
+// ─── Standardised RM Currency Input component ──────────────────────────────────
 interface RmInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   name: string;
@@ -61,28 +40,26 @@ interface RmInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 w-full">
       <div
         className={cn(
-          "flex items-center rounded-md border bg-background ring-offset-background",
+          "flex items-center rounded-lg border bg-background ring-offset-background transition-all",
           "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-          error ? "border-destructive" : "border-input",
+          error ? "border-destructive focus-within:ring-destructive/50" : "border-input",
           disabled && "cursor-not-allowed opacity-50"
         )}
       >
-        <span className="select-none border-r border-input bg-muted px-3 py-2 text-sm font-medium text-muted-foreground rounded-l-md">
+        <span className="select-none border-r border-input bg-muted px-3 py-2 text-sm font-semibold text-muted-foreground rounded-l-lg">
           RM
         </span>
         <input
           id={id}
           name={name}
-          type="number"
-          step="0.01"
-          min="0.01"
+          type="text"
           placeholder="0.00"
           disabled={disabled}
           className={cn(
-            "flex-1 bg-transparent px-3 py-2 text-sm outline-none",
+            "flex-1 bg-transparent px-3 py-2 text-sm outline-none w-full",
             "placeholder:text-muted-foreground",
             "disabled:cursor-not-allowed",
             className
@@ -91,19 +68,18 @@ function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps
         />
       </div>
       {error && (
-        <p className="text-xs text-destructive">{error}</p>
+        <p className="text-xs text-destructive font-medium mt-1">{error}</p>
       )}
     </div>
   );
 }
 
-// ─── Section C Row ─────────────────────────────────────────────────────────────
-// Wraps a deduction type checkbox + its conditional input fields.
+// ─── Checkbox Section Card Component ───────────────────────────────────────────
 interface SectionCRowProps {
-  value: DeductionType;
+  value: string;
   label: string;
-  selected: DeductionType | null;
-  onSelect: (value: DeductionType) => void;
+  selected: string | null;
+  onSelect: (value: string) => void;
   disabled: boolean;
   children?: React.ReactNode;
 }
@@ -113,10 +89,10 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-lg border p-4 transition-colors",
+        "flex flex-col gap-4 rounded-xl border p-4 transition-all duration-300 bg-card/50",
         isSelected
-          ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20"
-          : "border-border bg-card hover:border-muted-foreground/40"
+          ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm ring-1 ring-emerald-500/30"
+          : "border-border hover:border-muted-foreground/30 hover:bg-card/80"
       )}
     >
       <div className="flex items-center gap-3">
@@ -125,21 +101,22 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
           checked={isSelected}
           onCheckedChange={() => onSelect(value)}
           disabled={disabled}
-          className="mt-0.5"
+          className="h-5 w-5 rounded border-muted-foreground/40 text-emerald-600 focus:ring-emerald-500"
         />
         <Label
           htmlFor={`type-${value}`}
           className={cn(
-            "cursor-pointer font-medium text-sm leading-tight",
+            "cursor-pointer font-semibold text-sm leading-tight select-none",
             isSelected ? "text-emerald-800 dark:text-emerald-300" : "text-foreground"
           )}
         >
           {label}
         </Label>
       </div>
-      {/* Conditional input fields — rendered only when this row is selected */}
+      
+      {/* Dynamic Conditional Ingestion Area */}
       {isSelected && children && (
-        <div className="ml-7 mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="ml-8 mt-1 border-l-2 border-emerald-500/20 pl-4 space-y-4 animate-in fade-in slide-in-from-top-3 duration-300">
           {children}
         </div>
       )}
@@ -147,88 +124,160 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
   );
 }
 
-// ─── Field Error Helper ────────────────────────────────────────────────────────
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="text-xs text-destructive mt-1">{message}</p>;
-}
-
-// ─── Main Component ────────────────────────────────────────────────────────────
-
 export function ZakatForm() {
-  // useActionState: React 19 hook that binds form lifecycle to the Server Action.
-  // Returns [currentState, dispatchFn, isPending] — no manual useTransition needed.
-  const [state, dispatch, isPending] = useActionState<
-    ZakatActionResult | null,
-    FormData
-  >(submitZakatApplicationAction, null);
+  const [state, dispatch, isPending] = useActionState<ZakatActionResult | null, FormData>(
+    submitZakatFormAction,
+    null
+  );
 
-  // Local controlled state for fields that drive reactive UI changes.
-  // NOTE: we use uncontrolled inputs for non-reactive fields (name="" attributes)
-  // so FormData collection is automatic — avoids unnecessary re-renders.
-  const [selectedType, setSelectedType] = useState<DeductionType | null>(null);
-  const [startMonth,   setStartMonth]   = useState<string>("");
-  const [lafazAmount,  setLafazAmount]  = useState<string>("");
+  // States for Dynamic UI interactions
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [bulanMula, setBulanMula] = useState<string>("");
+  const [tahunMula, setTahunMula] = useState<string>("");
+  const [targetDeductionValue, setTargetDeductionValue] = useState<string>("");
+  const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
 
-  // Derive the "active" RM amount that feeds the Section D lafaz preview.
-  // Logic: whichever input is semantically "the deduction amount" for the chosen type.
-  const handleTypeSelect = useCallback((type: DeductionType) => {
-    setSelectedType(type);
-    setLafazAmount(""); // Reset amount preview when switching type
+  const handleTypeSelect = useCallback((type: string) => {
+    setSelectedType((prev) => (prev === type ? null : type));
   }, []);
 
-  // Shorthand field error accessor
-  const err = (field: string) =>
-    state?.status === "error"
-      ? (state.fieldErrors as Record<string, string[]>)?.[field]?.[0]
-      : undefined;
+  const err = (field: keyof ZakatFieldErrors) => {
+    if (state?.status === "error" && state.fieldErrors) {
+      return state.fieldErrors[field]?.[0];
+    }
+    return undefined;
+  };
 
-  // Determine whether the form was successfully submitted
   const isSuccess = state?.status === "success";
 
   if (isSuccess) {
     return (
-      <Card className="border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30">
-        <CardContent className="pt-6 text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900">
-            <svg className="h-7 w-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/10">
+        <CardContent className="pt-8 text-center space-y-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800">
+            <svg className="h-8 w-8 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-300">
-            Permohonan Berjaya Dihantar
-          </h3>
-          <p className="text-sm text-emerald-700 dark:text-emerald-400">
-            {(state as { message: string }).message}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            ID Permohonan: <span className="font-mono font-medium">{(state as { applicationId: string }).applicationId}</span>
-          </p>
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold text-emerald-800 dark:text-emerald-300">
+              Permohonan Berjaya Dihantar!
+            </h3>
+            <p className="text-sm text-emerald-700 dark:text-emerald-400 max-w-md mx-auto">
+              {state.message}
+            </p>
+          </div>
+          <div className="inline-block px-4 py-2 bg-background border rounded-lg shadow-xs text-xs font-mono font-bold text-muted-foreground select-all">
+            ID Rujukan: {state.applicationId}
+          </div>
+          <div className="pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="px-6 py-2"
+            >
+              Hantar Permohonan Baru
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  // Generate years from 2026 sequentially
+  const years = Array.from({ length: 10 }, (_, i) => String(2026 + i));
+
   return (
-    <form action={dispatch} noValidate className="space-y-6">
-      {/* Hidden field — deductionType controlled by checkbox state */}
+    <form action={dispatch} noValidate className="space-y-8">
+      {/* Hidden field for selected deduction type */}
       {selectedType && (
         <input type="hidden" name="deductionType" value={selectedType} />
       )}
 
-      {/* ── Section C ─────────────────────────────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base font-semibold tracking-tight">
-            C) SILA TANDAKAN (✓) PADA PETAK BERKENAAN
-          </CardTitle>
-          <CardDescription>
-            Pilih satu (1) jenis potongan zakat gaji yang berkenaan.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      {/* ── BAHAGIAN A: MAKLUMAT PERIBADI ─────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="border-b pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+            BAHAGIAN A: MAKLUMAT PERIBADI
+          </h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="namaPenuh" className="font-semibold text-xs">Nama Penuh</Label>
+            <Input id="namaPenuh" name="namaPenuh" disabled={isPending} placeholder="Masukkan nama penuh seperti dalam KP" />
+            {err("namaPenuh") && <p className="text-xs text-destructive font-medium">{err("namaPenuh")}</p>}
+          </div>
 
-          {/* ── Row 1: ORIGINAL_PCB_CHANGE ──────────────────────────────────── */}
+          <div className="space-y-1">
+            <Label htmlFor="noKP" className="font-semibold text-xs">No. Kad Pengenalan</Label>
+            <Input id="noKP" name="noKP" maxLength={12} disabled={isPending} placeholder="Contoh: 890520015432 (12 digit)" />
+            {err("noKP") && <p className="text-xs text-destructive font-medium">{err("noKP")}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="noPekerja" className="font-semibold text-xs">No. Pekerja</Label>
+            <Input id="noPekerja" name="noPekerja" disabled={isPending} placeholder="Masukkan No. Kakitangan UTHM" />
+            {err("noPekerja") && <p className="text-xs text-destructive font-medium">{err("noPekerja")}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="noTelefon" className="font-semibold text-xs">No. Telefon</Label>
+            <Input id="noTelefon" name="noTelefon" disabled={isPending} placeholder="Contoh: 0123456789" />
+            {err("noTelefon") && <p className="text-xs text-destructive font-medium">{err("noTelefon")}</p>}
+          </div>
+
+          <div className="md:col-span-2 space-y-1">
+            <Label htmlFor="alamatRumah" className="font-semibold text-xs">Alamat Rumah</Label>
+            <Textarea id="alamatRumah" name="alamatRumah" disabled={isPending} placeholder="Masukkan alamat kediaman penuh" rows={3} />
+            {err("alamatRumah") && <p className="text-xs text-destructive font-medium">{err("alamatRumah")}</p>}
+          </div>
+
+          <div className="grid grid-cols-3 md:col-span-2 gap-4">
+            <div className="space-y-1 col-span-1">
+              <Label htmlFor="poskod" className="font-semibold text-xs">Poskod</Label>
+              <Input id="poskod" name="poskod" maxLength={5} disabled={isPending} placeholder="86400" />
+              {err("poskod") && <p className="text-xs text-destructive font-medium">{err("poskod")}</p>}
+            </div>
+
+            <div className="space-y-1 col-span-1">
+              <Label htmlFor="bandar" className="font-semibold text-xs">Bandar</Label>
+              <Input id="bandar" name="bandar" disabled={isPending} placeholder="Parit Raja" />
+              {err("bandar") && <p className="text-xs text-destructive font-medium">{err("bandar")}</p>}
+            </div>
+
+            <div className="space-y-1 col-span-1">
+              <Label htmlFor="negeri" className="font-semibold text-xs">Negeri</Label>
+              <Select name="negeri" disabled={isPending}>
+                <SelectTrigger id="negeri" className="w-full">
+                  <SelectValue placeholder="Pilih..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {NEGERI_LIST.map((neg) => (
+                    <SelectItem key={neg} value={neg}>{neg}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {err("negeri") && <p className="text-xs text-destructive font-medium">{err("negeri")}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── BAHAGIAN C: JENIS POTONGAN ───────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="border-b pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+            BAHAGIAN C: SILA TANDAKAN (/) PADA PETAK BERKENAAN
+          </h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Pilih satu jenis kebenaran arahan potongan zakat bulanan yang berkenaan.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {/* Card 1: ORIGINAL_PCB_CHANGE */}
           <SectionCRow
             value="ORIGINAL_PCB_CHANGE"
             label="Perubahan potongan PCB Asal"
@@ -236,46 +285,29 @@ export function ZakatForm() {
             onSelect={handleTypeSelect}
             disabled={isPending}
           >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
               <div className="space-y-1.5">
-                <Label htmlFor="originalPcbAmount" className="text-xs text-muted-foreground">
-                  Potongan PCB Asal
-                </Label>
+                <Label htmlFor="amaunPcbAsal" className="text-xs font-semibold text-muted-foreground">Potongan PCB Asal</Label>
                 <RmInput
-                  id="originalPcbAmount"
-                  name="originalPcbAmount"
+                  id="amaunPcbAsal"
+                  name="amaunPcbAsal"
                   disabled={isPending}
-                  error={err("originalPcbAmount")}
-                  aria-describedby="originalPcbAmount-error"
+                  error={err("amaunPcbAsal")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="monthlyZakatDeduction" className="text-xs text-muted-foreground">
-                  Potongan Zakat Bulanan
-                </Label>
+                <Label htmlFor="amaunZakatBulanan" className="text-xs font-semibold text-muted-foreground">Potongan Zakat Baru Sebulan</Label>
                 <RmInput
-                  id="monthlyZakatDeduction"
-                  name="monthlyZakatDeduction"
+                  id="amaunZakatBulanan"
+                  name="amaunZakatBulanan"
                   disabled={isPending}
-                  error={err("monthlyZakatDeduction")}
-                  onChange={(e) => setLafazAmount(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="residualPcbBalance" className="text-xs text-muted-foreground">
-                  Baki PCB
-                </Label>
-                <RmInput
-                  id="residualPcbBalance"
-                  name="residualPcbBalance"
-                  disabled={isPending}
-                  error={err("residualPcbBalance")}
+                  error={err("amaunZakatBulanan")}
                 />
               </div>
             </div>
           </SectionCRow>
 
-          {/* ── Row 2: FIXED_MONTHLY ────────────────────────────────────────── */}
+          {/* Card 2: FIXED_MONTHLY */}
           <SectionCRow
             value="FIXED_MONTHLY"
             label="Potongan Zakat Bulanan Sebanyak"
@@ -284,20 +316,17 @@ export function ZakatForm() {
             disabled={isPending}
           >
             <div className="max-w-xs space-y-1.5">
-              <Label htmlFor="fixedMonthlyAmount" className="text-xs text-muted-foreground">
-                Jumlah Potongan Tetap Sebulan
-              </Label>
+              <Label htmlFor="amaunZakatBulanan-fixed" className="text-xs font-semibold text-muted-foreground">Jumlah Potongan Tetap Sebulan</Label>
               <RmInput
-                id="fixedMonthlyAmount"
-                name="fixedMonthlyAmount"
+                id="amaunZakatBulanan-fixed"
+                name="amaunZakatBulanan"
                 disabled={isPending}
-                error={err("fixedMonthlyAmount")}
-                onChange={(e) => setLafazAmount(e.target.value)}
+                error={err("amaunZakatBulanan")}
               />
             </div>
           </SectionCRow>
 
-          {/* ── Row 3: AMOUNT_ADJUSTMENT ────────────────────────────────────── */}
+          {/* Card 3: AMOUNT_ADJUSTMENT */}
           <SectionCRow
             value="AMOUNT_ADJUSTMENT"
             label="Penambahan / Pengurangan Potongan Zakat"
@@ -305,34 +334,29 @@ export function ZakatForm() {
             onSelect={handleTypeSelect}
             disabled={isPending}
           >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
               <div className="space-y-1.5">
-                <Label htmlFor="adjustmentFromAmount" className="text-xs text-muted-foreground">
-                  Daripada (Jumlah Semasa)
-                </Label>
+                <Label htmlFor="amaunZakatAsal" className="text-xs font-semibold text-muted-foreground">Daripada (Jumlah Semasa)</Label>
                 <RmInput
-                  id="adjustmentFromAmount"
-                  name="adjustmentFromAmount"
+                  id="amaunZakatAsal"
+                  name="amaunZakatAsal"
                   disabled={isPending}
-                  error={err("adjustmentFromAmount")}
+                  error={err("amaunZakatAsal")}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="adjustmentToAmount" className="text-xs text-muted-foreground">
-                  Kepada (Jumlah Baru)
-                </Label>
+                <Label htmlFor="amaunZakatBaru" className="text-xs font-semibold text-muted-foreground">Kepada (Jumlah Baru)</Label>
                 <RmInput
-                  id="adjustmentToAmount"
-                  name="adjustmentToAmount"
+                  id="amaunZakatBaru"
+                  name="amaunZakatBaru"
                   disabled={isPending}
-                  error={err("adjustmentToAmount")}
-                  onChange={(e) => setLafazAmount(e.target.value)}
+                  error={err("amaunZakatBaru")}
                 />
               </div>
             </div>
           </SectionCRow>
 
-          {/* ── Row 4: MATCH_PCB ────────────────────────────────────────────── */}
+          {/* Card 4: MATCH_PCB */}
           <SectionCRow
             value="MATCH_PCB"
             label="Potongan Zakat Mengikut Potongan PCB"
@@ -340,152 +364,162 @@ export function ZakatForm() {
             onSelect={handleTypeSelect}
             disabled={isPending}
           >
-            <p className="text-xs text-muted-foreground italic">
-              Jumlah potongan zakat akan diselaraskan secara automatik mengikut amaun PCB semasa.
+            <p className="text-xs text-muted-foreground leading-relaxed italic">
+              * Tiada pengisian amaun diperlukan. Sistem potongan gaji akan menyelaraskan amaun potongan zakat bulanan anda secara automatik menyamai amaun Potongan Cukai Bulanan (PCB) semasa yang dikenakan.
             </p>
           </SectionCRow>
 
-          {/* Deduction type validation error */}
-          {!selectedType && state?.status === "error" && (
-            <p className="text-sm text-destructive">
-              {err("deductionType") ?? "Sila pilih jenis potongan."}
-            </p>
+          {err("deductionType") && (
+            <p className="text-sm text-destructive font-bold mt-2">{err("deductionType")}</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* ── Section D: Lafaz Membayar Zakat ───────────────────────────────── */}
-      <Card className="border-amber-200 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/20">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold tracking-tight text-amber-900 dark:text-amber-300">
-            D) LAFAZ MEMBAYAR ZAKAT
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
+      {/* ── BAHAGIAN D: LAFAZ MEMBAYAR ZAKAT ───────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="border-b pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+            BAHAGIAN D: LAFAZ MEMBAYAR ZAKAT
+          </h2>
+        </div>
 
-          {/* Month selector — drives both the lafaz preview and the startMonth hidden field */}
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="space-y-1.5 min-w-[180px]">
-              <Label htmlFor="startMonth-select" className="text-sm font-medium">
-                Bulan Mula Potongan <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                name="startMonth"
-                value={startMonth}
-                onValueChange={setStartMonth}
-                disabled={isPending}
-              >
-                <SelectTrigger
-                  id="startMonth-select"
-                  aria-describedby="startMonth-error"
-                  className={cn(err("startMonth") && "border-destructive")}
-                >
-                  <SelectValue placeholder="Pilih bulan..." />
+        <div className="space-y-4">
+          {/* Target Deduction Input specifically inside Lafaz Section */}
+          <div className="max-w-xs space-y-1.5">
+            <Label htmlFor="targetDeductionValue" className="font-semibold text-xs text-foreground">
+              Amaun Potongan Zakat Gaji (RM) <span className="text-destructive">*</span>
+            </Label>
+            <RmInput
+              id="targetDeductionValue"
+              name="targetDeductionValue"
+              disabled={isPending}
+              value={targetDeductionValue}
+              onChange={(e) => setTargetDeductionValue(e.target.value)}
+              error={err("targetDeductionValue")}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Sila masukkan amaun muktamad untuk dizakatkan (contoh: 150.00).
+            </p>
+          </div>
+
+          {/* Side-by-side dropdown selectors for start month and year */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="bulanMula" className="font-semibold text-xs">Bulan Mula Potongan <span className="text-destructive">*</span></Label>
+              <Select name="bulanMula" value={bulanMula} onValueChange={setBulanMula} disabled={isPending}>
+                <SelectTrigger id="bulanMula" className="w-full">
+                  <SelectValue placeholder="Pilih Bulan..." />
                 </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {MONTH_OPTIONS.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {month}
-                    </SelectItem>
+                <SelectContent className="max-h-56">
+                  {MALAY_MONTHS.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError message={err("startMonth")} />
+              {err("bulanMula") && <p className="text-xs text-destructive font-medium">{err("bulanMula")}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="tahunMula" className="font-semibold text-xs">Tahun Mula Potongan <span className="text-destructive">*</span></Label>
+              <Select name="tahunMula" value={tahunMula} onValueChange={setTahunMula} disabled={isPending}>
+                <SelectTrigger id="tahunMula" className="w-full">
+                  <SelectValue placeholder="Pilih Tahun..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {years.map((y) => (
+                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {err("tahunMula") && <p className="text-xs text-destructive font-medium">{err("tahunMula")}</p>}
             </div>
           </div>
 
-          {/* ── Dynamic Lafaz Declaration Box ─────────────────────────────── */}
-          {/* The text binds reactively to startMonth and lafazAmount state.   */}
-          {/* Unset placeholders render as underlined blanks matching the form. */}
-          <div className="rounded-lg border border-amber-300 bg-white dark:bg-amber-950/40 p-4 shadow-sm">
-            <p className="text-sm leading-7 text-foreground font-medium">
-              Saya bersetuju gaji saya dipotong mulai gaji bulan{" "}
-              <span
-                className={cn(
-                  "inline-block min-w-[120px] border-b-2 px-1 text-center font-semibold transition-colors",
-                  startMonth
-                    ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                    : "border-muted-foreground text-muted-foreground"
-                )}
-              >
-                {startMonth || "_______________"}
+          {/* Dynamic Lafaz Announcement Box */}
+          <div className="rounded-xl border border-amber-300 bg-amber-50/50 dark:border-amber-900/40 dark:bg-amber-950/10 p-5 shadow-xs transition-all duration-300">
+            <p className="text-sm text-amber-900 dark:text-amber-300 font-semibold mb-2 flex items-center gap-2">
+              <svg className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              Akad & Lafaz Zakat:
+            </p>
+            <p className="text-sm leading-relaxed text-foreground font-medium italic">
+              &ldquo;Saya bersetuju gaji saya dipotong mulai gaji bulan{" "}
+              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20 px-2 py-0.5 rounded">
+                {bulanMula || "[Bulan]"}
+              </span>{" "}
+              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20 px-2 py-0.5 rounded">
+                {tahunMula || "[Tahun]"}
               </span>{" "}
               sebanyak RM{" "}
-              <span
-                className={cn(
-                  "inline-block min-w-[80px] border-b-2 px-1 text-center font-semibold transition-colors",
-                  lafazAmount
-                    ? "border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                    : "border-muted-foreground text-muted-foreground"
-                )}
-              >
-                {lafazAmount
-                  ? parseFloat(lafazAmount).toFixed(2)
-                  : "________"}
+              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20 px-2 py-0.5 rounded">
+                {targetDeductionValue || "0.00"}
               </span>{" "}
-              bagi menunaikan zakat harta.
+              bagi menunaikan zakat harta.&rdquo;
             </p>
           </div>
 
-          {/* ── Declaration Checkbox ─────────────────────────────────────── */}
-          <div
-            className={cn(
-              "flex items-start gap-3 rounded-lg border p-4 transition-colors",
-              err("declarationConfirmed")
-                ? "border-destructive bg-destructive/5"
-                : "border-border bg-card"
-            )}
-          >
-            <Checkbox
-              id="declarationConfirmed"
-              name="declarationConfirmed"
-              value="true"
-              disabled={isPending}
-              className="mt-0.5"
-              aria-describedby="declaration-error"
-            />
-            <Label
-              htmlFor="declarationConfirmed"
-              className="cursor-pointer text-sm leading-relaxed"
+          {/* Declaration Checkbox */}
+          <div className="space-y-1">
+            <div
+              className={cn(
+                "flex items-start gap-3 rounded-lg border p-4 transition-all duration-300 bg-card/40",
+                err("pengesahanLafaz")
+                  ? "border-destructive bg-destructive/5"
+                  : "border-border hover:bg-card/70"
+              )}
             >
-              Saya mengesahkan bahawa maklumat yang diberikan adalah benar dan saya
-              bersetuju untuk membuat potongan zakat gaji seperti yang dinyatakan
-              dalam lafaz di atas.
-            </Label>
+              <Checkbox
+                id="pengesahanLafaz"
+                name="pengesahanLafaz"
+                value="true"
+                checked={pengesahanLafaz}
+                onCheckedChange={(checked) => setPengesahanLafaz(!!checked)}
+                disabled={isPending}
+                className="mt-0.5 h-5 w-5 rounded border-muted-foreground/40 text-emerald-600 focus:ring-emerald-500"
+              />
+              <Label
+                htmlFor="pengesahanLafaz"
+                className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none"
+              >
+                Saya mengesahkan bahawa maklumat yang diberikan adalah benar dan saya bersetuju untuk membuat potongan zakat gaji seperti yang dinyatakan dalam lafaz di atas.
+              </Label>
+            </div>
+            {err("pengesahanLafaz") && (
+              <p className="text-xs text-destructive font-medium mt-1">{err("pengesahanLafaz")}</p>
+            )}
           </div>
-          <FieldError message={err("declarationConfirmed")} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* ── Global non-field error ─────────────────────────────────────────── */}
+      {/* Global Validation Message */}
       {state?.status === "error" && !state.fieldErrors && (
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
-        >
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive font-semibold">
           {state.message}
         </div>
       )}
 
-      {/* ── Submit ────────────────────────────────────────────────────────── */}
-      <Button
-        type="submit"
-        disabled={isPending || !selectedType}
-        aria-busy={isPending}
-        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-5 text-base"
-      >
-        {isPending ? (
-          <span className="flex items-center gap-2">
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-            </svg>
-            Menghantar Permohonan...
-          </span>
-        ) : (
-          "HANTAR PERMOHONAN"
-        )}
-      </Button>
+      {/* ── Submit Action ───────────────────────────────────────────────────────── */}
+      <div className="pt-4 flex justify-center">
+        <Button
+          type="submit"
+          disabled={isPending || !selectedType || !pengesahanLafaz}
+          aria-busy={isPending}
+          className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+        >
+          {isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+              Memproses Permohonan...
+            </span>
+          ) : (
+            "HANTAR PERMOHONAN"
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

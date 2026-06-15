@@ -118,47 +118,41 @@ enum ApplicationStatus {
 model ZakatApplication {
   id            String            @id @default(cuid())
 
-  // ── Section C: Deduction method chosen by staff ──────────────────────────
+  // BAHAGIAN A: MAKLUMAT PERIBADI
+  namaPenuh     String
+  noKP          String
+  noPekerja     String
+  noTelefon     String
+  alamatRumah   String            @db.Text
+  poskod        String
+  bandar        String
+  negeri        String
+
+  // BAHAGIAN C: SILA TANDAKAN (/) PADA PETAK BERKENAAN
   deductionType DeductionType
 
-  // Fields for ORIGINAL_PCB_CHANGE:
-  // originalPcbAmount      → the PCB value before modification
-  // monthlyZakatDeduction  → the new zakat monthly amount post-change
-  // residualPcbBalance     → remaining PCB balance after zakat is carved out
-  originalPcbAmount     Decimal? @db.Decimal(10, 2)
-  monthlyZakatDeduction Decimal? @db.Decimal(10, 2)
-  residualPcbBalance    Decimal? @db.Decimal(10, 2)
+  // Section C Amount fields (Decimal)
+  amaunPcbAsal      Decimal? @db.Decimal(10, 2)
+  amaunZakatBulanan Decimal? @db.Decimal(10, 2)
+  amaunZakatAsal    Decimal? @db.Decimal(10, 2)
+  amaunZakatBaru    Decimal? @db.Decimal(10, 2)
 
-  // Field for FIXED_MONTHLY:
-  // fixedMonthlyAmount → the absolute RM figure deducted every month
-  fixedMonthlyAmount    Decimal? @db.Decimal(10, 2)
-
-  // Fields for AMOUNT_ADJUSTMENT:
-  // adjustmentFromAmount → current deduction amount before change
-  // adjustmentToAmount   → new target deduction amount after change
-  adjustmentFromAmount  Decimal? @db.Decimal(10, 2)
-  adjustmentToAmount    Decimal? @db.Decimal(10, 2)
-
-  // ── Section D: Lafaz declaration metadata ──────────────────────────────────
-  // startMonth: Malay month+year string e.g. "Januari 2026" — stored as text
-  // to faithfully represent the user's declared intent without timezone ambiguity.
-  startMonth            String
-
-  // declarationConfirmed: must be true before submission is accepted;
-  // the physical form requires explicit staff acknowledgement of the lafaz.
-  declarationConfirmed  Boolean           @default(false)
+  // BAHAGIAN D: LAFAZ MEMBAYAR ZAKAT
+  bulanMula         String
+  tahunMula         String
+  pengesahanLafaz   Boolean           @default(false)
 
   // ── Application lifecycle ──────────────────────────────────────────────────
-  status                ApplicationStatus @default(PENDING)
-  submittedAt           DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  adminNotes            String?           @db.Text // Optional rejection/approval note from admin
+  status            ApplicationStatus @default(PENDING)
+  submittedAt       DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  adminNotes        String?           @db.Text // Optional notes
 
   // ── Ownership ─────────────────────────────────────────────────────────────
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])                  // All queries filter by owner first
+  @@index([userId])
   @@index([status])                  // Admin review dashboard filters by status
   @@index([userId, status])          // Compound for user-scoped status views
   @@index([submittedAt(sort: Desc)]) // Chronological ordering for audit trail

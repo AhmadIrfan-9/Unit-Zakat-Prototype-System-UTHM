@@ -1,8 +1,7 @@
 // src/app/actions/zakat.ts
 //
-// "use server" seals this entire module at the server boundary.
-// The Next.js bundler guarantees Prisma, auth tokens, and DB credentials
-// never appear in the client JavaScript bundle.
+// React 19 Server Action for submitting Zakat applications.
+// Performs session verification, validates form input via Zod, and records application via Prisma.
 
 "use server";
 
@@ -11,9 +10,6 @@ import { prisma } from "@/lib/prisma";
 import { zakatApplicationSchema, type ZakatFieldErrors } from "@/lib/validations/zakat";
 import { revalidatePath } from "next/cache";
 import { DeductionType } from "@prisma/client";
-
-// ─── Discriminated return type ─────────────────────────────────────────────────
-// Forces the client component to exhaustively handle both outcomes at compile time.
 
 type ActionSuccess = {
   status: "success";
@@ -29,133 +25,123 @@ type ActionError = {
 
 export type ZakatActionResult = ActionSuccess | ActionError;
 
-// ─── Helper: parse a FormData decimal string to Prisma-compatible Decimal input ─
-// Returns undefined (not null) so Prisma omits the column entirely for
-// deduction types that don't use that field — avoids polluting rows with zeros.
+// Helper function to parse decimal inputs safely for Prisma
 function parseDecimal(value: FormDataEntryValue | null): number | undefined {
   if (!value || String(value).trim() === "") return undefined;
   const n = parseFloat(String(value));
   return isNaN(n) ? undefined : n;
 }
 
-// ─── Server Action ─────────────────────────────────────────────────────────────
-
-export async function submitZakatApplicationAction(
+export async function submitZakatFormAction(
   _prevState: ZakatActionResult | null,
   formData: FormData
 ): Promise<ZakatActionResult> {
-
-  // ① Authentication guard — always the FIRST check.
-  //    Middleware is a supplementary layer; a misconfigured matcher could bypass it.
+  // 1. Authenticate the active user session
   const session = await auth();
   if (!session?.user?.id) {
     return {
       status: "error",
-      message: "Sesi anda telah tamat. Sila log masuk semula.",
+      message: "Sesi anda telah tamat atau tidak sah. Sila log masuk semula.",
     };
   }
 
-  // ② Extract raw FormData entries into a plain object for Zod parsing.
-  //    All FormData values arrive as strings or File objects — we pass everything
-  //    as strings and let Zod's coercion/refinement logic handle typing.
+  // 2. Map form data parameters to object
   const rawInput = {
+    namaPenuh:            formData.get("namaPenuh"),
+    noKP:                 formData.get("noKP"),
+    noPekerja:            formData.get("noPekerja"),
+    noTelefon:            formData.get("noTelefon"),
+    alamatRumah:          formData.get("alamatRumah"),
+    poskod:               formData.get("poskod"),
+    bandar:               formData.get("bandar"),
+    negeri:               formData.get("negeri"),
     deductionType:        formData.get("deductionType"),
-    originalPcbAmount:    formData.get("originalPcbAmount"),
-    monthlyZakatDeduction:formData.get("monthlyZakatDeduction"),
-    residualPcbBalance:   formData.get("residualPcbBalance"),
-    fixedMonthlyAmount:   formData.get("fixedMonthlyAmount"),
-    adjustmentFromAmount: formData.get("adjustmentFromAmount"),
-    adjustmentToAmount:   formData.get("adjustmentToAmount"),
-    startMonth:           formData.get("startMonth"),
-    // Checkbox returns the string "true" only when checked; absent when unchecked.
-    declarationConfirmed: formData.get("declarationConfirmed") ?? "false",
+    amaunPcbAsal:         formData.get("amaunPcbAsal"),
+    amaunZakatBulanan:    formData.get("amaunZakatBulanan"),
+    amaunZakatAsal:       formData.get("amaunZakatAsal"),
+    amaunZakatBaru:       formData.get("amaunZakatBaru"),
+    bulanMula:            formData.get("bulanMula"),
+    tahunMula:            formData.get("tahunMula"),
+    targetDeductionValue: formData.get("targetDeductionValue"),
+    pengesahanLafaz:      formData.get("pengesahanLafaz") ?? "false",
   };
 
-  // ③ Schema validation — discriminated union selects the correct variant based
-  //    on `deductionType` before applying field-level rules.
+  // 3. Strict schema parsing
   const parsed = zakatApplicationSchema.safeParse(rawInput);
-
   if (!parsed.success) {
     return {
       status: "error",
-      message: "Sila semak semula maklumat yang diisi.",
+      message: "Sila lengkapkan maklumat borang dengan betul.",
       fieldErrors: parsed.error.flatten().fieldErrors as ZakatFieldErrors,
     };
   }
 
   const data = parsed.data;
 
-  // ④ Defensive re-check: declarationConfirmed must be "true" string.
-  //    Zod already validates this, but we add an explicit guard as documentation.
-  if (data.declarationConfirmed !== "true") {
+  // 4. Double guard for electronic certification
+  if (data.pengesahanLafaz !== "true") {
     return {
       status: "error",
-      message: "Anda mesti bersetuju dengan lafaz membayar zakat sebelum menghantar.",
+      message: "Lafaz membayar zakat mestilah disahkan sebelum menghantar.",
     };
   }
 
-  // ⑤ Database write — scoped exclusively to the authenticated user's ID.
-  //    userId is NEVER sourced from client input; it comes from the server session.
+  // 5. Database ingestion using Prisma
   try {
     const application = await prisma.zakatApplication.create({
       data: {
-        userId:        session.user.id,
-        deductionType: data.deductionType as DeductionType,
-        startMonth:    data.startMonth,
-        declarationConfirmed: true,
+        userId:            session.user.id,
+        namaPenuh:         data.namaPenuh,
+        noKP:              data.noKP,
+        noPekerja:         data.noPekerja,
+        noTelefon:         data.noTelefon,
+        alamatRumah:       data.alamatRumah,
+        poskod:            data.poskod,
+        bandar:            data.bandar,
+        negeri:            data.negeri,
+        deductionType:     data.deductionType as DeductionType,
+        bulanMula:         data.bulanMula,
+        tahunMula:         data.tahunMula,
+        pengesahanLafaz:   true,
 
-        // Conditional decimal fields — undefined values are omitted by Prisma
-        // so irrelevant columns remain NULL in the DB, not zero.
-        originalPcbAmount:
+        // Conditional decimal allocations
+        amaunPcbAsal:
           data.deductionType === "ORIGINAL_PCB_CHANGE"
-            ? parseDecimal(formData.get("originalPcbAmount"))
+            ? parseDecimal(formData.get("amaunPcbAsal"))
             : undefined,
-
-        monthlyZakatDeduction:
-          data.deductionType === "ORIGINAL_PCB_CHANGE"
-            ? parseDecimal(formData.get("monthlyZakatDeduction"))
+        
+        amaunZakatBulanan:
+          data.deductionType === "ORIGINAL_PCB_CHANGE" || data.deductionType === "FIXED_MONTHLY"
+            ? parseDecimal(formData.get("amaunZakatBulanan"))
             : undefined,
-
-        residualPcbBalance:
-          data.deductionType === "ORIGINAL_PCB_CHANGE"
-            ? parseDecimal(formData.get("residualPcbBalance"))
-            : undefined,
-
-        fixedMonthlyAmount:
-          data.deductionType === "FIXED_MONTHLY"
-            ? parseDecimal(formData.get("fixedMonthlyAmount"))
-            : undefined,
-
-        adjustmentFromAmount:
+        
+        amaunZakatAsal:
           data.deductionType === "AMOUNT_ADJUSTMENT"
-            ? parseDecimal(formData.get("adjustmentFromAmount"))
+            ? parseDecimal(formData.get("amaunZakatAsal"))
             : undefined,
-
-        adjustmentToAmount:
+        
+        amaunZakatBaru:
           data.deductionType === "AMOUNT_ADJUSTMENT"
-            ? parseDecimal(formData.get("adjustmentToAmount"))
+            ? parseDecimal(formData.get("amaunZakatBaru"))
             : undefined,
       },
-      select: { id: true }, // Minimal projection — don't round-trip the full row
+      select: { id: true },
     });
 
-    // ⑥ Cache invalidation — revalidates the admin review page and user history page
-    //    so both views reflect the new submission without stale RSC cache data.
+    // 6. Invalidate layout caches to refresh data views
+    revalidatePath("/");
     revalidatePath("/dashboard/zakat");
-    revalidatePath("/admin/zakat");
 
     return {
       status: "success",
       applicationId: application.id,
-      message: "Permohonan zakat berjaya dihantar. Pihak pentadbir akan menyemak permohonan anda.",
+      message: "Permohonan potongan zakat gaji anda berjaya dihantar ke sistem.",
     };
   } catch (error) {
-    // Log server-side for observability (e.g., Vercel logs / Sentry).
-    // Return only a safe generic message to the client — never leak DB internals.
-    console.error("[submitZakatApplicationAction] DB write failed:", error);
+    console.error("[submitZakatFormAction] Error committing to database:", error);
     return {
       status: "error",
-      message: "Ralat sistem berlaku. Sila cuba lagi atau hubungi pihak pentadbir.",
+      message: "Ralat pangkalan data berlaku semasa memproses permohonan anda.",
     };
   }
 }

@@ -15,6 +15,13 @@ datasource db {
 // These follow the exact schema expected by @auth/prisma-adapter.
 // Do NOT rename fields — the adapter maps them by convention.
 
+// This enum defines the two distinct security roles used to segregate staff and management dashboard environments.
+enum Role {
+  USER_STAFF
+  MANAGEMENT_STAFF
+}
+
+// This model updates the application database schema to include staff profiles, roles, and a strict connection to their submitted zakat applications.
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -24,11 +31,21 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts             Account[]
-  sessions             Session[]
-  tasks                Task[]
-  zakatStaffSalaryDeductions           ZakatStaffSalaryDeduction[]
+  // Profile and security attributes added for credentials authentication and dashboard authorization
+  noPekerja     String?   @unique @map("no_pekerja")
+  noKP          String?   @map("no_kp")
+  passwordHash  String?   @map("password_hash")
+  umur          Int?
+  alamatRumah   String?   @db.Text @map("alamat_rumah")
+  gajiSemasa    Decimal?  @db.Decimal(10, 2) @map("gaji_semasa")
+  role          Role      @default(USER_STAFF)
+
+  accounts                    Account[]
+  sessions                    Session[]
+  tasks                       Task[]
+  zakatStaffSalaryDeductions  ZakatStaffSalaryDeduction[]
 }
+
 
 model Account {
   id                String  @id @default(cuid())

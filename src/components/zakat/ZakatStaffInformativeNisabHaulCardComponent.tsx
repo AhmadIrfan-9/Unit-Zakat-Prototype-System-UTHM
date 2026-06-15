@@ -9,16 +9,18 @@ interface ZakatStaffInformativeNisabHaulCardProps {
   gajiSemasa: number | null;
 }
 
-// This module displays current calculation rules by placing the monthly Nisab metrics and yearly Haul tracking information together inside unified informative widgets.
+// This component prints structural financial tracking blocks containing the institutional Nisab values and standard timeline metrics side-by-side.
 export function ZakatStaffInformativeNisabHaulCardComponent({ gajiSemasa }: ZakatStaffInformativeNisabHaulCardProps) {
   const NISAB_BULANAN = 2150.00;
   const isWajib = (gajiSemasa || 0) >= NISAB_BULANAN;
 
   return (
+    // This wrapper lays out children cards side-by-side using responsive grids.
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full animate-in fade-in duration-300">
       
-      {/* CARD 1: NISAB bulanan monitoring widgets */}
+      {/* Informative Nisab monitoring card layout */}
       <Card className="border border-border/80 shadow-md bg-white dark:bg-card overflow-hidden">
+        {/* Card header introducing Nisab rules */}
         <CardHeader className="bg-[#002060]/5 border-b pb-3.5 flex flex-row items-center gap-3">
           <div className="p-2 bg-[#002060]/10 rounded-lg text-[#002060]">
             <Coins className="h-5 w-5" />
@@ -29,6 +31,7 @@ export function ZakatStaffInformativeNisabHaulCardComponent({ gajiSemasa }: Zaka
           </div>
         </CardHeader>
         
+        {/* Card content displaying raw threshold limits and dynamic status badge */}
         <CardContent className="p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -60,8 +63,9 @@ export function ZakatStaffInformativeNisabHaulCardComponent({ gajiSemasa }: Zaka
         </CardContent>
       </Card>
 
-      {/* CARD 2: HAUL timeline rule definitions */}
+      {/* Informative Haul timeline rules card layout */}
       <Card className="border border-border/80 shadow-md bg-white dark:bg-card overflow-hidden">
+        {/* Card header introducing Haul constraints */}
         <CardHeader className="bg-[#002060]/5 border-b pb-3.5 flex flex-row items-center gap-3">
           <div className="p-2 bg-[#002060]/10 rounded-lg text-[#002060]">
             <CalendarRange className="h-5 w-5" />
@@ -72,6 +76,7 @@ export function ZakatStaffInformativeNisabHaulCardComponent({ gajiSemasa }: Zaka
           </div>
         </CardHeader>
         
+        {/* Card content displaying raw hijriah year constraints */}
         <CardContent className="p-5 space-y-4">
           <div className="space-y-1">
             <span className="text-[10px] font-bold text-muted-foreground uppercase">Syarat Haul Pendapatan</span>

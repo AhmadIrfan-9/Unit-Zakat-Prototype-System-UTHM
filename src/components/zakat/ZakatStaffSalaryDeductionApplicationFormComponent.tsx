@@ -33,19 +33,19 @@ interface RmInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-// This utility input displays the Malaysian currency prepended with RM and handles focus ring states.
+// This currency input component renders a text field with an absolute RM label prepended on the left.
 function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps) {
   return (
+    // This container wraps the input and overlays the RM symbol in an absolute position.
     <div className="flex flex-col gap-1 w-full animate-in slide-in-from-top-2 duration-250">
       <div
         className={cn(
-          "flex items-center rounded-lg border bg-background ring-offset-background transition-all",
-          "focus-within:ring-2 focus-within:ring-[#002060] focus-within:ring-offset-2",
+          "relative flex items-center rounded-lg border bg-background ring-offset-background transition-all h-9 focus-within:ring-2 focus-within:ring-[#002060] focus-within:ring-offset-2",
           error ? "border-destructive focus-within:ring-destructive/50" : "border-input",
           disabled && "cursor-not-allowed opacity-50"
         )}
       >
-        <span className="select-none border-r border-input bg-muted px-3 py-2 text-sm font-semibold text-muted-foreground rounded-l-lg">
+        <span className="absolute left-3 text-xs font-bold text-muted-foreground select-none pointer-events-none">
           RM
         </span>
         <input
@@ -55,9 +55,8 @@ function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps
           placeholder="0.00"
           disabled={disabled}
           className={cn(
-            "flex-1 bg-transparent px-3 py-2 text-sm outline-none w-full",
+            "w-full bg-transparent pl-10 pr-3 h-full text-xs outline-none",
             "placeholder:text-muted-foreground",
-            "disabled:cursor-not-allowed",
             className
           )}
           {...rest}
@@ -79,10 +78,11 @@ interface SectionCRowProps {
   children?: React.ReactNode;
 }
 
-// This helper component generates rows inside Section C containing a checkbox and dynamic conditional fields.
+// This row component manages checkboxes in Section C and shows or hides currency inputs based on selection states.
 function SectionCRow({ value, label, selected, onSelect, disabled, children }: SectionCRowProps) {
   const isSelected = selected === value;
   return (
+    // Renders the row box with color highlights when selected.
     <div
       className={cn(
         "flex flex-col gap-4 rounded-xl border p-4 transition-all duration-300 bg-card/50",
@@ -120,42 +120,42 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
   );
 }
 
-// This form component handles user payroll deduction choices with hidden input reveals and generates a dynamic legal declaration sentence for final submission.
+// This form captures user salary deduction criteria, reveals relative numerical inputs conditionally, and generates a reactive certification string for submission.
 export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: ZakatStaffSalaryDeductionApplicationFormProps) {
-  // Bind form actions dynamically to Next.js server actions to handle background logic.
+  // Binds submission logic to server-side action handlers.
   const [state, dispatch, isPending] = useActionState<ZakatStaffSalaryDeductionActionResult | null, FormData>(
     handleZakatDeductionSubmission,
     null
   );
 
-  // Manage selection states of checkboxed deduction types inside the interactive UI layout.
+  // Tracks the active payment method checkbox choice.
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  // Manage month starting fields to display them instantly in the electronic covenant preview.
+  // Tracks the target start month value.
   const [bulanMula, setBulanMula] = useState<string>("");
 
-  // Manage year starting fields to display them instantly in the electronic covenant preview.
+  // Tracks the target start year value.
   const [tahunMula, setTahunMula] = useState<string>("");
 
-  // Track the raw numeric amount to be dynamically rendered inside the Arabic akad statement block.
+  // Tracks the raw payment amount input.
   const [targetDeductionValue, setTargetDeductionValue] = useState<string>("");
 
-  // Control confirmation status checkbox before letting the submission trigger compile.
+  // Tracks the state of the legal declaration checkbox.
   const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
 
-  // Reference hooks to access form nodes and trigger programmatic submission flows securely.
+  // Connects page actions to raw DOM references.
   const formRef = useRef<HTMLFormElement>(null);
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
 
-  // Interactive dialog visibility toggles.
+  // Tracks the visibility of the confirmation overlay.
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  // Handle section checks and toggle options mutually exclusively to prevent multi-value state submissions.
+  // Filters selected payment categories exclusively.
   const handleTypeSelect = useCallback((type: string) => {
     setSelectedType((prev) => (prev === type ? null : type));
   }, []);
 
-  // Map server validation feedback fields to corresponding input segments in browser viewport.
+  // Maps Zod validation issues to corresponding fields.
   const err = (field: keyof ZakatStaffSalaryDeductionFieldErrors) => {
     if (state?.success === false && state.fieldErrors) {
       return state.fieldErrors[field]?.[0];
@@ -163,7 +163,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
     return undefined;
   };
 
-  // Trigger form submission programmatically once the user clicks "Yes" in the confirmation overlay.
+  // Triggers formal database commits after verification.
   const handleConfirmSubmit = () => {
     setIsConfirmOpen(false);
     hiddenSubmitRef.current?.click();
@@ -171,7 +171,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
 
   const isSuccess = state?.success === true;
 
-  // Intercept the dashboard page flow with a victory modal card upon successful record ingestion.
+  // Renders a successful submission notification block.
   if (isSuccess && state?.data) {
     return (
       <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/10 w-full">
@@ -207,18 +207,20 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
     );
   }
 
+  // Generates starting year parameters beginning at year 2026.
   const years = Array.from({ length: 10 }, (_, i) => String(2026 + i));
 
   return (
+    // Renders the interactive deduction form with split divisions.
     <form ref={formRef} action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300">
       {selectedType && <input type="hidden" name="deductionType" value={selectedType} />}
       
-      {/* Hidden fields to submit credentials details loaded from the session */}
+      {/* Raw credentials identifiers fetched from active sessions */}
       <input type="hidden" name="namaPenuh" value={user.name || ""} />
       <input type="hidden" name="noKP" value={user.noKP || ""} />
       <input type="hidden" name="noPekerja" value={user.noPekerja || ""} />
 
-      {/* Hidden button to let JavaScript trigger browser form validation and server dispatching */}
+      {/* Hidden button to process HTML form triggers */}
       <button type="submit" ref={hiddenSubmitRef} className="hidden" />
 
       {/* BAHAGIAN A: MAKLUMAT PERIBADI */}
@@ -229,7 +231,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
-        {/* Email management staff instruction panel */}
+        {/* Change profile notification box */}
         <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
           <p className="leading-relaxed">
             <strong>Pemberitahuan Pindaan:</strong> Untuk menukar sebarang maklumat profil (Nama, No. KP, No. Pekerja, Gaji Semasa), anda perlu menghubungi staf pengurusan melalui emel rasmi.
@@ -242,6 +244,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </a>
         </div>
         
+        {/* Personal profile details fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
             <Label className="font-semibold text-xs text-[#002060]">Nama Penuh</Label>
@@ -314,6 +317,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
+        {/* Section C payment checkbox rows */}
         <div className="space-y-3">
           <SectionCRow
             value="ORIGINAL_PCB_CHANGE"
@@ -392,6 +396,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
+        {/* Dynamic target deductions input fields and dropdown parameters */}
         <div className="space-y-4">
           <div className="max-w-xs space-y-1.5">
             <Label htmlFor="targetDeductionValue" className="font-semibold text-xs text-[#002060]">
@@ -439,7 +444,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             </div>
           </div>
 
-          {/* Interactive Akad Banner */}
+          {/* Interactive Akad Announcement Banner */}
           <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs">
             <p className="text-sm text-amber-900 font-semibold mb-2">
               Akad & Lafaz Zakat:
@@ -460,6 +465,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             </p>
           </div>
 
+          {/* Verification lafaz confirmation checkbox component */}
           <div className="space-y-1">
             <div
               className={cn(
@@ -491,7 +497,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </div>
       )}
 
-      {/* Submit button using Emerald Green */}
+      {/* Action button styled in Emerald Green */}
       <div className="pt-4 flex justify-center">
         <Button
           type="button"
@@ -502,13 +508,13 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           }}
           disabled={isPending || !selectedType || !pengesahanLafaz}
           aria-busy={isPending}
-          className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200 cursor-pointer"
+          className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50"
         >
           {isPending ? "Memproses Permohonan..." : "HANTAR PERMOHONAN"}
         </Button>
       </div>
 
-      {/* Confirmation Modal overlay requiring Yes/Batal controls */}
+      {/* Confirmation Modal overlay requiring user check */}
       {isConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-sm border border-border shadow-2xl rounded-xl bg-white dark:bg-card p-6 space-y-4 animate-in zoom-in-95 duration-200 text-left">

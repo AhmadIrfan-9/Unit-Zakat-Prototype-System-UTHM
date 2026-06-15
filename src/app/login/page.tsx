@@ -11,25 +11,42 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
-// This component parses URL parameters and renders credentials input elements or forgot password templates.
+// This login component uses an aerial mosque background image and a secure split form panel to handle user authentication without any visible shortcut links.
 function LoginForm() {
+  // Setup router hook to transition users after successful authorization.
   const router = useRouter();
+  
+  // Retrieve search query parameters to evaluate login error redirects.
   const searchParams = useSearchParams();
   
-  // Login form inputs and validation states
+  // Hold the user's staff identifier or identity card number.
   const [noPekerja, setNoPekerja] = useState("");
+  
+  // Hold the secret authentication password.
   const [password, setPassword] = useState("");
+  
+  // Monitor authorization error notifications received from auth handlers.
   const [error, setError] = useState<string | null>(searchParams.get("error") ? "Log masuk gagal. Sila periksa No. Pekerja dan kata laluan anda." : null);
+  
+  // Manage spinner indicators during credentials verification.
   const [loading, setLoading] = useState(false);
 
-  // Forgot Password toggle states
+  // Manage password reset views.
   const [isForgotMode, setIsForgotMode] = useState(false);
+  
+  // Hold worker identifier inside reset forms.
   const [forgotNoPekerja, setForgotNoPekerja] = useState("");
+  
+  // Hold UTHM email inside reset forms.
   const [forgotEmail, setForgotEmail] = useState("");
+  
+  // Manage success states for password resets.
   const [forgotSuccess, setForgotSuccess] = useState(false);
+  
+  // Manage error messages for password resets.
   const [forgotError, setForgotError] = useState<string | null>(null);
 
-  // Handle credentials verification by calling NextAuth client handlers.
+  // Authenticate user credentials and route them to their dashboards.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noPekerja || !password) {
@@ -41,7 +58,7 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // Trigger NextAuth credentials verification handler.
+      // Execute the credentials sign in request.
       const response = await signIn("credentials", {
         noPekerja,
         password,
@@ -52,7 +69,7 @@ function LoginForm() {
         setError("No. Pekerja atau Kata Laluan tidak sah.");
         setLoading(false);
       } else {
-        // Redirect standard authenticated users to their corresponding dashboard routes.
+        // Direct successful users to the main zakat layout container.
         router.push("/dashboard/zakat");
         router.refresh();
       }
@@ -63,7 +80,7 @@ function LoginForm() {
     }
   };
 
-  // Handle forgot password requests.
+  // Submit password reset queries to the administration.
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError(null);
@@ -78,50 +95,66 @@ function LoginForm() {
       return;
     }
 
-    // Set success state to show confirmation feedback
     setForgotSuccess(true);
   };
 
   return (
-    // This component renders the secure login page featuring a full-screen background image and a professional split-screen form layout without any test data links.
-    <div
-      className="relative min-h-screen w-full flex flex-col md:flex-row font-sans antialiased bg-cover bg-center"
-      style={{ backgroundImage: "url('/background.jpg')" }}
-    >
-      {/* Left Panel: Welcoming context overlaying UTHM institutional context */}
-      <div className="flex-1 flex flex-col justify-between p-8 md:p-16 bg-black/55 text-white min-h-[40vh] md:min-h-screen">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/logo.png"
-            alt="Logo UTHM"
-            width={240}
-            height={80}
-            priority
-            className="h-20 w-auto object-contain brightness-0 invert"
-          />
-        </div>
+    // Renders the main split screen interface split into mosque scene on left and form panel on right.
+    <div className="relative min-h-screen w-full flex flex-col md:flex-row font-sans antialiased bg-background">
+      
+      {/* Left Panel: Cover background scene and stacked corporate logos */}
+      <div 
+        className="flex-1 flex flex-col justify-between p-8 md:p-16 text-white min-h-[40vh] md:min-h-screen bg-cover bg-center relative"
+        style={{ backgroundImage: "url('/image (2).png')" }}
+      >
+        {/* Dark backdrop overlay for text legibility */}
+        <div className="absolute inset-0 bg-black/40 -z-0" />
         
-        <div className="space-y-4 max-w-xl my-auto pt-10 md:pt-0">
-          <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight uppercase">
-            Sistem Caruman Zakat Gaji UTHM
-          </h1>
-          <div className="h-1 w-20 bg-emerald-500 rounded" />
-          <p className="text-sm md:text-base text-gray-200 font-medium leading-relaxed">
-            Selamat Datang ke Portal Kebenaran Potongan Gaji Kakitangan UTHM. Urus dan hantar permohonan sumbangan zakat bulanan anda dengan selamat dan efisien secara digital.
+        <div className="relative z-10 flex flex-col justify-between h-full min-h-[35vh] md:min-h-[85vh]">
+          {/* Stacked UTHM and Zakat UTHM institutional logos */}
+          <div className="flex flex-col items-start gap-4">
+            <Image
+              src="/image_bb5246.png"
+              alt="Logo UTHM"
+              width={240}
+              height={80}
+              priority
+              className="h-20 w-auto object-contain brightness-0 invert"
+            />
+            <Image
+              src="/image_bb546b.png"
+              alt="Logo Zakat UTHM"
+              width={180}
+              height={60}
+              priority
+              className="h-10 w-auto object-contain brightness-0 invert"
+            />
+          </div>
+          
+          {/* Main title without the word prototip */}
+          <div className="space-y-4 max-w-xl my-auto pt-10 md:pt-0">
+            <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight uppercase">
+              Sistem Caruman Zakat Gaji UTHM
+            </h1>
+            <div className="h-1 w-20 bg-emerald-500 rounded" />
+            <p className="text-sm md:text-base text-gray-200 font-medium leading-relaxed">
+              Selamat Datang ke Portal Kebenaran Potongan Gaji Kakitangan UTHM. Urus dan hantar permohonan sumbangan zakat bulanan anda dengan selamat dan efisien secara digital.
+            </p>
+          </div>
+
+          {/* Legal copyrights statement footer */}
+          <p className="text-[10px] text-gray-400 font-medium pt-8 md:pt-0">
+            &copy; {new Date().getFullYear()} Universiti Tun Hussein Onn Malaysia. Hak Cipta Terpelihara.
           </p>
         </div>
-
-        <p className="text-[10px] text-gray-400 font-medium">
-          &copy; {new Date().getFullYear()} Universiti Tun Hussein Onn Malaysia. Hak Cipta Terpelihara.
-        </p>
       </div>
 
-      {/* Right Panel: Clean White login card */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white/90 dark:bg-card/90 backdrop-blur-md min-h-[60vh] md:min-h-screen border-l border-border/20">
+      {/* Right Panel: White credentials card container */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white dark:bg-card min-h-[60vh] md:min-h-screen border-l border-border/20">
         <div className="w-full max-w-md animate-in fade-in duration-500">
           
           {!isForgotMode ? (
-            /* Secure Credentials Form Panel */
+            // Authentication form card structure
             <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full">
               <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
                 <CardTitle className="text-lg font-bold text-[#002060]">
@@ -134,6 +167,7 @@ function LoginForm() {
               
               <CardContent className="p-6 space-y-4">
                 {error && (
+                  // General error notification container
                   <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{error}</span>
@@ -141,10 +175,12 @@ function LoginForm() {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Staff ID or Identification Card Input */}
                   <div className="space-y-1.5">
                     <Label htmlFor="noPekerja" className="font-bold text-xs text-[#002060]">No. Pekerja atau No. Kad Pengenalan</Label>
                     <Input
                       id="noPekerja"
+                      type="text"
                       placeholder="Masukkan No. Pekerja / No. KP"
                       value={noPekerja}
                       onChange={(e) => setNoPekerja(e.target.value)}
@@ -153,6 +189,7 @@ function LoginForm() {
                     />
                   </div>
 
+                  {/* Password Input */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password" className="font-bold text-xs text-[#002060]">Kata Laluan</Label>
@@ -179,6 +216,7 @@ function LoginForm() {
                     />
                   </div>
 
+                  {/* Navy Blue action submission button */}
                   <Button
                     type="submit"
                     disabled={loading}
@@ -190,7 +228,7 @@ function LoginForm() {
               </CardContent>
             </Card>
           ) : (
-            /* Forgot Password Panel */
+            // Reset request card layout
             <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full animate-in slide-in-from-right-4 duration-300">
               <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
                 <CardTitle className="text-lg font-bold text-[#002060]">
@@ -203,6 +241,7 @@ function LoginForm() {
               <CardContent className="p-6 space-y-4">
                 
                 {forgotSuccess ? (
+                  // Success dialog banner
                   <div className="space-y-4 py-2 text-center animate-in zoom-in-95 duration-200">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600">
                       <CheckCircle className="h-6 w-6" />
@@ -230,6 +269,7 @@ function LoginForm() {
                     </Button>
                   </div>
                 ) : (
+                  // Verification fields mapping
                   <form onSubmit={handleForgotSubmit} className="space-y-4">
                     {forgotError && (
                       <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
@@ -242,6 +282,7 @@ function LoginForm() {
                       <Label htmlFor="forgotNoPekerja" className="font-bold text-xs text-[#002060]">No. Pekerja</Label>
                       <Input
                         id="forgotNoPekerja"
+                        type="text"
                         placeholder="Contoh: STAFF001"
                         value={forgotNoPekerja}
                         onChange={(e) => setForgotNoPekerja(e.target.value)}

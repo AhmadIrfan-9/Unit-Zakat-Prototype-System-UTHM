@@ -7,7 +7,7 @@
 
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { ZakatSalaryDeductionFormClientComponent } from "@/components/zakat/zakat-salary-deduction-form-client-component";
+import { ZakatSalaryDeductionFormClientComponent } from "@/components/zakat/ZakatSalaryDeductionFormClientComponent";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

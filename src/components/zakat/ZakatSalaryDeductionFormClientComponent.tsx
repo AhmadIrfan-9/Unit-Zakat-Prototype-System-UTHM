@@ -1,9 +1,9 @@
-// src/components/zakat/zakat-salary-deduction-form-client-component.tsx
+// src/components/zakat/ZakatSalaryDeductionFormClientComponent.tsx
 "use client";
 
 import { useActionState, useState, useCallback } from "react";
-import { executeZakatSalaryDeductionDatabaseInsertion, type ZakatStaffSalaryDeductionActionResult } from "@/app/actions/zakat-salary-deduction-server-actions";
-import { MALAY_MONTHS, NEGERI_LIST, type ZakatStaffSalaryDeductionFieldErrors } from "@/lib/validations/zakat-salary-deduction-schema";
+import { handleZakatDeductionSubmission, type ZakatStaffSalaryDeductionActionResult } from "@/app/actions/zakatDeductionServerActions";
+import { MALAY_MONTHS, NEGERI_LIST, type ZakatStaffSalaryDeductionFieldErrors } from "@/lib/validations/zakatDeductionValidationSchema";
 
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -38,7 +38,7 @@ function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps
       <div
         className={cn(
           "flex items-center rounded-lg border bg-background ring-offset-background transition-all",
-          "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+          "focus-within:ring-2 focus-within:ring-[#002060] focus-within:ring-offset-2",
           error ? "border-destructive focus-within:ring-destructive/50" : "border-input",
           disabled && "cursor-not-allowed opacity-50"
         )}
@@ -84,7 +84,7 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
       className={cn(
         "flex flex-col gap-4 rounded-xl border p-4 transition-all duration-300 bg-card/50",
         isSelected
-          ? "border-emerald-500 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-sm ring-1 ring-emerald-500/30"
+          ? "border-[#002060] bg-[#002060]/5 shadow-sm ring-1 ring-[#002060]/30"
           : "border-border hover:border-muted-foreground/30 hover:bg-card/80"
       )}
     >
@@ -94,13 +94,13 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
           checked={isSelected}
           onCheckedChange={() => onSelect(value)}
           disabled={disabled}
-          className="h-5 w-5 rounded border-muted-foreground/40 text-emerald-600 focus:ring-emerald-500"
+          className="h-5 w-5 rounded border-muted-foreground/40 text-[#002060] data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
         />
         <Label
           htmlFor={`type-${value}`}
           className={cn(
             "cursor-pointer font-semibold text-sm leading-tight select-none",
-            isSelected ? "text-emerald-800 dark:text-emerald-300" : "text-foreground"
+            isSelected ? "text-[#002060] dark:text-blue-300" : "text-foreground"
           )}
         >
           {label}
@@ -108,7 +108,7 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
       </div>
       
       {isSelected && children && (
-        <div className="ml-8 mt-1 border-l-2 border-emerald-500/20 pl-4 space-y-4 animate-in fade-in slide-in-from-top-3 duration-300">
+        <div className="ml-8 mt-1 border-l-2 border-[#002060]/20 pl-4 space-y-4 animate-in fade-in slide-in-from-top-3 duration-300">
           {children}
         </div>
       )}
@@ -116,34 +116,35 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
   );
 }
 
+// This interactive component displays the form and handles user selections in the browser.
 export function ZakatSalaryDeductionFormClientComponent() {
-  // Bind form dispatch hooks dynamically to native React server actions to monitor async life transitions.
+  // Bind form actions dynamically to Next.js server actions to handle background logic.
   const [state, dispatch, isPending] = useActionState<ZakatStaffSalaryDeductionActionResult | null, FormData>(
-    executeZakatSalaryDeductionDatabaseInsertion,
+    handleZakatDeductionSubmission,
     null
   );
 
-  // Manage internal selection states to isolate checked inputs and maintain clean database mappings.
+  // Manage selection states of checkboxed deduction types inside the interactive UI layout.
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  // Track the Malay text representation of the month chosen to launch the deduction sequence.
+  // Manage month starting fields to display them instantly in the electronic covenant preview.
   const [bulanMula, setBulanMula] = useState<string>("");
 
-  // Track the target calendar year to start the deduction to representation accuracy.
+  // Manage year starting fields to display them instantly in the electronic covenant preview.
   const [tahunMula, setTahunMula] = useState<string>("");
 
-  // Capture raw text keystrokes from the numeric field to build reactive preview sentences.
+  // Track the raw numeric amount to be dynamically rendered inside the Arabic akad statement block.
   const [targetDeductionValue, setTargetDeductionValue] = useState<string>("");
 
-  // Control submission block states by ensuring user confirms covenant checks.
+  // Control confirmation status checkbox before letting the submission trigger compile.
   const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
 
-  // Toggle user choices mutually exclusively to prevent multi-selection database conflicts.
+  // Handle section checks and toggle options mutually exclusively to prevent multi-value state submissions.
   const handleTypeSelect = useCallback((type: string) => {
     setSelectedType((prev) => (prev === type ? null : type));
   }, []);
 
-  // Map server validation failures to local component scopes to present field feedback.
+  // Map server validation feedback fields to corresponding input segments in browser viewport.
   const err = (field: keyof ZakatStaffSalaryDeductionFieldErrors) => {
     if (state?.success === false && state.fieldErrors) {
       return state.fieldErrors[field]?.[0];
@@ -153,7 +154,7 @@ export function ZakatSalaryDeductionFormClientComponent() {
 
   const isSuccess = state?.success === true;
 
-  // Intercept the form layout with an approval banner on success to confirm transactions.
+  // Intercept the dashboard page flow with a victory modal card upon successful record ingestion.
   if (isSuccess && state?.data) {
     return (
       <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/10">
@@ -197,60 +198,60 @@ export function ZakatSalaryDeductionFormClientComponent() {
 
       {/* BAHAGIAN A: MAKLUMAT PERIBADI */}
       <div className="space-y-4">
-        <div className="border-b pb-2">
-          <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+        <div className="border-b border-border pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
             BAHAGIAN A: MAKLUMAT PERIBADI
           </h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="namaPenuh" className="font-semibold text-xs">Nama Penuh</Label>
-            <Input id="namaPenuh" name="namaPenuh" disabled={isPending} placeholder="Masukkan nama penuh seperti dalam KP" />
+            <Label htmlFor="namaPenuh" className="font-semibold text-xs text-[#002060]">Nama Penuh</Label>
+            <Input id="namaPenuh" name="namaPenuh" disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="Masukkan nama penuh seperti dalam KP" />
             {err("namaPenuh") && <p className="text-xs text-destructive font-medium">{err("namaPenuh")}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="noKP" className="font-semibold text-xs">No. Kad Pengenalan</Label>
-            <Input id="noKP" name="noKP" maxLength={12} disabled={isPending} placeholder="Contoh: 890520015432 (12 digit)" />
+            <Label htmlFor="noKP" className="font-semibold text-xs text-[#002060]">No. Kad Pengenalan</Label>
+            <Input id="noKP" name="noKP" maxLength={12} disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="Contoh: 890520015432 (12 digit)" />
             {err("noKP") && <p className="text-xs text-destructive font-medium">{err("noKP")}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="noPekerja" className="font-semibold text-xs">No. Pekerja</Label>
-            <Input id="noPekerja" name="noPekerja" disabled={isPending} placeholder="Masukkan No. Kakitangan UTHM" />
+            <Label htmlFor="noPekerja" className="font-semibold text-xs text-[#002060]">No. Pekerja</Label>
+            <Input id="noPekerja" name="noPekerja" disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="Masukkan No. Kakitangan UTHM" />
             {err("noPekerja") && <p className="text-xs text-destructive font-medium">{err("noPekerja")}</p>}
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="noTelefon" className="font-semibold text-xs">No. Telefon</Label>
-            <Input id="noTelefon" name="noTelefon" disabled={isPending} placeholder="Contoh: 0123456789" />
+            <Label htmlFor="noTelefon" className="font-semibold text-xs text-[#002060]">No. Telefon</Label>
+            <Input id="noTelefon" name="noTelefon" disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="Contoh: 0123456789" />
             {err("noTelefon") && <p className="text-xs text-destructive font-medium">{err("noTelefon")}</p>}
           </div>
 
           <div className="md:col-span-2 space-y-1">
-            <Label htmlFor="alamatRumah" className="font-semibold text-xs">Alamat Rumah</Label>
-            <Textarea id="alamatRumah" name="alamatRumah" disabled={isPending} placeholder="Masukkan alamat kediaman penuh" rows={3} />
+            <Label htmlFor="alamatRumah" className="font-semibold text-xs text-[#002060]">Alamat Rumah</Label>
+            <Textarea id="alamatRumah" name="alamatRumah" disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="Masukkan alamat kediaman penuh" rows={3} />
             {err("alamatRumah") && <p className="text-xs text-destructive font-medium">{err("alamatRumah")}</p>}
           </div>
 
           <div className="grid grid-cols-3 md:col-span-2 gap-4">
             <div className="space-y-1 col-span-1">
-              <Label htmlFor="poskod" className="font-semibold text-xs">Poskod</Label>
-              <Input id="poskod" name="poskod" maxLength={5} disabled={isPending} placeholder="86400" />
+              <Label htmlFor="poskod" className="font-semibold text-xs text-[#002060]">Poskod</Label>
+              <Input id="poskod" name="poskod" maxLength={5} disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="86400" />
               {err("poskod") && <p className="text-xs text-destructive font-medium">{err("poskod")}</p>}
             </div>
 
             <div className="space-y-1 col-span-1">
-              <Label htmlFor="bandar" className="font-semibold text-xs">Bandar</Label>
-              <Input id="bandar" name="bandar" disabled={isPending} placeholder="Parit Raja" />
+              <Label htmlFor="bandar" className="font-semibold text-xs text-[#002060]">Bandar</Label>
+              <Input id="bandar" name="bandar" disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060]" placeholder="Parit Raja" />
               {err("bandar") && <p className="text-xs text-destructive font-medium">{err("bandar")}</p>}
             </div>
 
             <div className="space-y-1 col-span-1">
-              <Label htmlFor="negeri" className="font-semibold text-xs">Negeri</Label>
+              <Label htmlFor="negeri" className="font-semibold text-xs text-[#002060]">Negeri</Label>
               <Select name="negeri" disabled={isPending}>
-                <SelectTrigger id="negeri" className="w-full">
+                <SelectTrigger id="negeri" className="w-full focus-visible:ring-[#002060] focus-visible:border-[#002060] focus:ring-[#002060]">
                   <SelectValue placeholder="Pilih..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
@@ -267,8 +268,8 @@ export function ZakatSalaryDeductionFormClientComponent() {
 
       {/* ── BAHAGIAN C: SILA TANDAKAN (/) PADA PETAK BERKENAAN ────────────────────── */}
       <div className="space-y-4">
-        <div className="border-b pb-2">
-          <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+        <div className="border-b border-border pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
             BAHAGIAN C: SILA TANDAKAN (/) PADA PETAK BERKENAAN
           </h2>
         </div>
@@ -345,15 +346,15 @@ export function ZakatSalaryDeductionFormClientComponent() {
 
       {/* ── BAHAGIAN D: LAFAZ MEMBAYAR ZAKAT ───────────────────────────────────────── */}
       <div className="space-y-4">
-        <div className="border-b pb-2">
-          <h2 className="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+        <div className="border-b border-border pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
             BAHAGIAN D: LAFAZ MEMBAYAR ZAKAT
           </h2>
         </div>
 
         <div className="space-y-4">
           <div className="max-w-xs space-y-1.5">
-            <Label htmlFor="targetDeductionValue" className="font-semibold text-xs text-foreground">
+            <Label htmlFor="targetDeductionValue" className="font-semibold text-xs text-[#002060]">
               Amaun Potongan Zakat Gaji (RM) <span className="text-destructive">*</span>
             </Label>
             <RmInput
@@ -368,9 +369,9 @@ export function ZakatSalaryDeductionFormClientComponent() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="bulanMula" className="font-semibold text-xs">Bulan Mula Potongan <span className="text-destructive">*</span></Label>
+              <Label htmlFor="bulanMula" className="font-semibold text-xs text-[#002060]">Bulan Mula Potongan <span className="text-destructive">*</span></Label>
               <Select name="bulanMula" value={bulanMula} onValueChange={setBulanMula} disabled={isPending}>
-                <SelectTrigger id="bulanMula" className="w-full">
+                <SelectTrigger id="bulanMula" className="w-full focus-visible:ring-[#002060] focus-visible:border-[#002060] focus:ring-[#002060]">
                   <SelectValue placeholder="Pilih Bulan..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
@@ -383,9 +384,9 @@ export function ZakatSalaryDeductionFormClientComponent() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="tahunMula" className="font-semibold text-xs">Tahun Mula Potongan <span className="text-destructive">*</span></Label>
+              <Label htmlFor="tahunMula" className="font-semibold text-xs text-[#002060]">Tahun Mula Potongan <span className="text-destructive">*</span></Label>
               <Select name="tahunMula" value={tahunMula} onValueChange={setTahunMula} disabled={isPending}>
-                <SelectTrigger id="tahunMula" className="w-full">
+                <SelectTrigger id="tahunMula" className="w-full focus-visible:ring-[#002060] focus-visible:border-[#002060] focus:ring-[#002060]">
                   <SelectValue placeholder="Pilih Tahun..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
@@ -398,21 +399,21 @@ export function ZakatSalaryDeductionFormClientComponent() {
             </div>
           </div>
 
-          {/* Interpolate states dynamically within the card text block to satisfy electronic contract display requirements. */}
-          <div className="rounded-xl border border-amber-300 bg-amber-50/50 dark:border-amber-900/40 dark:bg-amber-950/10 p-5 shadow-xs">
-            <p className="text-sm text-amber-900 dark:text-amber-300 font-semibold mb-2 flex items-center gap-2">
+          {/* Interpolate starting bounds reactively to frame the official Malaysian religious covenant declaration. */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs">
+            <p className="text-sm text-amber-900 font-semibold mb-2 flex items-center gap-2">
               Akad & Lafaz Zakat:
             </p>
             <p className="text-sm leading-relaxed text-foreground font-medium italic">
               &ldquo;Saya bersetuju gaji saya dipotong mulai gaji bulan{" "}
-              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20 px-2 py-0.5 rounded">
+              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 bg-amber-100/40 px-2 py-0.5 rounded">
                 {bulanMula || "[Bulan]"}
               </span>{" "}
-              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20 px-2 py-0.5 rounded">
+              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 bg-amber-100/40 px-2 py-0.5 rounded">
                 {tahunMula || "[Tahun]"}
               </span>{" "}
               sebanyak RM{" "}
-              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 dark:text-amber-300 bg-amber-100/40 dark:bg-amber-900/20 px-2 py-0.5 rounded">
+              <span className="underline decoration-amber-500/80 decoration-2 underline-offset-4 font-bold text-amber-800 bg-amber-100/40 px-2 py-0.5 rounded">
                 {targetDeductionValue || "0.00"}
               </span>{" "}
               bagi menunaikan zakat harta.&rdquo;
@@ -433,7 +434,7 @@ export function ZakatSalaryDeductionFormClientComponent() {
                 checked={pengesahanLafaz}
                 onCheckedChange={(checked) => setPengesahanLafaz(!!checked)}
                 disabled={isPending}
-                className="mt-0.5 h-5 w-5 rounded border-muted-foreground/40 text-emerald-600 focus:ring-emerald-500"
+                className="mt-0.5 h-5 w-5 rounded border-muted-foreground/40 text-[#002060] data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
               />
               <Label htmlFor="pengesahanLafaz" className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none">
                 Saya mengesahkan bahawa maklumat yang diberikan adalah benar dan saya bersetuju untuk membuat potongan zakat gaji seperti yang dinyatakan dalam lafaz di atas.

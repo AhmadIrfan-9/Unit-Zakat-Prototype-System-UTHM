@@ -27,7 +27,7 @@ model User {
   accounts             Account[]
   sessions             Session[]
   tasks                Task[]
-  zakatStaffSalaryDeductionSubmissions ZakatStaffSalaryDeductionSubmission[]
+  zakatStaffSalaryDeductions           ZakatStaffSalaryDeduction[]
 }
 
 model Account {
@@ -115,7 +115,8 @@ enum ApplicationStatus {
   REJECTED   // Rejected — staff must resubmit with corrections
 }
 
-model ZakatStaffSalaryDeductionSubmission {
+// This database model stores the official zakat deduction records for UTHM staff.
+model ZakatStaffSalaryDeduction {
   id            String            @id @default(cuid())
 
   // This block stores the personal identification and contact details of the staff member submitting the form.
@@ -155,5 +156,5 @@ model ZakatStaffSalaryDeductionSubmission {
   @@index([userId, status])
   @@index([submittedAt(sort: Desc)])
 
-  @@map("zakat_staff_salary_deduction_submissions")
+  @@map("zakat_staff_salary_deductions")
 }

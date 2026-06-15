@@ -1,9 +1,9 @@
-// src/app/actions/zakat-salary-deduction-server-actions.ts
+// src/app/actions/zakatDeductionServerActions.ts
 "use server";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { zakatSalaryDeductionSchema, type ZakatStaffSalaryDeductionFieldErrors } from "@/lib/validations/zakat-salary-deduction-schema";
+import { zakatDeductionValidationSchema, type ZakatStaffSalaryDeductionFieldErrors } from "@/lib/validations/zakatDeductionValidationSchema";
 import { revalidatePath } from "next/cache";
 import { DeductionType } from "@prisma/client";
 
@@ -29,11 +29,12 @@ function parseDecimal(amountString: FormDataEntryValue | null): number | undefin
   return isNaN(numericAmount) ? undefined : numericAmount;
 }
 
-export async function executeZakatSalaryDeductionDatabaseInsertion(
+// This server function securely handles the logic of saving the form data to our database.
+export async function handleZakatDeductionSubmission(
   _previousState: ZakatStaffSalaryDeductionActionResult | null,
   formData: FormData
 ): Promise<ZakatStaffSalaryDeductionActionResult> {
-  // Prevent unauthorized data manipulation by validating active sessions before database interaction.
+  // This step verifies that the user session is active and authentic before proceeding.
   const activeSession = await auth();
   if (!activeSession?.user?.id) {
     return {
@@ -42,7 +43,7 @@ export async function executeZakatSalaryDeductionDatabaseInsertion(
     };
   }
 
-  // Secure client input structures against malicious payloads by mapping incoming form parameters.
+  // This step structures raw form parameters to prepare them for parsing.
   const rawInput = {
     namaPenuh:            formData.get("namaPenuh"),
     noKP:                 formData.get("noKP"),
@@ -63,8 +64,8 @@ export async function executeZakatSalaryDeductionDatabaseInsertion(
     pengesahanLafaz:      formData.get("pengesahanLafaz") ?? "false",
   };
 
-  // Enforce business rules and payload format accuracy using strict schema validations.
-  const parsedValidation = zakatSalaryDeductionSchema.safeParse(rawInput);
+  // This step parses user inputs against Zod schema rules to ensure data integrity.
+  const parsedValidation = zakatDeductionValidationSchema.safeParse(rawInput);
   if (!parsedValidation.success) {
     return {
       success: false,
@@ -75,7 +76,7 @@ export async function executeZakatSalaryDeductionDatabaseInsertion(
 
   const validatedFields = parsedValidation.data;
 
-  // Respect Islamic jurisprudence rules requiring explicit agreement declarations before logging zakat covenants.
+  // This step checks that the user checked the electronic lafaz verification box.
   if (validatedFields.pengesahanLafaz !== "true") {
     return {
       success: false,
@@ -83,9 +84,9 @@ export async function executeZakatSalaryDeductionDatabaseInsertion(
     };
   }
 
-  // Maintain historical employee transaction tracking by committing deduction items to database records.
+  // This step commits the verified salary deduction request data to the database.
   try {
-    const newSubmission = await prisma.zakatStaffSalaryDeductionSubmission.create({
+    const newSubmission = await prisma.zakatStaffSalaryDeduction.create({
       data: {
         userId:            activeSession.user.id,
         namaPenuh:         validatedFields.namaPenuh,
@@ -124,7 +125,7 @@ export async function executeZakatSalaryDeductionDatabaseInsertion(
       select: { id: true },
     });
 
-    // Avoid stale layout views in client viewports by clearing browser caches for related pages.
+    // This step clears cache regions to refresh layouts across active pages in real time.
     revalidatePath("/");
     revalidatePath("/dashboard/zakat");
 
@@ -135,7 +136,7 @@ export async function executeZakatSalaryDeductionDatabaseInsertion(
       },
     };
   } catch (dbWriteError) {
-    console.error("[executeZakatSalaryDeductionDatabaseInsertion] Error saving submission:", dbWriteError);
+    console.error("[handleZakatDeductionSubmission] Error saving submission:", dbWriteError);
     return {
       success: false,
       error: "Ralat pangkalan data berlaku semasa memproses permohonan anda.",

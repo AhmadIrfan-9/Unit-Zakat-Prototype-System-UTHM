@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AlertCircle, Key, UserCheck, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { AlertCircle, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
 // This component parses URL parameters and renders credentials input elements or forgot password templates.
 function LoginForm() {
@@ -22,7 +22,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(searchParams.get("error") ? "Log masuk gagal. Sila periksa No. Pekerja dan kata laluan anda." : null);
   const [loading, setLoading] = useState(false);
 
-  // Forgot Password modal toggle states
+  // Forgot Password toggle states
   const [isForgotMode, setIsForgotMode] = useState(false);
   const [forgotNoPekerja, setForgotNoPekerja] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
@@ -63,7 +63,7 @@ function LoginForm() {
     }
   };
 
-  // Handle forgot password mock requests gracefully.
+  // Handle forgot password requests.
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError(null);
@@ -82,243 +82,210 @@ function LoginForm() {
     setForgotSuccess(true);
   };
 
-  // Populate form credentials input states with test account values instantly without displaying the raw passwords.
-  const fillTestCredentials = (noPek: string) => {
-    setNoPekerja(noPek);
-    setPassword("password123");
-    setError(null);
-  };
-
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-muted/40 p-4 font-sans antialiased">
-      
-      {/* Background vector design elements */}
-      <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,rgba(0,32,96,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,32,96,0.02)_1px,transparent_1px)] bg-size-[16px_16px] mask-[radial-gradient(ellipse_80%_60%_at_50%_0%,#000_80%,transparent_100%)]" />
-
-      <div className="w-full max-w-md space-y-6">
-        
-        {/* Institutional UTHM Logo Header */}
-        <div className="flex justify-center w-full">
+    // This component renders the secure login page featuring a full-screen background image and a professional split-screen form layout without any test data links.
+    <div
+      className="relative min-h-screen w-full flex flex-col md:flex-row font-sans antialiased bg-cover bg-center"
+      style={{ backgroundImage: "url('/background.jpg')" }}
+    >
+      {/* Left Panel: Welcoming context overlaying UTHM institutional context */}
+      <div className="flex-1 flex flex-col justify-between p-8 md:p-16 bg-black/55 text-white min-h-[40vh] md:min-h-screen">
+        <div className="flex items-center gap-3">
           <Image
             src="/logo.png"
             alt="Logo UTHM"
             width={240}
-            height={70}
+            height={80}
             priority
-            className="h-16 w-auto object-contain mix-blend-multiply dark:mix-blend-normal"
+            className="h-20 w-auto object-contain brightness-0 invert"
           />
         </div>
+        
+        <div className="space-y-4 max-w-xl my-auto pt-10 md:pt-0">
+          <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight uppercase">
+            Sistem Caruman Zakat Gaji UTHM
+          </h1>
+          <div className="h-1 w-20 bg-emerald-500 rounded" />
+          <p className="text-sm md:text-base text-gray-200 font-medium leading-relaxed">
+            Selamat Datang ke Portal Kebenaran Potongan Gaji Kakitangan UTHM. Urus dan hantar permohonan sumbangan zakat bulanan anda dengan selamat dan efisien secara digital.
+          </p>
+        </div>
 
-        {/* Credentials Form Layout Card - Conditionally renders Login or Forgot Password */}
-        {!isForgotMode ? (
-          <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95">
-            <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
-              <CardTitle className="text-lg font-bold text-[#002060]">
-                Log Masuk Portal Zakat Gaji
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Sistem Caruman Zakat Gaji UTHM
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="p-6 space-y-6">
-              {error && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+        <p className="text-[10px] text-gray-400 font-medium">
+          &copy; {new Date().getFullYear()} Universiti Tun Hussein Onn Malaysia. Hak Cipta Terpelihara.
+        </p>
+      </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="noPekerja" className="font-bold text-xs text-[#002060]">No. Pekerja</Label>
-                  <Input
-                    id="noPekerja"
-                    placeholder="Contoh: STAFF001"
-                    value={noPekerja}
-                    onChange={(e) => setNoPekerja(e.target.value)}
-                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060]"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="font-bold text-xs text-[#002060]">Kata Laluan</Label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotMode(true);
-                        setForgotSuccess(false);
-                        setForgotError(null);
-                      }}
-                      className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
-                    >
-                      Lupa Kata Laluan?
-                    </button>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060]"
-                    disabled={loading}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#002060] hover:bg-[#002060]/95 text-white font-bold py-2.5 text-xs tracking-wider shadow-md cursor-pointer transition-all"
-                >
-                  {loading ? "Memproses Log Masuk..." : "LOG MASUK"}
-                </Button>
-              </form>
-
-              {/* Prototype helper test accounts panel with default passwords hidden */}
-              <div className="border-t pt-4 space-y-3">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block text-center">
-                  Akaun Demonstrasi Pilihan
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  
-                  {/* Staff member credentials card */}
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("STAFF001")}
-                    className="flex items-start gap-2 p-2.5 border rounded-lg bg-muted/20 hover:bg-muted/40 transition-all text-left text-xs cursor-pointer group"
-                  >
-                    <UserCheck className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
-                    <div>
-                      <div className="font-bold text-foreground group-hover:text-[#002060]">Staf Biasa</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">ID: STAFF001</div>
-                      <div className="text-[9px] text-emerald-600 font-semibold mt-0.5">Sedia dimasukkan</div>
-                    </div>
-                  </button>
-
-                  {/* Management Staff credentials card */}
-                  <button
-                    type="button"
-                    onClick={() => fillTestCredentials("MGR001")}
-                    className="flex items-start gap-2 p-2.5 border rounded-lg bg-muted/20 hover:bg-muted/40 transition-all text-left text-xs cursor-pointer group"
-                  >
-                    <Key className="h-4 w-4 text-[#002060] mt-0.5 shrink-0" />
-                    <div>
-                      <div className="font-bold text-foreground group-hover:text-[#002060]">Pengurusan</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">ID: MGR001</div>
-                      <div className="text-[9px] text-emerald-600 font-semibold mt-0.5">Sedia dimasukkan</div>
-                    </div>
-                  </button>
-
-                </div>
-              </div>
-
-            </CardContent>
-          </Card>
-        ) : (
-          /* FORGOT PASSWORD SECTION */
-          <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 animate-in fade-in slide-in-from-right-4 duration-300">
-            <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
-              <CardTitle className="text-lg font-bold text-[#002060]">
-                Set Semula Kata Laluan
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Sila lengkapkan butiran pengesahan staf
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
+      {/* Right Panel: Clean White login card */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white/90 dark:bg-card/90 backdrop-blur-md min-h-[60vh] md:min-h-screen border-l border-border/20">
+        <div className="w-full max-w-md animate-in fade-in duration-500">
+          
+          {!isForgotMode ? (
+            /* Secure Credentials Form Panel */
+            <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full">
+              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
+                <CardTitle className="text-lg font-bold text-[#002060]">
+                  Log Masuk Portal
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Sila masukkan butiran kakitangan rasmi anda
+                </CardDescription>
+              </CardHeader>
               
-              {forgotSuccess ? (
-                /* Success Notification Box */
-                <div className="space-y-4 py-2 text-center animate-in zoom-in-95 duration-200">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600">
-                    <CheckCircle className="h-6 w-6" />
+              <CardContent className="p-6 space-y-4">
+                {error && (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{error}</span>
                   </div>
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-sm text-foreground">Permintaan Berjaya Diterima</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Pautan arahan set semula kata laluan telah dihantar ke emel berdaftar UTHM anda:
-                      <br />
-                      <span className="font-bold text-[#002060] dark:text-blue-300">{forgotEmail}</span>
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsForgotMode(false);
-                      setForgotSuccess(false);
-                      setForgotNoPekerja("");
-                      setForgotEmail("");
-                    }}
-                    className="w-full text-xs h-9 cursor-pointer"
-                  >
-                    Kembali Ke Log Masuk
-                  </Button>
-                </div>
-              ) : (
-                /* Reset Form Elements */
-                <form onSubmit={handleForgotSubmit} className="space-y-4">
-                  {forgotError && (
-                    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 shrink-0" />
-                      <span>{forgotError}</span>
-                    </div>
-                  )}
+                )}
 
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="forgotNoPekerja" className="font-bold text-xs text-[#002060]">No. Pekerja</Label>
+                    <Label htmlFor="noPekerja" className="font-bold text-xs text-[#002060]">No. Pekerja atau No. Kad Pengenalan</Label>
                     <Input
-                      id="forgotNoPekerja"
-                      placeholder="Contoh: STAFF001"
-                      value={forgotNoPekerja}
-                      onChange={(e) => setForgotNoPekerja(e.target.value)}
-                      className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                      id="noPekerja"
+                      placeholder="Masukkan No. Pekerja / No. KP"
+                      value={noPekerja}
+                      onChange={(e) => setNoPekerja(e.target.value)}
+                      className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                      disabled={loading}
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="forgotEmail" className="font-bold text-xs text-[#002060]">Emel Rasmi UTHM</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="forgotEmail"
-                        type="email"
-                        placeholder="nama@uthm.edu.my"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        className="pl-9 focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
-                      />
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="font-bold text-xs text-[#002060]">Kata Laluan</Label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsForgotMode(true);
+                          setForgotSuccess(false);
+                          setForgotError(null);
+                        }}
+                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                      >
+                        Lupa Kata Laluan?
+                      </button>
                     </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                      disabled={loading}
+                    />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-[#002060] hover:bg-[#002060]/95 text-white font-bold py-2.5 text-xs tracking-wider shadow-md cursor-pointer transition-all"
+                    disabled={loading}
+                    className="w-full bg-[#002060] hover:bg-[#002060]/95 text-white font-bold py-3 text-xs tracking-wider shadow-md cursor-pointer transition-all"
                   >
-                    HANTAR PAUTAN SET SEMULA
+                    {loading ? "Memproses Log Masuk..." : "LOG MASUK"}
                   </Button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsForgotMode(false)}
-                    className="flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-muted-foreground hover:text-foreground transition-all pt-1 cursor-pointer"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Log Masuk
-                  </button>
                 </form>
-              )}
+              </CardContent>
+            </Card>
+          ) : (
+            /* Forgot Password Panel */
+            <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full animate-in slide-in-from-right-4 duration-300">
+              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
+                <CardTitle className="text-lg font-bold text-[#002060]">
+                  Set Semula Kata Laluan
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Sila masukkan butiran pengesahan kakitangan
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                
+                {forgotSuccess ? (
+                  <div className="space-y-4 py-2 text-center animate-in zoom-in-95 duration-200">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600">
+                      <CheckCircle className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sm text-foreground">Permintaan Diterima</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Pautan arahan set semula kata laluan telah dihantar ke emel berdaftar UTHM anda:
+                        <br />
+                        <span className="font-bold text-[#002060] dark:text-blue-300">{forgotEmail}</span>
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsForgotMode(false);
+                        setForgotSuccess(false);
+                        setForgotNoPekerja("");
+                        setForgotEmail("");
+                      }}
+                      className="w-full text-xs h-9 cursor-pointer"
+                    >
+                      Kembali Ke Log Masuk
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotSubmit} className="space-y-4">
+                    {forgotError && (
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <span>{forgotError}</span>
+                      </div>
+                    )}
 
-            </CardContent>
-          </Card>
-        )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="forgotNoPekerja" className="font-bold text-xs text-[#002060]">No. Pekerja</Label>
+                      <Input
+                        id="forgotNoPekerja"
+                        placeholder="Contoh: STAFF001"
+                        value={forgotNoPekerja}
+                        onChange={(e) => setForgotNoPekerja(e.target.value)}
+                        className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                      />
+                    </div>
 
-        {/* Footer info copy */}
-        <p className="text-center text-[10px] text-muted-foreground font-medium">
-          &copy; {new Date().getFullYear()} Universiti Tun Hussein Onn Malaysia. Hak Cipta Terpelihara.
-        </p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="forgotEmail" className="font-bold text-xs text-[#002060]">Emel Rasmi UTHM</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="forgotEmail"
+                          type="email"
+                          placeholder="nama@uthm.edu.my"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          className="pl-9 focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-[#002060] hover:bg-[#002060]/95 text-white font-bold py-3 text-xs tracking-wider shadow-md cursor-pointer transition-all"
+                    >
+                      HANTAR PAUTAN SET SEMULA
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotMode(false)}
+                      className="flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-muted-foreground hover:text-foreground transition-all pt-1 cursor-pointer"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Log Masuk
+                    </button>
+                  </form>
+                )}
+
+              </CardContent>
+            </Card>
+          )}
+
+        </div>
       </div>
     </div>
   );

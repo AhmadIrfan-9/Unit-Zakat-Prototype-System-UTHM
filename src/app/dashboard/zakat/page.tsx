@@ -2,8 +2,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ZakatStaffDashboardTabsContainerComponent } from "@/components/zakat/ZakatStaffDashboardTabsContainerComponent";
-import Link from "next/link";
+import { ZakatStaffDashboardMasterViewComponent } from "@/components/zakat/ZakatStaffDashboardMasterViewComponent";
 import type { Metadata } from "next";
 
 // Define metadata for the staff salary deduction form page.
@@ -38,58 +37,11 @@ export default async function ZakatApplicationPage() {
     noKP: dbUser.noKP,
     gajiSemasa: dbUser.gajiSemasa ? Number(dbUser.gajiSemasa) : null,
     alamatRumah: dbUser.alamatRumah,
+    role: dbUser.role,
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-muted/40 p-4 md:p-8 font-sans antialiased">
-      
-      {/* Background vector design pattern */}
-      <div className="absolute inset-0 -z-10 h-full w-full bg-[linear-gradient(to_right,rgba(0,32,96,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,32,96,0.02)_1px,transparent_1px)] bg-size-[16px_16px] mask-[radial-gradient(ellipse_80%_60%_at_50%_0%,#000_80%,transparent_100%)]" />
-
-      {/* Show navigation controls and user session info before the main tab container */}
-      <div className="w-full max-w-3xl flex flex-col gap-6">
-        
-        {/* Authentication status header banner and routing controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/85 dark:bg-card/85 backdrop-blur-xs p-4 rounded-xl border border-border shadow-sm">
-          <div className="text-left space-y-0.5">
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Log masuk sebagai</p>
-            <p className="text-xs font-extrabold text-[#002060] dark:text-blue-300">
-              {dbUser.name ?? dbUser.email} (Pekerja: {dbUser.noPekerja || "PENTADBIR"})
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {session.user.role === "MANAGEMENT_STAFF" && (
-              <Link
-                href="/dashboard/pengurusan"
-                className="inline-flex items-center justify-center px-3 py-1.5 border border-[#002060] rounded-lg text-[10px] font-bold text-[#002060] hover:bg-[#002060]/5 dark:border-blue-400 dark:text-blue-400 transition-all cursor-pointer shadow-xs bg-white"
-              >
-                Dashboard Pengurusan
-              </Link>
-            )}
-            <Link
-              href="/api/auth/signout"
-              className="inline-flex items-center justify-center px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-bold shadow-xs transition-colors cursor-pointer select-none"
-            >
-              Log Keluar
-            </Link>
-          </div>
-        </div>
-
-        {/* Tab-based Dashboard workspace container rendering */}
-        <ZakatStaffDashboardTabsContainerComponent user={formattedUser} />
-
-        {/* Footer info copy credits */}
-        <footer className="text-center space-y-1">
-          <p className="text-[11px] text-muted-foreground font-medium">
-            &copy; {new Date().getFullYear()} Universiti Tun Hussein Onn Malaysia. Hak Cipta Terpelihara.
-          </p>
-          <p className="text-[10px] text-muted-foreground/50">
-            Disediakan oleh Pejabat Zakat UTHM & Bahagian Teknologi Maklumat
-          </p>
-        </footer>
-      </div>
-    </div>
+    // Renders the master view component which handles full navbar layout and contents.
+    <ZakatStaffDashboardMasterViewComponent user={formattedUser} />
   );
 }
-

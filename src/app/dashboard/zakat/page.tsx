@@ -7,7 +7,7 @@
 
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { ZakatForm } from "@/components/zakat/ZakatForm";
+import { ZakatSalaryDeductionFormClientComponent } from "@/components/zakat/zakat-salary-deduction-form-client-component";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -61,7 +61,7 @@ export default async function ZakatApplicationPage() {
         </div>
 
         {/* ── Form ────────────────────────────────────────────────────────── */}
-        <ZakatForm />
+        <ZakatSalaryDeductionFormClientComponent />
 
         {/* ── Footer Note ─────────────────────────────────────────────────── */}
         <p className="mt-6 text-center text-xs text-muted-foreground">

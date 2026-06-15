@@ -1,4 +1,4 @@
-import { ZakatForm } from "@/components/zakat/ZakatForm";
+import { ZakatSalaryDeductionFormClientComponent } from "@/components/zakat/zakat-salary-deduction-form-client-component";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Image from "next/image";
 
@@ -35,7 +35,7 @@ export default function ZakatPage() {
           </CardHeader>
           
           <CardContent className="p-6 md:p-8">
-            <ZakatForm />
+            <ZakatSalaryDeductionFormClientComponent />
           </CardContent>
         </Card>
 

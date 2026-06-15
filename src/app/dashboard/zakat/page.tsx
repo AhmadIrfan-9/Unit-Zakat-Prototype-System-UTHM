@@ -24,7 +24,7 @@ export default async function ZakatApplicationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50/40 to-background dark:from-emerald-950/10">
+    <div className="min-h-screen bg-linear-to-b from-emerald-50/40 to-background dark:from-emerald-950/10">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
 
         {/* ── Page Header ─────────────────────────────────────────────────── */}

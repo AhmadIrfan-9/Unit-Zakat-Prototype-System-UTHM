@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
-// This login component uses an aerial mosque background image and a secure split form panel to handle user authentication without any visible shortcut links.
+// This component renders the login route featuring an aerial mosque cover background and houses both institutional logos side-by-side inside the secure entry card.
 function LoginForm() {
   // Setup router hook to transition users after successful authorization.
   const router = useRouter();
@@ -102,7 +102,7 @@ function LoginForm() {
     // Renders the main split screen interface split into mosque scene on left and form panel on right.
     <div className="relative min-h-screen w-full flex flex-col md:flex-row font-sans antialiased bg-background">
       
-      {/* Left Panel: Cover background scene and stacked corporate logos */}
+      {/* Left Panel: Cover background scene without logo frames for clean aesthetics */}
       <div 
         className="flex-1 flex flex-col justify-between p-8 md:p-16 text-white min-h-[40vh] md:min-h-screen bg-cover bg-center relative"
         style={{ backgroundImage: "url('/image (2).png')" }}
@@ -111,25 +111,8 @@ function LoginForm() {
         <div className="absolute inset-0 bg-black/40 z-0" />
         
         <div className="relative z-10 flex flex-col justify-between h-full min-h-[35vh] md:min-h-[85vh]">
-          {/* Stacked UTHM and Zakat UTHM institutional logos */}
-          <div className="flex flex-col items-start gap-4">
-            <Image
-              src="/image_bb5246.png"
-              alt="Logo UTHM"
-              width={240}
-              height={80}
-              priority
-              className="h-20 w-auto object-contain brightness-0 invert"
-            />
-            <Image
-              src="/image_bb546b.png"
-              alt="Logo Zakat UTHM"
-              width={180}
-              height={60}
-              priority
-              className="h-10 w-auto object-contain brightness-0 invert"
-            />
-          </div>
+          {/* Top spacer container */}
+          <div className="h-1" />
           
           {/* Main title without the word prototip */}
           <div className="space-y-4 max-w-xl my-auto pt-10 md:pt-0">
@@ -154,15 +137,38 @@ function LoginForm() {
         <div className="w-full max-w-md animate-in fade-in duration-500">
           
           {!isForgotMode ? (
-            // Authentication form card structure
+            // Authentication form card structure with side-by-side logos in the header
             <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full">
-              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
-                <CardTitle className="text-lg font-bold text-[#002060]">
-                  Log Masuk Portal
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Sila masukkan butiran kakitangan rasmi anda
-                </CardDescription>
+              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-4">
+                
+                {/* UTHM and Zakat UTHM logos displayed side-by-side */}
+                <div className="flex items-center justify-center gap-6 pb-2">
+                  <Image
+                    src="/image_bb5246.png"
+                    alt="Logo UTHM"
+                    width={120}
+                    height={40}
+                    priority
+                    className="h-10 w-auto object-contain"
+                  />
+                  <Image
+                    src="/image_bb546b.png"
+                    alt="Logo Zakat UTHM"
+                    width={90}
+                    height={30}
+                    priority
+                    className="h-8 w-auto object-contain"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <CardTitle className="text-lg font-bold text-[#002060]">
+                    Log Masuk Portal
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Sila masukkan butiran kakitangan rasmi anda
+                  </CardDescription>
+                </div>
               </CardHeader>
               
               <CardContent className="p-6 space-y-4">
@@ -228,15 +234,38 @@ function LoginForm() {
               </CardContent>
             </Card>
           ) : (
-            // Reset request card layout
+            // Reset request card layout with side-by-side logos in the header
             <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full animate-in slide-in-from-right-4 duration-300">
-              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-1">
-                <CardTitle className="text-lg font-bold text-[#002060]">
-                  Set Semula Kata Laluan
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Sila masukkan butiran pengesahan kakitangan
-                </CardDescription>
+              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-4">
+                
+                {/* UTHM and Zakat UTHM logos displayed side-by-side */}
+                <div className="flex items-center justify-center gap-6 pb-2">
+                  <Image
+                    src="/image_bb5246.png"
+                    alt="Logo UTHM"
+                    width={120}
+                    height={40}
+                    priority
+                    className="h-10 w-auto object-contain"
+                  />
+                  <Image
+                    src="/image_bb546b.png"
+                    alt="Logo Zakat UTHM"
+                    width={90}
+                    height={30}
+                    priority
+                    className="h-8 w-auto object-contain"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <CardTitle className="text-lg font-bold text-[#002060]">
+                    Set Semula Kata Laluan
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Sila masukkan butiran pengesahan kakitangan
+                  </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 

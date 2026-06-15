@@ -59,7 +59,7 @@ interface ZakatManagementDashboardMasterViewProps {
   };
 }
 
-// This management master page displays an executive navy greeting header, summary transaction counter cards, and an interactive data table paired with collection trend line graphs.
+// This manager interface handles the data visualization dashboards, aggregate metrics rows, and payroll validation tables for the executive staff.
 export function ZakatManagementDashboardMasterViewComponent({
   stats,
   chartData,
@@ -416,7 +416,7 @@ export function ZakatManagementDashboardMasterViewComponent({
                 <Button
                   type="submit"
                   disabled={isPendingTransition}
-                  className="h-9 px-5 text-xs font-bold bg-[#002060] hover:bg-[#002060]/90 text-white shadow-sm cursor-pointer"
+                  className="h-9 px-5 text-xs font-bold bg-[#002060] hover:bg-[#002060]/95 text-white shadow-sm cursor-pointer"
                 >
                   {isPendingTransition ? "Menyimpan..." : "Kemaskini"}
                 </Button>

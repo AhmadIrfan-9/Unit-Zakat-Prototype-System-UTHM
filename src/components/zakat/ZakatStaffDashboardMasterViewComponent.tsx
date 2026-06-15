@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
 import { ZakatStaffInformativeNisabHaulCardComponent } from "./ZakatStaffInformativeNisabHaulCardComponent";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./ZakatStaffSalaryDeductionApplicationFormComponent";
@@ -23,7 +24,7 @@ interface ZakatStaffDashboardMasterViewProps {
   user: AuthenticatedUserProps;
 }
 
-// This master staff view wraps a navy blue user welcome banner, a row of Nisab and Haul metric cards, and the primary application input panels together.
+// This staff workspace manager prints a navy greeting banner embedded with the zakat logo, tracks threshold info cards, and wraps the interactive application view.
 export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashboardMasterViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,18 +57,32 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
         user={user} 
       />
 
-      {/* Welcome Hero Banner: full-bleed background styled in UTHM corporate Navy Blue */}
+      {/* Welcome Hero Banner: full-bleed background styled in UTHM corporate Navy Blue with the Zakat Logo on the right */}
       <section className="w-full bg-[#002060] text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-[#002060]/10 shadow-md">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-[10px] uppercase font-black tracking-widest text-[#002060] bg-white rounded-full px-3 py-1 inline-block mb-3">
-            Portal Kakitangan UTHM
-          </p>
-          <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
-            Selamat Datang, {user.name || "Kakitangan UTHM"}
-          </h1>
-          <p className="text-xs md:text-sm text-gray-200 mt-2 font-medium">
-            Sistem Caruman Zakat Gaji UTHM &bull; Sesi Potongan Gaji Kakitangan Aktif
-          </p>
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase font-black tracking-widest text-[#002060] bg-white rounded-full px-3 py-1 inline-block">
+              Portal Kakitangan UTHM
+            </p>
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
+              Selamat Datang, {user.name || "Kakitangan UTHM"}
+            </h1>
+            <p className="text-xs md:text-sm text-gray-200 font-medium">
+              Sistem Caruman Zakat Gaji UTHM &bull; Sesi Potongan Gaji Kakitangan Aktif
+            </p>
+          </div>
+          
+          {/* Zakat UTHM Logo displayed inside the far-right corner, white-accented */}
+          <div className="shrink-0 flex items-center justify-start sm:justify-end">
+            <Image
+              src="/image_bb546b.png"
+              alt="Logo Zakat UTHM"
+              width={150}
+              height={50}
+              priority
+              className="h-12 w-auto object-contain brightness-0 invert"
+            />
+          </div>
         </div>
       </section>
 
@@ -77,8 +92,8 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
         {/* Metrics Row: Side-by-side Nisab monthly limits and Haul rules */}
         <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa || null} />
 
-        {/* Main Workspace Grid: Dynamic component rendering based on navigation states */}
-        <div className="w-full">
+        {/* Main Workspace Area: Constrain content to a max-width of max-w-3xl */}
+        <div className="w-full max-w-3xl mx-auto">
           {activeTab === "form" && (
             <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
               <ZakatStaffSalaryDeductionApplicationFormComponent user={user} />

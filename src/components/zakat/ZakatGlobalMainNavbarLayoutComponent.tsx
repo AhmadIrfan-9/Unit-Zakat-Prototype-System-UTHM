@@ -20,7 +20,7 @@ interface ZakatGlobalMainNavbarProps {
   user: UserInfo;
 }
 
-// This global navigation bar stays fixed at the top of the viewport to host the dual stacked corporate logos and primary route selectors.
+// This global layout component displays the main university logo on the left and mounts the central route switching navigation tabs across the system header.
 export function ZakatGlobalMainNavbarLayoutComponent({
   activeTab,
   onTabChange,
@@ -34,26 +34,16 @@ export function ZakatGlobalMainNavbarLayoutComponent({
     <header className="sticky top-0 z-40 w-full border-b border-border bg-white/95 backdrop-blur-md dark:bg-card/95 shadow-xs">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Left Block: Vertically stacked brand logos inside a balanced frame */}
+        {/* Left Block: Display ONLY the primary UTHM logo on the far-left */}
         <div className="flex items-center gap-2">
-          <div className="flex flex-col items-start gap-0.5 select-none">
-            <Image
-              src="/image_bb5246.png"
-              alt="Logo UTHM"
-              width={110}
-              height={36}
-              priority
-              className="h-8 w-auto object-contain"
-            />
-            <Image
-              src="/image_bb546b.png"
-              alt="Logo Zakat UTHM"
-              width={90}
-              height={28}
-              priority
-              className="h-6 w-auto object-contain pl-1"
-            />
-          </div>
+          <Image
+            src="/image_bb5246.png"
+            alt="Logo UTHM"
+            width={140}
+            height={44}
+            priority
+            className="h-10 w-auto object-contain select-none"
+          />
         </div>
 
         {/* Center Block: Responsive workspace navigation tabs in a pill style */}

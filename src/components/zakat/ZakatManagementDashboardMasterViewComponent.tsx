@@ -295,7 +295,7 @@ export function ZakatManagementDashboardMasterViewComponent({
                 <CardDescription className="text-[10px]">Caruman terkumpul UTHM berdasarkan bulan potongan</CardDescription>
               </CardHeader>
               <CardContent className="p-5 flex-1 flex flex-col justify-center">
-                <div className="h-[240px] w-full">
+                <div className="h-60 w-full">
                   {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

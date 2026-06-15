@@ -229,7 +229,7 @@ export function ZakatManagementAnalyticsDashboardComponent({
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="h-[300px] w-full">
+          <div className="h-75 w-full">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>

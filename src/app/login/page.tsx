@@ -108,7 +108,7 @@ function LoginForm() {
         style={{ backgroundImage: "url('/image (2).png')" }}
       >
         {/* Dark backdrop overlay for text legibility */}
-        <div className="absolute inset-0 bg-black/40 -z-0" />
+        <div className="absolute inset-0 bg-black/40 z-0" />
         
         <div className="relative z-10 flex flex-col justify-between h-full min-h-[35vh] md:min-h-[85vh]">
           {/* Stacked UTHM and Zakat UTHM institutional logos */}

@@ -1,7 +1,7 @@
 // src/components/zakat/ZakatStaffApplicationFormContainerComponent.tsx
 "use client";
 
-import { useActionState, useState, useCallback } from "react";
+import { useActionState, useState, useCallback, useRef } from "react";
 import { handleZakatDeductionSubmission, type ZakatStaffSalaryDeductionActionResult } from "@/app/actions/zakatDeductionServerActions";
 import { MALAY_MONTHS, NEGERI_LIST, type ZakatStaffSalaryDeductionFieldErrors } from "@/lib/validations/zakatDeductionValidationSchema";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { AlertCircle } from "lucide-react";
 
 // This interface declares the structure of user data passed from the authenticated session.
 interface AuthenticatedUserProps {
@@ -142,6 +143,13 @@ export function ZakatStaffApplicationFormContainerComponent({ user }: ZakatStaff
   // Control confirmation status checkbox before letting the submission trigger compile.
   const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
 
+  // Reference hooks to access form nodes and trigger programmatic submission flows securely.
+  const formRef = useRef<HTMLFormElement>(null);
+  const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
+
+  // Interactive dialog visibility toggles.
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   // Handle section checks and toggle options mutually exclusively to prevent multi-value state submissions.
   const handleTypeSelect = useCallback((type: string) => {
     setSelectedType((prev) => (prev === type ? null : type));
@@ -153,6 +161,12 @@ export function ZakatStaffApplicationFormContainerComponent({ user }: ZakatStaff
       return state.fieldErrors[field]?.[0];
     }
     return undefined;
+  };
+
+  // Trigger form submission programmatically once the user clicks "Yes" in the confirmation overlay.
+  const handleConfirmSubmit = () => {
+    setIsConfirmOpen(false);
+    hiddenSubmitRef.current?.click();
   };
 
   const isSuccess = state?.success === true;
@@ -200,13 +214,16 @@ export function ZakatStaffApplicationFormContainerComponent({ user }: ZakatStaff
   const isEligible = (user.gajiSemasa || 0) >= NISAB_BULANAN;
 
   return (
-    <form action={dispatch} noValidate className="space-y-8">
+    <form ref={formRef} action={dispatch} noValidate className="space-y-8">
       {selectedType && <input type="hidden" name="deductionType" value={selectedType} />}
       
       {/* Hidden fields to submit credentials details loaded from the session */}
       <input type="hidden" name="namaPenuh" value={user.name || ""} />
       <input type="hidden" name="noKP" value={user.noKP || ""} />
       <input type="hidden" name="noPekerja" value={user.noPekerja || ""} />
+
+      {/* Hidden button to let JavaScript trigger browser form validation and server dispatching */}
+      <button type="submit" ref={hiddenSubmitRef} className="hidden" />
 
       {/* Grid Layout for Personal Details and Nisab/Haul Panel */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -217,6 +234,19 @@ export function ZakatStaffApplicationFormContainerComponent({ user }: ZakatStaff
             <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
               BAHAGIAN A: MAKLUMAT PERIBADI (PROFIL STAF)
             </h2>
+          </div>
+
+          {/* Email management staff instruction panel */}
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+            <p className="leading-relaxed">
+              <strong>Pemberitahuan Pindaan:</strong> Untuk menukar sebarang maklumat profil (Nama, No. KP, No. Pekerja, Gaji Semasa), anda perlu menghubungi staf pengurusan melalui emel rasmi.
+            </p>
+            <a
+              href="mailto:zainal@uthm.edu.my?subject=Pindaan%20Maklumat%20Profil%20Zakat%20Gaji%20-%20%5BNo.%20Pekerja:%20STAFF001%5D"
+              className="inline-flex items-center justify-center px-3.5 py-1.5 bg-[#002060] hover:bg-[#002060]/90 text-white rounded text-[10px] font-bold shadow-xs cursor-pointer select-none transition-all shrink-0 text-center uppercase tracking-wider"
+            >
+              Emel Pengurusan
+            </a>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -525,17 +555,58 @@ export function ZakatStaffApplicationFormContainerComponent({ user }: ZakatStaff
         </div>
       )}
 
-      {/* Submit button using Emerald Green */}
+      {/* Main button has type="button" to prompt confirmation dialog overlay instead of direct execution */}
       <div className="pt-4 flex justify-center">
         <Button
-          type="submit"
+          type="button"
+          onClick={() => {
+            if (selectedType && pengesahanLafaz) {
+              setIsConfirmOpen(true);
+            }
+          }}
           disabled={isPending || !selectedType || !pengesahanLafaz}
           aria-busy={isPending}
-          className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200"
+          className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200 cursor-pointer"
         >
           {isPending ? "Memproses Permohonan..." : "HANTAR PERMOHONAN"}
         </Button>
       </div>
+
+      {/* Confirmation Modal Box requiring confirmation from the user prior to submitting the form data */}
+      {isConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm border border-border shadow-2xl rounded-xl bg-white dark:bg-card p-6 space-y-4 animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="h-10 w-10 bg-amber-50 dark:bg-amber-950/40 rounded-full flex items-center justify-center">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-sm text-foreground">
+                Pengesahan Hantar Borang
+              </h3>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Adakah anda pasti untuk menghantar permohonan potongan zakat gaji bulanan ini? Lafaz akad zakat anda akan didaftarkan secara rasmi.
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsConfirmOpen(false)}
+                className="h-9 px-4 text-xs font-semibold cursor-pointer"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmSubmit}
+                className="h-9 px-5 text-xs font-bold bg-[#002060] hover:bg-[#002060]/95 text-white shadow-sm cursor-pointer"
+              >
+                Ya, Hantar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

@@ -43,7 +43,7 @@ model User {
   accounts                    Account[]
   sessions                    Session[]
   tasks                       Task[]
-  zakatStaffSalaryDeductions  ZakatStaffSalaryDeduction[]
+  zakatStaffSalaryDeductions  ZakatStaffSalaryDeductionApplication[]
 }
 
 
@@ -132,8 +132,8 @@ enum ApplicationStatus {
   REJECTED   // Rejected — staff must resubmit with corrections
 }
 
-// This database model stores the official zakat deduction records for UTHM staff.
-model ZakatStaffSalaryDeduction {
+// This database model defines user access levels and tracks explicit consent validation flags required by Malaysia's Personal Data Protection Act 2010.
+model ZakatStaffSalaryDeductionApplication {
   id            String            @id @default(cuid())
 
   // This block stores the personal identification and contact details of the staff member submitting the form.
@@ -157,6 +157,7 @@ model ZakatStaffSalaryDeduction {
   bulanMula         String            @map("bulan_mula")
   tahunMula         String            @map("tahun_mula")
   pengesahanLafaz   Boolean           @default(false) @map("pengesahan_lafaz")
+  persetujuanAkta709 Boolean           @default(false) @map("persetujuan_akta_709")
 
   // This block tracks the submission state, audit timestamps, and administrative evaluation feedback notes.
   status            ApplicationStatus @default(PENDING)

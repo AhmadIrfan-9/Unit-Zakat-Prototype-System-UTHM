@@ -62,6 +62,7 @@ export async function handleZakatDeductionSubmission(
     tahunMula:            formData.get("tahunMula"),
     targetDeductionValue: formData.get("targetDeductionValue"),
     pengesahanLafaz:      formData.get("pengesahanLafaz") ?? "false",
+    persetujuanAkta709:   formData.get("persetujuanAkta709") ?? "false",
   };
 
   // This step parses user inputs against Zod schema rules to ensure data integrity.
@@ -86,7 +87,7 @@ export async function handleZakatDeductionSubmission(
 
   // This step commits the verified salary deduction request data to the database.
   try {
-    const newSubmission = await prisma.zakatStaffSalaryDeduction.create({
+    const newSubmission = await prisma.zakatStaffSalaryDeductionApplication.create({
       data: {
         userId:            activeSession.user.id,
         namaPenuh:         validatedFields.namaPenuh,
@@ -101,6 +102,7 @@ export async function handleZakatDeductionSubmission(
         bulanMula:         validatedFields.bulanMula,
         tahunMula:         validatedFields.tahunMula,
         pengesahanLafaz:   true,
+        persetujuanAkta709: true,
 
         amaunPcbAsal:
           validatedFields.deductionType === "ORIGINAL_PCB_CHANGE"

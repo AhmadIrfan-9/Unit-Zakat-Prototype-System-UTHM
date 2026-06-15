@@ -27,7 +27,7 @@ export async function fetchManagementAnalyticsDashboardData() {
   }
 
   // Retrieve all submitted applications from the database.
-  const applications = await prisma.zakatStaffSalaryDeduction.findMany({
+  const applications = await prisma.zakatStaffSalaryDeductionApplication.findMany({
     orderBy: { submittedAt: "desc" },
     include: {
       user: {
@@ -127,7 +127,7 @@ export async function updateZakatApplicationWorkflowStatus(
 
   try {
     // Perform database update operation to alter the workflow status state.
-    const updated = await prisma.zakatStaffSalaryDeduction.update({
+    const updated = await prisma.zakatStaffSalaryDeductionApplication.update({
       where: { id: applicationId },
       data: {
         status,

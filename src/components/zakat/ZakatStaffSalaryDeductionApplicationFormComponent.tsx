@@ -143,6 +143,9 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
   // Tracks the state of the legal declaration checkbox.
   const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
 
+  // Tracks the state of the Akta 709 consent checkbox.
+  const [persetujuanAkta709, setPersetujuanAkta709] = useState<boolean>(false);
+
   // Connects page actions to raw DOM references.
   const formRef = useRef<HTMLFormElement>(null);
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
@@ -488,6 +491,30 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             </div>
             {err("pengesahanLafaz") && <p className="text-xs text-destructive font-medium mt-1">{err("pengesahanLafaz")}</p>}
           </div>
+
+          {/* Akta 709 compliance consent checkbox component */}
+          <div className="space-y-1">
+            <div
+              className={cn(
+                "flex items-start gap-3 rounded-lg border p-4 bg-card/40",
+                err("persetujuanAkta709") ? "border-destructive bg-destructive/5" : "border-border hover:bg-card/70"
+              )}
+            >
+              <Checkbox
+                id="persetujuanAkta709"
+                name="persetujuanAkta709"
+                value="true"
+                checked={persetujuanAkta709}
+                onCheckedChange={(checked) => setPersetujuanAkta709(!!checked)}
+                disabled={isPending}
+                className="mt-0.5 h-5 w-5 rounded border-muted-foreground/40 text-[#002060] data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
+              />
+              <Label htmlFor="persetujuanAkta709" className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none">
+                Bersetuju dengan terma dan syarat pemprosesan data peribadi mengikut Akta Perlindungan Data Peribadi 2010 (Akta 709).
+              </Label>
+            </div>
+            {err("persetujuanAkta709") && <p className="text-xs text-destructive font-medium mt-1">{err("persetujuanAkta709")}</p>}
+          </div>
         </div>
       </div>
 
@@ -502,11 +529,11 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         <Button
           type="button"
           onClick={() => {
-            if (selectedType && pengesahanLafaz) {
+            if (selectedType && pengesahanLafaz && persetujuanAkta709) {
               setIsConfirmOpen(true);
             }
           }}
-          disabled={isPending || !selectedType || !pengesahanLafaz}
+          disabled={isPending || !selectedType || !pengesahanLafaz || !persetujuanAkta709}
           aria-busy={isPending}
           className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50"
         >

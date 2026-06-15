@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
-// This component renders the login route featuring an aerial mosque cover background and houses both institutional logos side-by-side inside the secure entry card.
+// This login viewport renders a high-contrast entry card with side-by-side branding logos and a background cover scene depicting the UTHM mosque.
 function LoginForm() {
   // Setup router hook to transition users after successful authorization.
   const router = useRouter();
@@ -114,7 +114,7 @@ function LoginForm() {
           {/* Top spacer container */}
           <div className="h-1" />
           
-          {/* Main title without the word prototip */}
+          {/* Main title of the application */}
           <div className="space-y-4 max-w-xl my-auto pt-10 md:pt-0">
             <h1 className="text-3xl md:text-5xl font-black leading-tight tracking-tight uppercase">
               Sistem Caruman Zakat Gaji UTHM

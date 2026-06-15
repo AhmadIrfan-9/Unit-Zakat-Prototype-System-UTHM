@@ -4,7 +4,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Info, FileText, User as UserIcon, LogOut } from "lucide-react";
+import { Bell, Info, FileText, User as UserIcon, LogOut, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UserInfo {
@@ -20,7 +20,7 @@ interface ZakatGlobalMainNavbarProps {
   user: UserInfo;
 }
 
-// This global layout component displays the main university logo on the left and mounts the central route switching navigation tabs across the system header.
+// This core navbar locks at the top of the interface screen to display primary navigation links and the official university identity logo.
 export function ZakatGlobalMainNavbarLayoutComponent({
   activeTab,
   onTabChange,
@@ -46,51 +46,90 @@ export function ZakatGlobalMainNavbarLayoutComponent({
           />
         </div>
 
-        {/* Center Block: Responsive workspace navigation tabs in a pill style */}
+        {/* Center Block: Responsive workspace navigation tabs in a pill style based on roles */}
         <div className="hidden md:flex items-center justify-center">
           {onTabChange ? (
             <div className="flex items-center gap-1 bg-muted/65 p-1 rounded-xl border border-border/40">
-              <button
-                type="button"
-                onClick={() => onTabChange("info")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
-                  activeTab === "info"
-                    ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Info className="h-3.5 w-3.5" />
-                <span>Maklumat Terkini</span>
-              </button>
+              {user.role === "MANAGEMENT_STAFF" ? (
+                <>
+                  {/* Executive tab to show database stats and graphs */}
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("analysis")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
+                      activeTab === "analysis"
+                        ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span>Analisis Kutipan</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => onTabChange("form")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
-                  activeTab === "form"
-                    ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <FileText className="h-3.5 w-3.5" />
-                <span>Borang Permohonan</span>
-              </button>
+                  {/* Executive tab to show and edit manager profile details */}
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("profile")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
+                      activeTab === "profile"
+                        ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <UserIcon className="h-3.5 w-3.5" />
+                    <span>Profil Peribadi</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Staff tab to view information guidelines */}
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("info")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
+                      activeTab === "info"
+                        ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    <span>Maklumat Terkini</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => onTabChange("profile")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
-                  activeTab === "profile"
-                    ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <UserIcon className="h-3.5 w-3.5" />
-                <span>Profil Peribadi</span>
-              </button>
+                  {/* Staff tab to fill the deduction form */}
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("form")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
+                      activeTab === "form"
+                        ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>Borang Permohonan</span>
+                  </button>
+
+                  {/* Staff tab to view and edit personal profile inputs */}
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("profile")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
+                      activeTab === "profile"
+                        ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <UserIcon className="h-3.5 w-3.5" />
+                    <span>Profil Peribadi</span>
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="text-xs font-bold text-[#002060] px-4 py-2 bg-[#002060]/5 rounded-lg">

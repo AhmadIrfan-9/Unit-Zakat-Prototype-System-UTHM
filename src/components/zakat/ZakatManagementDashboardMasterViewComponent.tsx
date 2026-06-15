@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react";
 import { updateZakatApplicationWorkflowStatus } from "@/app/actions/zakatSalaryDeductionManagementServerActions";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
+import { ZakatStaffProfileManagementCardComponent } from "./ZakatStaffProfileManagementCardComponent";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
   AlertCircle,
@@ -66,6 +67,9 @@ export function ZakatManagementDashboardMasterViewComponent({
   applications: initialApplications,
   user
 }: ZakatManagementDashboardMasterViewProps) {
+  // This state hook manages the active navigation tab for the executive dashboard to switch panels.
+  const [activeTab, setActiveTab] = useState<string>("analysis");
+
   // Manage applications lists fetched from the server.
   const [applications, setApplications] = useState<ApplicationItem[]>(initialApplications);
 
@@ -153,7 +157,11 @@ export function ZakatManagementDashboardMasterViewComponent({
     <div className="min-h-screen bg-muted/30 flex flex-col font-sans antialiased pb-10">
       
       {/* Sticky top navbar display */}
-      <ZakatGlobalMainNavbarLayoutComponent user={user} />
+      <ZakatGlobalMainNavbarLayoutComponent 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        user={user} 
+      />
 
       {/* Welcome Hero Banner: full-bleed background styled in UTHM corporate Navy Blue */}
       <section className="w-full bg-[#002060] text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-[#002060]/10 shadow-md">
@@ -173,166 +181,189 @@ export function ZakatManagementDashboardMasterViewComponent({
       {/* Main executive content layout wrapped in centered bounding container */}
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
         
-        {/* Metrics Row: Three summary transaction statistics cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Total applications count */}
-          <Card className="border border-border shadow-md bg-white dark:bg-card">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah Permohonan</span>
-                <h3 className="text-2xl font-black text-[#002060] dark:text-blue-300">{totalApplications}</h3>
-                <p className="text-[10px] text-muted-foreground">Borang berdaftar terkumpul</p>
-              </div>
-              <div className="h-12 w-12 bg-blue-50 dark:bg-blue-950/30 rounded-full flex items-center justify-center text-[#002060]">
-                <Users className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+        {activeTab === "profile" ? (
+          // This container wraps the profile management component for management staff.
+          <div className="w-full max-w-3xl mx-auto">
+            <ZakatStaffProfileManagementCardComponent 
+              defaultValues={{
+                namaPenuh: user.name || "Prof. Dr. Zainal bin Ibrahim",
+                noPekerja: user.noPekerja || "MGR001",
+                noKP: "750812015433",
+                umur: 51,
+                gajiSemasa: "9500.00",
+                noTelefon: "013-7654321",
+                alamatRumah: "No. 45, Jalan Kemuliaan, Taman Universiti, 86400 Parit Raja, Johor",
+                poskod: "86400",
+                bandar: "Parit Raja",
+                negeri: "Johor",
+                isManagement: true
+              }} 
+            />
+          </div>
+        ) : (
+          <>
+            {/* Metrics Row: Three summary transaction statistics cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: Total applications count */}
+              <Card className="border border-border shadow-md bg-white dark:bg-card">
+                <CardContent className="p-6 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah Permohonan</span>
+                    <h3 className="text-2xl font-black text-[#002060] dark:text-blue-300">{totalApplications}</h3>
+                    <p className="text-[10px] text-muted-foreground">Borang berdaftar terkumpul</p>
+                  </div>
+                  <div className="h-12 w-12 bg-blue-50 dark:bg-blue-950/30 rounded-full flex items-center justify-center text-[#002060]">
+                    <Users className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Card 2: Pending evaluations counter */}
-          <Card className="border border-border shadow-md bg-white dark:bg-card">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Menunggu Penilaian</span>
-                <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400">{stats.totalPending}</h3>
-                <p className="text-[10px] text-amber-600 font-semibold">Tindakan pentadbiran diperlukan</p>
-              </div>
-              <div className="h-12 w-12 bg-amber-50 dark:bg-amber-950/30 rounded-full flex items-center justify-center text-amber-600">
-                <AlertCircle className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
+              {/* Card 2: Pending evaluations counter */}
+              <Card className="border border-border shadow-md bg-white dark:bg-card">
+                <CardContent className="p-6 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Menunggu Penilaian</span>
+                    <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400">{stats.totalPending}</h3>
+                    <p className="text-[10px] text-amber-600 font-semibold">Tindakan pentadbiran diperlukan</p>
+                  </div>
+                  <div className="h-12 w-12 bg-amber-50 dark:bg-amber-950/30 rounded-full flex items-center justify-center text-amber-600">
+                    <AlertCircle className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Card 3: Total Monthly Collections Aggregate Sum */}
-          <Card className="border border-border shadow-md bg-white dark:bg-card">
-            <CardContent className="p-6 flex items-center justify-between">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah Kutipan Bulanan</span>
-                <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                  RM {stats.approvedAmount.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </h3>
-                <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                  <TrendingUp className="h-3.5 w-3.5" /> Caruman diluluskan
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-full flex items-center justify-center text-emerald-600">
-                <DollarSign className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {/* Card 3: Total Monthly Collections Aggregate Sum */}
+              <Card className="border border-border shadow-md bg-white dark:bg-card">
+                <CardContent className="p-6 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah Kutipan Bulanan</span>
+                    <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                      RM {stats.approvedAmount.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </h3>
+                    <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" /> Caruman diluluskan
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-full flex items-center justify-center text-emerald-600">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* Main Workspace Grid: Table and line graph components rendered side-by-side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left Column: Pending application submissions grid table */}
-          <div className="lg:col-span-2">
-            <Card className="border border-border shadow-lg bg-white dark:bg-card overflow-hidden">
-              <CardHeader className="border-b border-border bg-muted/10 px-5 py-4">
-                <CardTitle className="text-sm font-bold text-foreground">Permohonan Zakat Menunggu Kelulusan</CardTitle>
-                <CardDescription className="text-[10px]">Senarai permohonan aktif perlu ditentusahkan</CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-muted/30 border-b border-border text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                        <th className="px-5 py-3">Nama Pemohon</th>
-                        <th className="px-5 py-3">No. Pekerja</th>
-                        <th className="px-5 py-3">Bulan Bermula</th>
-                        <th className="px-5 py-3">Amaun</th>
-                        <th className="px-5 py-3 text-right">Tindakan</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60 text-xs">
-                      {pendingApps.length > 0 ? (
-                        pendingApps.map((app) => (
-                          <tr key={app.id} className="hover:bg-muted/5 transition-colors">
-                            <td className="px-5 py-3.5">
-                              <div className="font-bold text-foreground">{app.namaPenuh}</div>
-                              <div className="text-[9px] text-muted-foreground font-mono">{app.noTelefon}</div>
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <div className="font-semibold text-muted-foreground">{app.noPekerja}</div>
-                            </td>
-                            <td className="px-5 py-3.5">
-                              <div className="font-semibold text-foreground">{app.bulanMula} {app.tahunMula}</div>
-                            </td>
-                            <td className="px-5 py-3.5 font-bold text-[#002060] dark:text-blue-300">
-                              RM {getDeductionAmount(app).toFixed(2)}
-                            </td>
-                            <td className="px-5 py-3.5 text-right">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => initiateEdit(app)}
-                                className="h-7 px-2.5 text-[10px] border-[#002060] text-[#002060] hover:bg-[#002060]/5 dark:border-blue-400 dark:text-blue-400 cursor-pointer"
-                              >
-                                <Edit2 className="h-3 w-3 mr-1" /> Urus
-                              </Button>
-                            </td>
+            {/* Main Workspace Grid: Table and line graph components rendered side-by-side */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Left Column: Pending application submissions grid table */}
+              <div className="lg:col-span-2">
+                <Card className="border border-border shadow-lg bg-white dark:bg-card overflow-hidden">
+                  <CardHeader className="border-b border-border bg-muted/10 px-5 py-4">
+                    <CardTitle className="text-sm font-bold text-foreground">Permohonan Zakat Menunggu Kelulusan</CardTitle>
+                    <CardDescription className="text-[10px]">Senarai permohonan aktif perlu ditentusahkan</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-muted/30 border-b border-border text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-5 py-3">Nama Pemohon</th>
+                            <th className="px-5 py-3">No. Pekerja</th>
+                            <th className="px-5 py-3">Bulan Bermula</th>
+                            <th className="px-5 py-3">Amaun</th>
+                            <th className="px-5 py-3 text-right">Tindakan</th>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">
-                            Tiada permohonan menunggu kelulusan pada masa ini
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column: Recharts line graph monitoring monthly transactions */}
-          <div className="lg:col-span-1">
-            <Card className="border border-border shadow-lg bg-white dark:bg-card flex flex-col h-full">
-              <CardHeader className="border-b border-border bg-muted/10 px-5 py-4">
-                <CardTitle className="text-sm font-bold text-foreground">Trend Kutipan Zakat</CardTitle>
-                <CardDescription className="text-[10px]">Caruman terkumpul UTHM berdasarkan bulan potongan</CardDescription>
-              </CardHeader>
-              <CardContent className="p-5 flex-1 flex flex-col justify-center">
-                <div className="h-60 w-full">
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                        <XAxis dataKey="period" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `RM${v}`} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--background))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px",
-                            fontSize: "10px"
-                          }}
-                          formatter={(v) => [`RM ${Number(v).toFixed(2)}`, "Jumlah Caruman"]}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="total"
-                          stroke="#002060"
-                          strokeWidth={2.5}
-                          dot={{ r: 3.5, stroke: "#002060", strokeWidth: 1.5, fill: "#fff" }}
-                          activeDot={{ r: 5 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center border border-dashed rounded-lg bg-muted/20 text-muted-foreground">
-                      <FileText className="h-8 w-8 stroke-1 mb-2" />
-                      <p className="text-[10px] font-semibold">Tiada data kutipan diluluskan</p>
+                        </thead>
+                        <tbody className="divide-y divide-border/60 text-xs">
+                          {pendingApps.length > 0 ? (
+                            pendingApps.map((app) => (
+                              <tr key={app.id} className="hover:bg-muted/5 transition-colors">
+                                <td className="px-5 py-3.5">
+                                  <div className="font-bold text-foreground">{app.namaPenuh}</div>
+                                  <div className="text-[9px] text-muted-foreground font-mono">{app.noTelefon}</div>
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <div className="font-semibold text-muted-foreground">{app.noPekerja}</div>
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <div className="font-semibold text-foreground">{app.bulanMula} {app.tahunMula}</div>
+                                </td>
+                                <td className="px-5 py-3.5 font-bold text-[#002060] dark:text-blue-300">
+                                  RM {getDeductionAmount(app).toFixed(2)}
+                                </td>
+                                <td className="px-5 py-3.5 text-right">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => initiateEdit(app)}
+                                    className="h-7 px-2.5 text-[10px] border-[#002060] text-[#002060] hover:bg-[#002060]/5 dark:border-blue-400 dark:text-blue-400 cursor-pointer"
+                                  >
+                                    <Edit2 className="h-3 w-3 mr-1" /> Urus
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground italic">
+                                Tiada permohonan menunggu kelulusan pada masa ini
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-        </div>
+              {/* Right Column: Recharts line graph monitoring monthly transactions */}
+              <div className="lg:col-span-1">
+                <Card className="border border-border shadow-lg bg-white dark:bg-card flex flex-col h-full">
+                  <CardHeader className="border-b border-border bg-muted/10 px-5 py-4">
+                    <CardTitle className="text-sm font-bold text-foreground">Trend Kutipan Zakat</CardTitle>
+                    <CardDescription className="text-[10px]">Caruman terkumpul UTHM berdasarkan bulan potongan</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-5 flex-1 flex flex-col justify-center">
+                    <div className="h-60 w-full">
+                      {chartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                            <XAxis dataKey="period" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `RM${v}`} />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: "hsl(var(--background))",
+                                border: "1px solid hsl(var(--border))",
+                                borderRadius: "8px",
+                                fontSize: "10px"
+                              }}
+                              formatter={(v) => [`RM ${Number(v).toFixed(2)}`, "Jumlah Caruman"]}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="total"
+                              stroke="#002060"
+                              strokeWidth={2.5}
+                              dot={{ r: 3.5, stroke: "#002060", strokeWidth: 1.5, fill: "#fff" }}
+                              activeDot={{ r: 5 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center border border-dashed rounded-lg bg-muted/20 text-muted-foreground">
+                          <FileText className="h-8 w-8 stroke-1 mb-2" />
+                          <p className="text-[10px] font-semibold">Tiada data kutipan diluluskan</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+            </div>
+          </>
+        )}
 
       </main>
 

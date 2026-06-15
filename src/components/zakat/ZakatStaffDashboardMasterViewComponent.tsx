@@ -24,7 +24,7 @@ interface ZakatStaffDashboardMasterViewProps {
   user: AuthenticatedUserProps;
 }
 
-// This staff workspace manager prints a navy greeting banner embedded with the zakat logo, tracks threshold info cards, and wraps the interactive application view.
+// This layout engine coordinates the user welcome banners, live threshold metrics grids, and dynamic tab panels for application processing.
 export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashboardMasterViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();

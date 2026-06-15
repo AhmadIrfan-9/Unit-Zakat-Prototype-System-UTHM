@@ -102,6 +102,13 @@ export const zakatDeductionValidationSchema = z.object({
     .refine((val) => val === "true", {
       message: "Anda mesti menanda kotak pengesahan lafaz untuk meneruskan.",
     }),
+
+  // This rule validates that the employee has marked the PDPA 2010 consent checkbox.
+  persetujuanAkta709: z
+    .string()
+    .refine((val) => val === "true", {
+      message: "Anda mesti bersetuju dengan terma pemprosesan data peribadi mengikut Akta 709.",
+    }),
 }).superRefine((validatedFields, ctx) => {
   // This rule checks that valid original PCB and new zakat values are entered for changing original PCB.
   if (validatedFields.deductionType === "ORIGINAL_PCB_CHANGE") {

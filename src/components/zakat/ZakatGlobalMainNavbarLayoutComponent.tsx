@@ -4,8 +4,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Info, FileText, User as UserIcon, LogOut, TrendingUp } from "lucide-react";
+import { Info, FileText, User as UserIcon, LogOut, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ZakatGlobalNotificationBellPopoverComponent } from "./ZakatGlobalNotificationBellPopoverComponent";
+
 
 interface UserInfo {
   name?: string | null;
@@ -140,15 +142,11 @@ export function ZakatGlobalMainNavbarLayoutComponent({
 
         {/* Right Block: User profile control pod with notification bell and avatar dropdown */}
         <div className="flex items-center gap-4 relative">
-          
           {/* Notification bell badge with alert icon indicator */}
-          <button
-            type="button"
-            className="relative p-2 rounded-full text-muted-foreground hover:text-[#002060] hover:bg-muted/50 transition-colors cursor-pointer select-none"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-          </button>
+          <ZakatGlobalNotificationBellPopoverComponent
+            role={user.role === "MANAGEMENT_STAFF" ? "MANAGEMENT_STAFF" : "USER_STAFF"}
+          />
+
 
           {/* User profile avatar container */}
           <div className="relative">

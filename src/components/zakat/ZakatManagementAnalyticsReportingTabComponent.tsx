@@ -208,8 +208,8 @@ export function ZakatManagementAnalyticsReportingTabComponent({
           
           <CardContent className="p-5 flex-1 flex flex-col justify-between overflow-hidden">
             
-            <div className="h-48 w-full flex-1">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-48 w-full flex-1 min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart data={lineData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                   <XAxis dataKey="year" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} />

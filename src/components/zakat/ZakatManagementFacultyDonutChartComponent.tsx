@@ -123,7 +123,7 @@ export function ZakatManagementFacultyDonutChartComponent({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center flex-1 overflow-hidden">
           
           {/* Donut Chart container */}
-          <div className="relative h-44 w-full flex items-center justify-center">
+          <div className="relative h-44 w-full flex items-center justify-center min-w-0">
             
             {/* This conditional visibility check displays the sifar record overlay text inside the placeholder ring. */}
             {isDonutZero && (
@@ -144,7 +144,7 @@ export function ZakatManagementFacultyDonutChartComponent({
               </div>
             )}
 
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={donutDataForChart}

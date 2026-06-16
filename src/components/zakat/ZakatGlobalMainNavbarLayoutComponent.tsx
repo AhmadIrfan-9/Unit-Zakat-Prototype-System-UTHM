@@ -48,6 +48,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
             height={56}
             priority
             className="h-14 w-auto object-contain select-none"
+            style={{ width: "auto" }}
           />
         </div>
 

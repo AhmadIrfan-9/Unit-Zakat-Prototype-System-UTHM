@@ -8,6 +8,7 @@ import Link from "next/link";
 import { Info, FileText, User as UserIcon, LogOut, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZakatGlobalNotificationBellPopoverComponent } from "./ZakatGlobalNotificationBellPopoverComponent";
+import { ZakatAuthenticationSignOutConfirmationModalComponent } from "./ZakatAuthenticationSignOutConfirmationModalComponent";
 
 interface UserInfo {
   name?: string | null;
@@ -29,6 +30,9 @@ export function ZakatGlobalMainNavbarLayoutComponent({
 }: ZakatGlobalMainNavbarProps) {
   // This state hook manages the open or closed state of the user profile dropdown container.
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  // This state hook manages the open or closed state of the session log out confirmation modal.
+  const [signOutModalOpen, setSignOutModalOpen] = useState(false);
 
   return (
     // This layout block renders the sticky top master navigation header ribbon spanning full viewport width.
@@ -181,13 +185,17 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     </p>
                   </div>
                   <div className="border-t border-border pt-2">
-                    <Link
-                      href="/api/auth/signout"
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all select-none cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        setSignOutModalOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all select-none cursor-pointer text-left"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Log Keluar</span>
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </>
@@ -196,6 +204,12 @@ export function ZakatGlobalMainNavbarLayoutComponent({
         </div>
 
       </div>
+
+      {/* This conditional view switcher renders the session sign out verification popup modal. */}
+      <ZakatAuthenticationSignOutConfirmationModalComponent
+        isOpen={signOutModalOpen}
+        onClose={() => setSignOutModalOpen(false)}
+      />
     </header>
   );
 }

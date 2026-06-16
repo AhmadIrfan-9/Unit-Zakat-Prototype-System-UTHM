@@ -1,4 +1,5 @@
-// src/components/zakat/ZakatGlobalMainNavbarLayoutComponent.tsx
+// This global master navbar merges all branding links, central workspace tab selectors, and profile configurations into a single unified top header ribbon.
+
 "use client";
 
 import { useState } from "react";
@@ -7,7 +8,6 @@ import Link from "next/link";
 import { Info, FileText, User as UserIcon, LogOut, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZakatGlobalNotificationBellPopoverComponent } from "./ZakatGlobalNotificationBellPopoverComponent";
-
 
 interface UserInfo {
   name?: string | null;
@@ -22,21 +22,20 @@ interface ZakatGlobalMainNavbarProps {
   user: UserInfo;
 }
 
-// This core navbar locks at the top of the interface screen to display primary navigation links and the official university identity logo.
 export function ZakatGlobalMainNavbarLayoutComponent({
   activeTab,
   onTabChange,
   user
 }: ZakatGlobalMainNavbarProps) {
-  // Toggle the user logout dropdown card.
+  // This state hook manages the open or closed state of the user profile dropdown container.
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  // Render the persistent header structure.
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-white/95 backdrop-blur-md dark:bg-card/95 shadow-xs">
+    // This layout block renders the sticky top master navigation header ribbon spanning full viewport width.
+    <header className="sticky top-0 z-45 w-full border-b border-border bg-white/95 backdrop-blur-md dark:bg-card/95 shadow-xs">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Left Block: Display ONLY the primary UTHM logo on the far-left */}
+        {/* This branding container mounts the primary university identity logo on the far-left. */}
         <div className="flex items-center gap-2">
           <Image
             src="/image_bb5246.png"
@@ -48,19 +47,32 @@ export function ZakatGlobalMainNavbarLayoutComponent({
           />
         </div>
 
-        {/* Center Block: Responsive workspace navigation tabs in a pill style based on roles */}
+        {/* This center zone navigation tab group coordinates switches for the user role workspace. */}
         <div className="hidden md:flex items-center justify-center">
           {onTabChange ? (
             <div className="flex items-center gap-1 bg-muted/65 p-1 rounded-xl border border-border/40">
               {user.role === "MANAGEMENT_STAFF" ? (
                 <>
-                  {/* Executive tab to show database stats and graphs */}
                   <button
                     type="button"
-                    onClick={() => onTabChange("analysis")}
+                    onClick={() => onTabChange("proses")}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
-                      activeTab === "analysis"
+                      activeTab === "proses"
+                        ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>Proses Permohonan</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("analisis")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
+                      activeTab === "analisis"
                         ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -69,7 +81,6 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     <span>Analisis Kutipan</span>
                   </button>
 
-                  {/* Executive tab to show and edit manager profile details */}
                   <button
                     type="button"
                     onClick={() => onTabChange("profile")}
@@ -86,7 +97,6 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                 </>
               ) : (
                 <>
-                  {/* Staff tab to view information guidelines */}
                   <button
                     type="button"
                     onClick={() => onTabChange("info")}
@@ -101,7 +111,6 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     <span>Maklumat Terkini</span>
                   </button>
 
-                  {/* Staff tab to fill the deduction form */}
                   <button
                     type="button"
                     onClick={() => onTabChange("form")}
@@ -116,7 +125,6 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     <span>Borang Permohonan</span>
                   </button>
 
-                  {/* Staff tab to view and edit personal profile inputs */}
                   <button
                     type="button"
                     onClick={() => onTabChange("profile")}
@@ -140,15 +148,12 @@ export function ZakatGlobalMainNavbarLayoutComponent({
           )}
         </div>
 
-        {/* Right Block: User profile control pod with notification bell and avatar dropdown */}
+        {/* This right zone flex group organizes the operational alert notification bell and avatar utilities. */}
         <div className="flex items-center gap-4 relative">
-          {/* Notification bell badge with alert icon indicator */}
           <ZakatGlobalNotificationBellPopoverComponent
             role={user.role === "MANAGEMENT_STAFF" ? "MANAGEMENT_STAFF" : "USER_STAFF"}
           />
 
-
-          {/* User profile avatar container */}
           <div className="relative">
             <button
               type="button"
@@ -158,13 +163,15 @@ export function ZakatGlobalMainNavbarLayoutComponent({
               {user.name ? user.name.charAt(0).toUpperCase() : "U"}
             </button>
 
-            {/* Click revealed logout and role identity dropdown container */}
             {profileDropdownOpen && (
               <>
+                {/* This background overlay element triggers dropdown closure when user clicks outside. */}
                 <div 
                   className="fixed inset-0 z-40" 
                   onClick={() => setProfileDropdownOpen(false)} 
                 />
+                
+                {/* This absolute dropdown card shows user profile credentials and sign-out controls. */}
                 <div className="absolute right-0 mt-2.5 w-56 rounded-xl border border-border bg-white dark:bg-card p-4 shadow-xl z-50 animate-in fade-in slide-in-from-top-3 duration-200">
                   <div className="space-y-1 mb-3">
                     <p className="text-xs font-bold text-foreground truncate">{user.name ?? user.email}</p>
@@ -186,7 +193,6 @@ export function ZakatGlobalMainNavbarLayoutComponent({
               </>
             )}
           </div>
-
         </div>
 
       </div>

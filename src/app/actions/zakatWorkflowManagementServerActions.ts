@@ -203,3 +203,50 @@ export async function fetchNotificationDataAction() {
   }
 }
 
+/**
+ * Updates the user's profile information in the database.
+ */
+export async function updateUserProfileAction(data: {
+  namaPenuh: string;
+  noKP: string;
+  noPekerja: string;
+  umur: number;
+  gajiSemasa: number;
+  alamatRumah: string;
+}) {
+  // This statement verifies that the user session is active and authentic.
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: "Sesi tamat. Sila log masuk semula." };
+  }
+
+  try {
+    // This query updates the user record in the database with validated profile data.
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        name: data.namaPenuh,
+        noKP: data.noKP,
+        noPekerja: data.noPekerja,
+        umur: data.umur,
+        gajiSemasa: data.gajiSemasa,
+        alamatRumah: data.alamatRumah,
+      },
+    });
+
+    // This cache revalidation refreshes the layout across active dashboard paths.
+    revalidatePath("/dashboard/zakat");
+    revalidatePath("/dashboard/zakat/profile");
+
+    return {
+      success: true,
+      data: updatedUser,
+    };
+  } catch (error) {
+    console.error("[updateUserProfileAction] Error:", error);
+    return {
+      success: false,
+      error: "Gagal mengemas kini data profil di pangkalan data.",
+    };
+  }
+}

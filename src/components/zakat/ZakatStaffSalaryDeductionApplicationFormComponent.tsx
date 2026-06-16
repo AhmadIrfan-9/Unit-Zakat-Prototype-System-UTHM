@@ -183,7 +183,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           
           {/* High-visibility feedback message banner */}
           <div className="bg-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow-md max-w-xl mx-auto text-xs sm:text-sm tracking-wide">
-            The form is successfully submitted, your application will be processed soon
+            Borang berjaya dihantar, permohonan anda akan diproses tidak lama lagi.
           </div>
 
           <div className="space-y-1">
@@ -225,7 +225,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
 
       <button type="submit" ref={hiddenSubmitRef} className="hidden" />
 
-      {/* Loading overlay spinner spinner wrapper */}
+      {/* Loading overlay spinner wrapper */}
       {isPending && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="flex flex-col items-center gap-3 bg-white dark:bg-card p-6 rounded-xl shadow-2xl border border-border">

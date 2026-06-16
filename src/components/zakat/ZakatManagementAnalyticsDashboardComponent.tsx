@@ -199,8 +199,7 @@ export function ZakatManagementAnalyticsDashboardComponent({
                   <Tooltip
                     formatter={(value: any, name: any) => {
                       const dewanBahasaLabel = FACULTY_TRANSLATIONS[name] || name;
-                      const numericValue = typeof value === "number" ? value : Number(value) || 0;
-                      return [`RM ${numericValue.toLocaleString("en-MY", { minimumFractionDigits: 2 })}`, dewanBahasaLabel];
+                      return [`RM ${Number(value).toLocaleString("en-MY", { minimumFractionDigits: 2 })}`, dewanBahasaLabel];
                     }}
                     contentStyle={{
                       backgroundColor: "hsl(var(--background))",

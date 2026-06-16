@@ -1,8 +1,9 @@
-// This master dashboard view sets up the primary layout grid by rendering the navy greeting banner directly beneath the unified header ribbon.
+// This administrative dashboard structure applies conditional layout switching grids to isolate tracking tables from operational analytics views.
 
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { updateZakatApplicationWorkflowStatus } from "@/app/actions/zakatSalaryDeductionManagementServerActions";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
 import { ZakatStaffProfileManagementCardComponent } from "./ZakatStaffProfileManagementCardComponent";
@@ -153,23 +154,37 @@ export function ZakatManagementDashboardMasterViewComponent({
 
       {/* This header banner displays welcome metadata and brand parameters directly below the navbar ribbon. */}
       <section className="w-full bg-[#002060] text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-[#002060]/10 shadow-md">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-[10px] uppercase font-black tracking-widest text-[#002060] bg-white rounded-full px-3 py-1 inline-block mb-3">
-            Portal Eksekutif Pengurusan
-          </p>
-          <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
-            Selamat Datang, Pengurusan Zakat UTHM
-          </h1>
-          <p className="text-xs md:text-sm text-gray-200 mt-2 font-medium">
-            Sistem Caruman Zakat Gaji UTHM &bull; Panel Kuasa Penilai Pentadbiran
-          </p>
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase font-black tracking-widest text-[#002060] bg-white rounded-full px-3 py-1 inline-block mb-3">
+              Portal Eksekutif Pengurusan
+            </p>
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
+              Selamat Datang, Pengurusan Zakat UTHM
+            </h1>
+            <p className="text-xs md:text-sm text-gray-200 mt-2 font-medium">
+              Sistem Caruman Zakat Gaji UTHM &bull; Panel Kuasa Penilai Pentadbiran
+            </p>
+          </div>
+          
+          {/* This branding container anchors the restored logo cleanly inside the right corner. */}
+          <div className="shrink-0 flex items-center justify-start sm:justify-end">
+            <Image
+              src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png"
+              alt="Logo Zakat UTHM"
+              width={130}
+              height={130}
+              priority
+              className="h-24 w-auto object-contain bg-white p-2.5 rounded-xl shadow-xs select-none"
+            />
+          </div>
         </div>
       </section>
 
       {/* This main workspace layout grid wraps sub-tab modules cleanly to prevent visual rendering overflow on wide monitors. */}
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
         
-        {/* This conditional rendering switcher displays either the personal profile configuration card, the process permohonan tab, or the analisis kutipan tab. */}
+        {/* This rendering ternary operation matches the active tab state to conditionally mount the profile configuration card. */}
         {activeTab === "profile" && (
           <div className="w-full max-w-3xl mx-auto">
             <ZakatStaffProfileManagementCardComponent 
@@ -190,6 +205,7 @@ export function ZakatManagementDashboardMasterViewComponent({
           </div>
         )}
 
+        {/* This rendering ternary operation matches the active tab state to conditionally mount the case management table. */}
         {activeTab === "proses" && (
           <ZakatManagementApplicationProcessingTabComponent
             stats={stats}
@@ -200,6 +216,7 @@ export function ZakatManagementDashboardMasterViewComponent({
           />
         )}
 
+        {/* This rendering ternary operation matches the active tab state to conditionally mount the analytics reporting tab. */}
         {activeTab === "analisis" && (
           <ZakatManagementAnalyticsReportingTabComponent
             applications={applications}
@@ -224,14 +241,14 @@ export function ZakatManagementDashboardMasterViewComponent({
             <form onSubmit={handleUpdateStatus}>
               <CardContent className="p-5 space-y-4">
                 
-                {/* This conditional rendering switcher renders database error alerts inside the form */}
+                {/* This conditional view container displays database error alerts inside the form. */}
                 {actionError && (
                   <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold">
                     {actionError}
                   </div>
                 )}
 
-                {/* This button grid allows toggle switching between approval and rejection states */}
+                {/* This button grid allows toggle switching between approval and rejection states. */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-[#002060]">Tentukan Status Keputusan</Label>
                   <div className="grid grid-cols-2 gap-3">
@@ -262,7 +279,7 @@ export function ZakatManagementDashboardMasterViewComponent({
                   </div>
                 </div>
 
-                {/* This textarea input captures administrative remarks and explanation logs */}
+                {/* This textarea input captures administrative remarks and explanation logs. */}
                 <div className="space-y-1.5">
                   <Label htmlFor="adminNotes" className="text-xs font-bold text-[#002060]">Catatan Pentadbiran (Mesej untuk Staf)</Label>
                   <Textarea
@@ -276,7 +293,7 @@ export function ZakatManagementDashboardMasterViewComponent({
                 </div>
               </CardContent>
               
-              {/* This button group controls dialog form submission and cancellation flows */}
+              {/* This button group controls dialog form submission and cancellation flows. */}
               <div className="border-t p-4 flex items-center justify-end gap-3 bg-muted/10">
                 <Button
                   type="button"

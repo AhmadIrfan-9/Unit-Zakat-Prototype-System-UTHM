@@ -1,4 +1,5 @@
-// src/components/zakat/ZakatStaffDashboardMasterViewComponent.tsx
+// This primary workspace shell tracks active tab scopes to dynamically swap content panes and enforce strict layout containment rules.
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,6 +9,7 @@ import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLay
 import { ZakatStaffInformativeNisabHaulCardComponent } from "./ZakatStaffInformativeNisabHaulCardComponent";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./ZakatStaffSalaryDeductionApplicationFormComponent";
 import { ZakatStaffProfileManagementCardComponent } from "./ZakatStaffProfileManagementCardComponent";
+import { ZakatManagementAnalyticsReportingTabComponent } from "./ZakatManagementAnalyticsReportingTabComponent";
 import { Card } from "@/components/ui/card";
 
 interface AuthenticatedUserProps {
@@ -24,40 +26,45 @@ interface ZakatStaffDashboardMasterViewProps {
   user: AuthenticatedUserProps;
 }
 
-// This layout engine coordinates the user welcome banners, live threshold metrics grids, and dynamic tab panels for application processing.
 export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashboardMasterViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Manage navigation tab states based on query parameters.
+  // This state hook manages the active navigation tab key.
   const [activeTab, setActiveTab] = useState<string>("info");
 
-  // Synchronise active tabs with the browser url queries.
+  // This hook synchronises active tabs with the browser url parameters to prevent visual leakage.
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["info", "form", "profile"].includes(tabParam)) {
+    if (tabParam && ["info", "form", "profile", "mohon", "analisis"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
 
-  // Coordinate active tab states when user selects tab pills.
+  // This helper function handles tab changes and pushes parameters to browser navigation history.
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     router.push(`/dashboard/zakat?tab=${tab}`, { scroll: false });
   };
 
+  // This rendering ternary operation matches URL parameters to strict view scopes to prevent tab leakage.
+  const viewScope = activeTab === "form" || activeTab === "mohon"
+    ? "mohon"
+    : activeTab === "profile"
+    ? "profile"
+    : "analisis";
+
   return (
-    // Outer flex wrapper matching full height.
     <div className="min-h-screen bg-muted/30 flex flex-col font-sans antialiased pb-10">
       
-      {/* Sticky top navbar wrapper */}
+      {/* This navbar layout component renders the responsive top-aligned navigation headers. */}
       <ZakatGlobalMainNavbarLayoutComponent 
         activeTab={activeTab} 
         onTabChange={handleTabChange} 
         user={user} 
       />
 
-      {/* Welcome Hero Banner: full-bleed background styled in UTHM corporate Navy Blue with the Zakat Logo on the right */}
+      {/* This header banner displays welcome metadata and the restored logo inside the right corner. */}
       <section className="w-full bg-[#002060] text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-[#002060]/10 shadow-md">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div className="space-y-2">
@@ -72,53 +79,47 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
             </p>
           </div>
           
-          {/* Zakat UTHM Logo displayed inside the far-right corner, white-accented */}
+          {/* This branding container anchors the restored logo cleanly inside the right corner. */}
           <div className="shrink-0 flex items-center justify-start sm:justify-end">
             <Image
-              src="/image_bb546b.png"
+              src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png"
               alt="Logo Zakat UTHM"
-              width={150}
-              height={50}
+              width={130}
+              height={130}
               priority
-              className="h-12 w-auto object-contain brightness-0 invert"
+              className="h-24 w-auto object-contain bg-white p-2.5 rounded-xl shadow-xs select-none"
             />
           </div>
         </div>
       </section>
 
-      {/* Main dashboard content sections wrapped in safety bounding margins */}
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+      {/* This main content layout area switches views based on the dynamic conditional scope structure. */}
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
         
-        {/* Metrics Row: Side-by-side Nisab monthly limits and Haul rules */}
-        <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa || null} />
+        {/* This conditional switch block maps parameters to toggle form, analytics, or profile views. */}
+        {viewScope === "mohon" ? (
+          <div className="space-y-8">
+            {/* This structural layout card displays the Nisab thresholds and Haul conditions. */}
+            <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa || null} />
 
-        {/* Main Workspace Area: Constrain content to a max-width of max-w-3xl */}
-        <div className="w-full max-w-3xl mx-auto">
-          {activeTab === "form" && (
-            <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
-              <ZakatStaffSalaryDeductionApplicationFormComponent user={user} />
-            </Card>
-          )}
-
-          {activeTab === "profile" && (
+            {/* This structural layout card displays the salary deduction submission form. */}
+            <div className="w-full max-w-3xl mx-auto">
+              <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
+                <ZakatStaffSalaryDeductionApplicationFormComponent user={user} />
+              </Card>
+            </div>
+          </div>
+        ) : viewScope === "analisis" ? (
+          <div className="w-full">
+            {/* This structural layout card displays side-by-side faculty collection and annual trend charts. */}
+            <ZakatManagementAnalyticsReportingTabComponent applications={[]} chartData={[]} />
+          </div>
+        ) : (
+          <div className="w-full max-w-3xl mx-auto">
+            {/* This structural layout card displays the profile details form on the top layer. */}
             <ZakatStaffProfileManagementCardComponent />
-          )}
-
-          {activeTab === "info" && (
-            <Card className="border border-border/80 shadow-md bg-white dark:bg-card/95 p-6 md:p-8 text-xs text-muted-foreground leading-relaxed space-y-4">
-              <h3 className="font-bold text-sm text-[#002060] dark:text-blue-300">Panduan Ringkas Pengurusan Caruman Zakat Gaji</h3>
-              <p>
-                Sistem ini membolehkan kakitangan Universiti Tun Hussein Onn Malaysia (UTHM) menguruskan potongan zakat bulanan terus dari slip gaji anda.
-              </p>
-              <p>
-                Sila ke tab <strong className="text-foreground">Borang Permohonan</strong> jika anda bersedia untuk mendaftar, menambah, atau mengubah kaedah potongan zakat bulanan semasa anda.
-              </p>
-              <p>
-                Jika terdapat sebarang maklumat peribadi yang salah, sila hubungi pentadbir sistem melalui emel rasmi yang tertera di bahagian bawah borang permohonan.
-              </p>
-            </Card>
-          )}
-        </div>
+          </div>
+        )}
 
       </main>
     </div>

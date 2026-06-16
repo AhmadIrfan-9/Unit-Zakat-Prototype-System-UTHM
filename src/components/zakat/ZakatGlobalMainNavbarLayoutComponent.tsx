@@ -1,4 +1,4 @@
-// This global master navbar merges all branding links, central workspace tab selectors, and profile configurations into a single unified top header ribbon.
+// This global layout component expands the corporate university logo to standard legibility heights and aligns all center navigation controls across a shared horizontal axis.
 
 "use client";
 
@@ -40,14 +40,14 @@ export function ZakatGlobalMainNavbarLayoutComponent({
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* This branding container mounts the primary university identity logo on the far-left. */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-start h-14 py-1 pr-2">
           <Image
             src="/image_bb5246.png"
             alt="Logo UTHM"
-            width={140}
-            height={44}
+            width={180}
+            height={56}
             priority
-            className="h-10 w-auto object-contain select-none"
+            className="h-14 w-auto object-contain select-none"
           />
         </div>
 

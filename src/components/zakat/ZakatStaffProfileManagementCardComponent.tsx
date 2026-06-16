@@ -1,4 +1,4 @@
-// This component renders a responsive two-column grid form for secure profile updates with integrated Akta 709 legal consent handling.
+// This profile management card displays empty form inputs styled with low-opacity format placeholders to guide staff data entry cleanly.
 
 "use client";
 
@@ -40,20 +40,20 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
   // This hook handles the React server action transition state.
   const [isPending, startTransition] = useTransition();
 
-  // This form state manages initialization, change events, and validation triggers.
+  // This form state manages initialization with empty defaults to enforce user input guided by placeholders.
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<any>({
     resolver: zodResolver(zakatProfileSchema),
     defaultValues: {
-      namaPenuh: defaultValues?.namaPenuh || "",
-      noKP: defaultValues?.noKP || "",
-      umur: defaultValues?.umur || undefined,
-      noTelefon: defaultValues?.noTelefon || "",
-      noPekerja: defaultValues?.noPekerja || "",
-      gajiSemasa: defaultValues?.gajiSemasa ? Number(defaultValues?.gajiSemasa) : undefined,
-      negeri: defaultValues?.negeri || "Johor",
-      bandar: defaultValues?.bandar || "",
-      poskod: defaultValues?.poskod || "",
-      alamatRumah: defaultValues?.alamatRumah || "",
+      namaPenuh: "",
+      noKP: "",
+      umur: undefined,
+      noTelefon: "",
+      noPekerja: "",
+      gajiSemasa: undefined,
+      negeri: "",
+      bandar: "",
+      poskod: "",
+      alamatRumah: "",
       persetujuanAkta709: false,
     }
   });
@@ -84,16 +84,19 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
   return (
     // Centered single card constraints.
     <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 w-full">
+      
+      {/* Header block introducing the profile card details */}
       <CardHeader className="border-b border-border bg-muted/10 px-6 py-6">
         <CardTitle className="text-base font-bold text-[#002060] flex items-center gap-2">
           <User className="h-5 w-5" />
           <span>Profil Kakitangan UTHM</span>
         </CardTitle>
         <CardDescription className="text-xs">
-          Kemaskini maklumat profil peribadi dan rekod kerjaya anda secara selamat.
+          Sila kemaskini maklumat profil peribadi dan rekod kerjaya anda secara lengkap.
         </CardDescription>
       </CardHeader>
       
+      {/* Content wrapper rendering the form input grid */}
       <CardContent className="p-6 md:p-8">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -104,12 +107,13 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 Maklumat Peribadi
               </h3>
               
+              {/* Full name input box */}
               <div className="space-y-1.5">
                 <Label htmlFor="namaPenuh" className="font-semibold text-xs text-[#002060]">Nama Penuh</Label>
                 <Input
                   id="namaPenuh"
-                  placeholder="Nama Penuh"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                  placeholder="Ali bin Abu"
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                   {...register("namaPenuh")}
                 />
                 {errors.namaPenuh && (
@@ -117,12 +121,13 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 )}
               </div>
 
+              {/* IC number input box */}
               <div className="space-y-1.5">
                 <Label htmlFor="noKP" className="font-semibold text-xs text-[#002060]">No. Kad Pengenalan</Label>
                 <Input
                   id="noKP"
-                  placeholder="Nombor KP (12 digit)"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                  placeholder="000000000000"
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                   {...register("noKP")}
                 />
                 {errors.noKP && (
@@ -130,13 +135,14 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 )}
               </div>
 
+              {/* Age input box */}
               <div className="space-y-1.5">
                 <Label htmlFor="umur" className="font-semibold text-xs text-[#002060]">Umur</Label>
                 <Input
                   id="umur"
                   type="number"
-                  placeholder="Umur"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                  placeholder="37"
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                   {...register("umur")}
                 />
                 {errors.umur && (
@@ -144,13 +150,14 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 )}
               </div>
 
+              {/* Phone number input box */}
               <div className="space-y-1.5">
                 <Label htmlFor="noTelefon" className="font-semibold text-xs text-[#002060]">No. Telefon</Label>
                 <Input
                   id="noTelefon"
                   type="tel"
-                  placeholder="No. Telefon (cth: 012-3456789)"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                  placeholder="0123456789"
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                   {...register("noTelefon")}
                 />
                 {errors.noTelefon && (
@@ -165,12 +172,13 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 Maklumat Pekerjaan
               </h3>
 
+              {/* Employee ID input box */}
               <div className="space-y-1.5">
                 <Label htmlFor="noPekerja" className="font-semibold text-xs text-[#002060]">No. Pekerja</Label>
                 <Input
                   id="noPekerja"
-                  placeholder="No. Kakitangan"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                  placeholder="STAFF001"
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                   {...register("noPekerja")}
                 />
                 {errors.noPekerja && (
@@ -178,6 +186,7 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 )}
               </div>
 
+              {/* Current salary input box */}
               <div className="space-y-1.5">
                 <Label htmlFor="gajiSemasa" className="font-semibold text-xs text-[#002060]">Gaji Semasa (RM)</Label>
                 <Input
@@ -185,7 +194,7 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                   type="number"
                   step="0.01"
                   placeholder="0.00"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                   {...register("gajiSemasa")}
                 />
                 {errors.gajiSemasa && (
@@ -193,6 +202,7 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 )}
               </div>
 
+              {/* State select dropdown */}
               <div className="space-y-1.5">
                 <Label htmlFor="negeri" className="font-semibold text-xs text-[#002060]">Negeri</Label>
                 <Select
@@ -214,12 +224,13 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                {/* City location input box */}
                 <div className="space-y-1.5">
                   <Label htmlFor="bandar" className="font-semibold text-xs text-[#002060]">Bandar</Label>
                   <Input
                     id="bandar"
-                    placeholder="Bandar"
-                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                    placeholder="Parit Raja"
+                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                     {...register("bandar")}
                   />
                   {errors.bandar && (
@@ -227,12 +238,13 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                   )}
                 </div>
 
+                {/* Postal code input box */}
                 <div className="space-y-1.5">
                   <Label htmlFor="poskod" className="font-semibold text-xs text-[#002060]">Poskod</Label>
                   <Input
                     id="poskod"
-                    placeholder="Poskod"
-                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
+                    placeholder="86400"
+                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
                     {...register("poskod")}
                   />
                   {errors.poskod && (
@@ -242,13 +254,13 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
               </div>
             </div>
 
-            {/* Full-width Alamat Rumah */}
+            {/* Home Address textarea spanning full width */}
             <div className="col-span-1 md:col-span-2 space-y-1.5">
               <Label htmlFor="alamatRumah" className="font-semibold text-xs text-[#002060]">Alamat Rumah</Label>
               <Textarea
                 id="alamatRumah"
-                placeholder="Sila nyatakan alamat kediaman lengkap semasa..."
-                className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs"
+                placeholder="No. 12, Jalan Universiti, Taman Parit Raja, 86400 Parit Raja, Johor"
+                className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs placeholder:text-slate-400/40"
                 rows={3}
                 {...register("alamatRumah")}
               />
@@ -257,7 +269,7 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
               )}
             </div>
 
-            {/* Akta 709 compliance consent footer card */}
+            {/* Akta 709 compliance declaration block */}
             <div className="col-span-1 md:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-2 shadow-xs">
               <div className="flex items-start gap-3">
                 <Checkbox
@@ -279,7 +291,7 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
 
           </div>
 
-          {/* Form Actions */}
+          {/* Form submit button styled in Emerald Green */}
           <div className="pt-4 flex justify-end border-t">
             <Button
               type="submit"

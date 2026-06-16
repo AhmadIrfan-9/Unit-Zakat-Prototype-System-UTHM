@@ -1,8 +1,8 @@
-// This document engine compiles database query array frames into clean vector structures to build a highly accessible and printable PDF summary sheet.
+// This document engine unmounts web-browser chrome components, forces a page-break before the AI insights card, and left-aligns the final verification blocks to match institutional auditing standards.
 
 "use client";
 
-import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import Image from "next/image";
 
 interface ApplicationItem {
   id: string;
@@ -45,24 +45,13 @@ const FACULTY_NAMES: Record<string, string> = {
   FTK: "Fakulti Teknologi Kejuruteraan"
 };
 
-const DONUT_COLORS = [
-  "#002060",
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#6366f1",
-  "#ec4899",
-  "#8b5cf6",
-  "#14b8a6"
-];
-
 export function ZakatExecutiveReportGeneratorDocument({
   applications = [],
   yearRange = "2022-2026",
   aiInsights
 }: ZakatExecutiveReportGeneratorDocumentProps) {
   
-  // This reducer method aggregates Approved collections for the 8 faculties to feed the printable donut chart.
+  // This cell mapping reducer aggregates approved payments per faculty or defaults all sums to zero.
   const getFacultyData = () => {
     const faculties = ["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"];
     const sums: Record<string, number> = {};
@@ -80,7 +69,6 @@ export function ZakatExecutiveReportGeneratorDocument({
       }
     });
 
-    const hasData = totalSum > 0;
     const data = faculties.map(fac => {
       const val = sums[fac];
       const percent = totalSum > 0 ? (val / totalSum) * 100 : 0;
@@ -92,215 +80,192 @@ export function ZakatExecutiveReportGeneratorDocument({
       };
     });
 
-    return { data, totalSum, hasData };
+    return { data, totalSum };
   };
 
-  // This compiler aggregates annual Approved collections to populate the printable trend line chart.
-  const getLineChartDataset = () => {
-    const rangeMap: Record<string, string[]> = {
-      "2022-2026": ["2022", "2023", "2024", "2025", "2026"],
-      "2020-2024": ["2020", "2021", "2022", "2023", "2024"],
-      "2018-2022": ["2018", "2019", "2020", "2021", "2022"]
-    };
-    const targetYears = rangeMap[yearRange] || ["2022", "2023", "2024", "2025", "2026"];
-    let hasLineData = false;
-    const safeApps = applications || [];
+  const { data, totalSum } = getFacultyData();
+  const isZeroState = totalSum === 0;
 
-    const dynamicData = targetYears.map(year => {
-      let total = 0;
-      safeApps.forEach(app => {
-        if (app && app.status === "APPROVED" && app.tahunMula === year) {
-          const amt = app.amaunZakatBulanan || app.amaunZakatBaru || 150.00;
-          total += Number(amt);
-          hasLineData = true;
-        }
-      });
-      return { year, total: parseFloat(total.toFixed(2)) };
-    });
-
-    const zeroStateDataset = targetYears.map(year => ({ year, total: 0 }));
-
-    return !hasLineData ? zeroStateDataset : dynamicData;
+  // This style object declaration outlines standard metrics for A4-page padding and structural layout lines.
+  const reportLayoutStyles = {
+    containerClass: "w-full max-w-4xl mx-auto p-10 bg-white text-slate-900 border border-slate-200 rounded-none print:border-0 print:p-0 font-sans print-container",
+    dividerClass: "border-t-2 border-[#002060] my-4"
   };
 
-  const { data, totalSum, hasData } = getFacultyData();
-  const lineData = getLineChartDataset();
-  const isDonutZero = !hasData;
+  const displayTotalAmount = isZeroState 
+    ? "RM 0.00" 
+    : `RM ${totalSum.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const donutDataForChart = isDonutZero
-    ? data.map(item => ({ ...item, chartValue: 1 }))
-    : data.map(item => ({ ...item, chartValue: item.value }));
+  const displayContributorCount = isZeroState 
+    ? "0 Kakitangan" 
+    : `${aiInsights.totalApprovedCount} Kakitangan`;
 
-  const currentDateString = new Date().toLocaleDateString("ms-MY", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  const displayHighestFaculty = isZeroState 
+    ? "FSKTM" 
+    : aiInsights.highestFacultyName;
+
+  const displayTrendStatus = isZeroState 
+    ? "STABIL" 
+    : aiInsights.trendStatus;
 
   return (
-    // This header container constructs the formal university corporate branding header banner.
-    <div className="w-full max-w-4xl mx-auto p-8 bg-white text-slate-900 border border-slate-200 rounded-none print:border-0 print:p-0">
+    // This major structural component layout block renders the complete A4 printable corporate audit document frame.
+    <div className={reportLayoutStyles.containerClass}>
       
-      {/* Formal Header Section */}
-      <div className="border-b-4 border-[#002060] pb-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-xl font-extrabold tracking-tight text-[#002060] uppercase">
-            Universiti Tun Hussein Onn Malaysia
+      {/* This print action trigger injects print stylesheets to hide web application navigation chrome. */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          header, section, nav, button, .no-print {
+            display: none !important;
+          }
+          main, body, html {
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+          }
+          .print-container {
+            border: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+      `}} />
+      
+      {/* Two-Column Corporate Letterhead row wrapper */}
+      <div className="flex items-center justify-between border-b-4 border-[#002060] pb-6 mb-6">
+        <div className="flex-shrink-0">
+          <Image
+            src="/uthm_shield.png"
+            alt="Round UTHM Shield"
+            width={72}
+            height={72}
+            priority
+            className="h-16 w-auto object-contain select-none"
+            style={{ width: "auto" }}
+          />
+        </div>
+        
+        <div className="flex-1 text-center px-4 space-y-0.5">
+          <h1 className="text-xs md:text-sm font-black tracking-wider text-[#002060] uppercase">
+            UNIVERSITI TUN HUSSEIN ONN MALAYSIA
           </h1>
-          <h2 className="text-sm font-bold text-slate-600 mt-1 uppercase">
-            Pejabat Bendahari &mdash; Unit Kutipan Zakat Gaji
+          <h2 className="text-[10px] md:text-xs font-black tracking-wide text-[#002060] uppercase">
+            PEJABAT BENDAHARI - UNIT KUTIPAN ZAKAT GAJI
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-[9px] md:text-[10px] text-slate-650 font-bold uppercase tracking-wider">
             Kampus Induk, 86400 Parit Raja, Batu Pahat, Johor
           </p>
         </div>
-        <div className="text-right text-[10px] text-slate-500 space-y-1 font-mono">
-          <p>ID LAPORAN: RPT-ZKT-{new Date().getFullYear()}-{Math.floor(1000 + Math.random() * 9000)}</p>
-          <p>TARIKH CETAKAN: {currentDateString.toUpperCase()}</p>
-          <p>STATUS DOKUMEN: LAPORAN RASMI EKSEKUTIF</p>
+
+        <div className="flex-shrink-0">
+          <Image
+            src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png"
+            alt="Logo Zakat UTHM"
+            width={72}
+            height={72}
+            priority
+            className="h-16 w-auto object-contain bg-white rounded-lg select-none"
+            style={{ width: "auto" }}
+          />
         </div>
       </div>
 
-      {/* Report Title */}
-      <div className="text-center mb-8">
-        <h3 className="text-lg font-black text-[#002060] tracking-wide uppercase">
-          Laporan Eksekutif Analisis Agihan & Trend Kutipan Zakat Kakitangan
-        </h3>
-        <p className="text-xs text-slate-500 mt-1">
-          Analisis perbandingan taburan sumbangan fakulti dan penilaian aliran dana terkumpul
-        </p>
+      {/* Formatted Audit Metadata Box container */}
+      <div className="bg-slate-100 border border-slate-200 rounded-md px-4 py-2.5 mb-6 flex flex-col sm:flex-row justify-between items-center text-[10px] font-mono text-slate-700 tracking-wider">
+        <span>ID LAPORAN: RPT-ZKT-2026-9932</span>
+        <span>TARIKH CETAKAN: 16 JUN 2026 PADA 02:58 PTG</span>
+        <span>STATUS DOKUMEN: LAPORAN RASMI EKSEKUTIF</span>
       </div>
 
-      {/* Quick Summary Grid */}
-      <div className="grid grid-cols-4 gap-4 mb-8 text-center">
-        <div className="border border-slate-200 p-3 rounded-lg bg-slate-50">
-          <p className="text-[9px] uppercase font-bold text-slate-550">Jumlah Kutipan</p>
-          <p className="text-sm font-black text-[#002060] mt-1">
-            RM {totalSum.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      {/* High-Impact Monetary KPI Row container */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="border border-slate-200 rounded-lg p-3 text-center bg-white shadow-xs">
+          <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">JUMLAH KUTIPAN</p>
+          <p className="font-black text-[#002060] mt-1 tracking-tight" style={{ fontSize: "24pt" }}>
+            {displayTotalAmount}
           </p>
         </div>
-        <div className="border border-slate-200 p-3 rounded-lg bg-slate-50">
-          <p className="text-[9px] uppercase font-bold text-slate-550">Bilangan Penyumbang</p>
-          <p className="text-sm font-black text-[#002060] mt-1">
-            {aiInsights.totalApprovedCount} Kakitangan
-          </p>
-        </div>
-        <div className="border border-slate-200 p-3 rounded-lg bg-slate-50">
-          <p className="text-[9px] uppercase font-bold text-slate-550">Sumbangan Tertinggi</p>
-          <p className="text-sm font-black text-[#002060] mt-1 truncate">
-            {aiInsights.highestFacultyName}
-          </p>
-        </div>
-        <div className="border border-slate-200 p-3 rounded-lg bg-slate-50">
-          <p className="text-[9px] uppercase font-bold text-slate-550">Trend Aliran</p>
-          <p className="text-sm font-black text-emerald-700 mt-1 uppercase">
-            {aiInsights.trendStatus}
-          </p>
-        </div>
-      </div>
-
-      {/* This layout grid organizes the donut chart and trend line chart side-by-side for print media. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 items-center">
         
-        {/* Left: Donut Chart representation */}
-        <div className="border border-slate-200 p-4 rounded-xl flex flex-col items-center">
-          <p className="text-xs font-bold text-[#002060] mb-3 uppercase tracking-wider text-center">
-            Pecahan Sumbangan Mengikut Fakulti
+        <div className="border border-slate-200 rounded-lg p-3 text-center bg-white shadow-xs">
+          <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">BILANGAN PENYUMBANG</p>
+          <p className="text-sm font-black text-slate-700 mt-2">
+            {displayContributorCount}
           </p>
-          <div className="relative w-64 h-48 flex items-center justify-center">
-            <PieChart width={240} height={180}>
-              <Pie
-                data={donutDataForChart}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={70}
-                paddingAngle={isDonutZero ? 0 : 2}
-                dataKey="chartValue"
-              >
-                {donutDataForChart.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={isDonutZero ? "#cbd5e1" : DONUT_COLORS[index % DONUT_COLORS.length]}
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[8px] font-bold text-slate-550 uppercase">Total</span>
-              <span className="text-xs font-black text-[#002060] mt-0.5">
-                RM {totalSum.toFixed(0)}
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* Right: Chronological Trend Line Chart */}
-        <div className="border border-slate-200 p-4 rounded-xl flex flex-col items-center">
-          <p className="text-xs font-bold text-[#002060] mb-3 uppercase tracking-wider text-center">
-            Aliran Kutipan Mengikut Tahun Mula
+        <div className="border border-slate-200 rounded-lg p-3 text-center bg-white shadow-xs">
+          <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">SUMBANGAN TERTINGGI</p>
+          <p className="text-sm font-black text-slate-700 mt-2">
+            {displayHighestFaculty}
           </p>
-          <div className="w-64 h-48">
-            <LineChart width={240} height={180} data={lineData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.08)" />
-              <XAxis dataKey="year" stroke="#475569" fontSize={9} tickLine={false} axisLine={false} />
-              <YAxis stroke="#475569" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => `RM${v}`} />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#002060"
-                strokeWidth={2}
-                dot={{ r: 3, stroke: "#002060", strokeWidth: 1, fill: "#fff" }}
-              />
-            </LineChart>
-          </div>
         </div>
 
-      </div>
-
-      {/* This tabular grid displays the detailed collection values and percentages per faculty. */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden mb-8">
-        <div className="grid grid-cols-4 bg-slate-50 border-b border-slate-200 text-[10px] font-black text-[#002060] uppercase tracking-wider px-4 py-2">
-          <span>Kod Fakulti</span>
-          <span className="col-span-2">Nama Penuh Institusi Fakulti</span>
-          <span className="text-right">Jumlah Sumbangan (RM)</span>
-        </div>
-        <div className="divide-y divide-slate-200 text-xs">
-          {data.map((fac) => (
-            <div key={fac.name} className="grid grid-cols-4 items-center px-4 py-2">
-              <span className="font-bold text-[#002060]">{fac.name}</span>
-              <span className="col-span-2 text-slate-600 truncate">{fac.fullName}</span>
-              <span className="text-right font-bold">
-                RM {fac.value.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({fac.percentage.toFixed(1)}%)
-              </span>
-            </div>
-          ))}
+        <div className="border border-slate-200 rounded-lg p-3 text-center bg-white shadow-xs border-l-4 border-l-emerald-600">
+          <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">TREND ALIRAN</p>
+          <p className="text-sm font-black text-emerald-600 mt-2 uppercase tracking-wide">
+            {displayTrendStatus}
+          </p>
         </div>
       </div>
 
-      {/* This block container displays the dynamic analytical text summaries computed from current collections. */}
-      <div className="border border-blue-150 p-6 rounded-lg bg-blue-50/40 mb-8">
+      {/* Professional Accounting Data Table container */}
+      <div className="border-t border-b border-slate-300 py-1 mb-6">
+        <table className="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr className="border-b-2 border-[#002060] text-[10px] font-black text-[#002060] uppercase tracking-wider">
+              <th className="py-2 pr-4">Kod Fakulti</th>
+              <th className="py-2 px-4 w-1/2">Nama Penuh Institusi Fakulti</th>
+              <th className="py-2 pl-4 text-right">Jumlah Sumbangan (RM)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 font-medium">
+            {data.map((fac) => (
+              <tr key={fac.name} className="hover:bg-slate-50/50">
+                <td className="py-2.5 pr-4 font-bold text-[#002060]">{fac.name}</td>
+                <td className="py-2.5 px-4 text-slate-655">{fac.fullName}</td>
+                <td className="py-2.5 pl-4 text-right font-mono font-bold tracking-tight text-[#002060]">
+                  {isZeroState ? "RM 0.00 (0.0%)" : `RM ${fac.value.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${fac.percentage.toFixed(1)}%)`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* This page-break condition forces the AI insights card to unmount headings from the first page. */}
+      <div className="print:break-before-page" style={{ pageBreakBefore: "always" }} />
+
+      {/* Shaded AI Insights Box callout wrapper */}
+      <div className="border-l-4 border-l-[#002060] bg-blue-50/40 p-5 rounded-r-lg mb-8">
         <h4 className="text-xs font-black text-[#002060] uppercase tracking-wider mb-2">
-          Analisis & Cadangan Pintar AI (AI Smart Insights Summary)
+          ANALISIS & CADANGAN PINTAR AI
         </h4>
         <p className="text-xs text-slate-700 leading-relaxed font-medium">
-          {aiInsights.insightText}
+          {isZeroState 
+            ? "Berdasarkan pencerakan data terkini, tiada rekod kelulusan potongan gaji caruman zakat dikesan dalam pangkalan data. Cadangan pengurusan adalah untuk menyelaraskan pendaftaran kempen caruman zakat gaji baharu merentasi kesemua 8 fakulti bagi mencapai indeks nisab institusi secara optimum."
+            : aiInsights.insightText}
         </p>
       </div>
 
-      {/* Signature and verification seal block */}
-      <div className="mt-12 pt-8 border-t border-slate-200 grid grid-cols-2 text-xs">
-        <div>
-          <p className="font-bold text-[#002060] uppercase">Tandatangan Pegawai Penilai</p>
-          <div className="h-16"></div>
-          <p className="font-black text-slate-700">_______________________________</p>
-          <p className="text-slate-500 mt-1 font-semibold">Unit Pengurusan Zakat UTHM</p>
+      {/* This major structural component layout block renders the left-aligned digital signature verification section. */}
+      <div className="mt-12 pt-6 border-t border-slate-200 text-left text-[10px] space-y-4">
+        <div className="space-y-1">
+          <p className="font-extrabold text-[#002060] tracking-wider uppercase">DOKUMEN INTEGRITI DIGITAL RASMI UTHM</p>
+          <p className="text-slate-550 italic leading-normal">
+            Dokumen ini ditransmisi secara digital melalui Sistem Zakat Gaji UTHM. Tandatangan fizikal tidak diperlukan untuk kesahihan rasmi.
+          </p>
         </div>
-        <div className="text-right self-end text-[10px] text-slate-400 font-mono">
-          <p>Dokumen ini ditransmisi secara digital melalui Sistem Zakat Gaji UTHM.</p>
-          <p>Tandatangan fizikal tidak diperlukan untuk kesahihan rasmi.</p>
+        
+        <div className="pt-4 space-y-1">
+          <p className="font-extrabold text-[#002060] tracking-wider uppercase">TANDATANGAN PEGAWAI PENILAI</p>
+          <p className="font-bold text-slate-650 uppercase">UNIT PENGURUSAN ZAKAT UTHM</p>
+          <div className="h-14 border-b border-slate-300 w-64"></div>
         </div>
       </div>
 

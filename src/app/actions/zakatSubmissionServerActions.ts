@@ -49,7 +49,7 @@ const submissionSchema = z.object({
       "Amaun mestilah dalam format angka (contoh: 150.00)."
     ),
   pengesahanLafaz:    z.literal("true", { error: "Pengesahan lafaz diperlukan." }),
-  persetujuanAkta709: z.string().min(1),
+  persetujuanAkta709: z.literal("true", { error: "Persetujuan Akta 709 diperlukan." }),
 });
 
 // This discriminated union type cleanly separates success and failure response payloads returned to the client.
@@ -92,24 +92,24 @@ export async function submitZakatApplicationAction(
 
   // This block extracts all raw form field values into a plain object keyed for Zod schema validation.
   const rawPayload = {
-    namaPenuh:            formData.get("namaPenuh"),
-    noKP:                 formData.get("noKP"),
-    noPekerja:            formData.get("noPekerja"),
-    noTelefon:            formData.get("noTelefon"),
-    alamatRumah:          formData.get("alamatRumah"),
-    poskod:               formData.get("poskod"),
-    bandar:               formData.get("bandar"),
-    negeri:               formData.get("negeri"),
-    deductionType:        formData.get("deductionType"),
-    amaunPcbAsal:         formData.get("amaunPcbAsal"),
-    amaunZakatBulanan:    formData.get("amaunZakatBulanan"),
-    amaunZakatAsal:       formData.get("amaunZakatAsal"),
-    amaunZakatBaru:       formData.get("amaunZakatBaru"),
-    bulanMula:            formData.get("bulanMula"),
-    tahunMula:            formData.get("tahunMula"),
-    targetDeductionValue: formData.get("targetDeductionValue"),
-    pengesahanLafaz:      formData.get("pengesahanLafaz") ?? "false",
-    persetujuanAkta709:   formData.get("persetujuanAkta709") ?? "false",
+    namaPenuh:            formData.get("namaPenuh")?.toString() ?? "",
+    noKP:                 formData.get("noKP")?.toString() ?? "",
+    noPekerja:            formData.get("noPekerja")?.toString() ?? "",
+    noTelefon:            formData.get("noTelefon")?.toString() ?? "",
+    alamatRumah:          formData.get("alamatRumah")?.toString() ?? "",
+    poskod:               formData.get("poskod")?.toString() ?? "",
+    bandar:               formData.get("bandar")?.toString() ?? "",
+    negeri:               formData.get("negeri")?.toString() ?? undefined,
+    deductionType:        formData.get("deductionType")?.toString() ?? undefined,
+    amaunPcbAsal:         formData.get("amaunPcbAsal")?.toString() ?? undefined,
+    amaunZakatBulanan:    formData.get("amaunZakatBulanan")?.toString() ?? undefined,
+    amaunZakatAsal:       formData.get("amaunZakatAsal")?.toString() ?? undefined,
+    amaunZakatBaru:       formData.get("amaunZakatBaru")?.toString() ?? undefined,
+    bulanMula:            formData.get("bulanMula")?.toString() ?? undefined,
+    tahunMula:            formData.get("tahunMula")?.toString() ?? "",
+    targetDeductionValue: formData.get("targetDeductionValue")?.toString() ?? "",
+    pengesahanLafaz:      formData.get("pengesahanLafaz")?.toString() ?? "false",
+    persetujuanAkta709:   formData.get("persetujuanAkta709")?.toString() ?? "false",
   };
 
   // This validation step runs the raw payload through the Zod schema and returns structured field-level errors on failure.

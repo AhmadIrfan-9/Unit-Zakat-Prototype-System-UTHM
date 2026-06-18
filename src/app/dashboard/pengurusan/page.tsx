@@ -1,4 +1,7 @@
 // src/app/dashboard/pengurusan/page.tsx
+// This directive forces server-side rendering on every request to ensure fresh application data is always displayed.
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { fetchManagementAnalyticsDashboardData } from "@/app/actions/zakatSalaryDeductionManagementServerActions";

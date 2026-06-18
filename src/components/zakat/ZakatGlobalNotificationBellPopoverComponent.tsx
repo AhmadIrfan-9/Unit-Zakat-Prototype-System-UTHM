@@ -35,7 +35,7 @@ export function ZakatGlobalNotificationBellPopoverComponent({
   // This state hook tracks which notifications have been clicked to dismiss the unread bubble indicator.
   const [readNotifications, setReadNotifications] = useState<string[]>([]);
 
-  // This hook fetches notification data dynamically when the component mounts.
+  // This hook fetches notification data dynamically when the component mounts and whenever the popover is opened.
   useEffect(() => {
     async function loadNotifications() {
       try {
@@ -48,7 +48,7 @@ export function ZakatGlobalNotificationBellPopoverComponent({
       }
     }
     loadNotifications();
-  }, []);
+  }, [isOpen]);
 
   // This utility formats the e-mail rayuan draft addressed to the management desk.
   const handleEmailAppeal = (app: NotificationAppItem) => {

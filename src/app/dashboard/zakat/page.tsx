@@ -1,4 +1,7 @@
 // src/app/dashboard/zakat/page.tsx
+// This directive forces server-side rendering on every request to ensure the user profile is always loaded fresh.
+export const dynamic = "force-dynamic";
+
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";

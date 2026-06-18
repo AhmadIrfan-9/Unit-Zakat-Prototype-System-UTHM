@@ -75,6 +75,11 @@ export function ZakatManagementDashboardMasterViewComponent({
   // This lifecycle state hook tracks the current list of payroll deduction applications.
   const [applications, setApplications] = useState<ApplicationItem[]>(initialApplications);
 
+  // This sync hook updates the local application list whenever the server pushes fresh initialApplications props.
+  useEffect(() => {
+    setApplications(initialApplications);
+  }, [initialApplications]);
+
   // This lifecycle state hook manages async transition states for database updates.
   const [isPendingTransition, startTransition] = useTransition();
 
@@ -127,6 +132,8 @@ export function ZakatManagementDashboardMasterViewComponent({
           )
         );
         toast.success("Permohonan berjaya diluluskan secara inline.");
+        // This refresh call triggers the server component to re-fetch and push updated application data.
+        router.refresh();
       } else {
         toast.error(result.error || "Gagal meluluskan permohonan.");
       }
@@ -159,6 +166,8 @@ export function ZakatManagementDashboardMasterViewComponent({
         );
         setActiveEditingApp(null);
         toast.success("Keputusan permohonan berjaya dikemaskini.");
+        // This refresh call triggers the server component to re-fetch and push updated application data.
+        router.refresh();
       } else {
         setActionError(result.error || "Ralat berlaku.");
       }

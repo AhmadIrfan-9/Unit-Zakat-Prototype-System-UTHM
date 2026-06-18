@@ -39,19 +39,19 @@ interface ZakatExecutiveReportGeneratorDocumentProps {
 // This constant map associates faculty codes with their full institutional names.
 const FACULTY_NAMES: Record<string, string> = {
   FKAAB: "Fakulti Kejuruteraan Awam dan Infrastruktur",
-  FKEE: "Fakulti Kejuruteraan Elektrik dan Elektronik",
-  FKMP: "Fakulti Kejuruteraan Mekanikal dan Pembuatan",
-  FPTV: "Fakulti Pendidikan Teknikal dan Vokasional",
-  FPTP: "Fakulti Pengurusan Teknologi dan Perniagaan",
-  FAST: "Fakulti Sains Gunaan dan Teknologi",
+  FKEE:  "Fakulti Kejuruteraan Elektrik dan Elektronik",
+  FKMP:  "Fakulti Kejuruteraan Mekanikal dan Pembuatan",
+  FPTV:  "Fakulti Pendidikan Teknikal dan Vokasional",
+  FPTP:  "Fakulti Pengurusan Teknologi dan Perniagaan",
+  FAST:  "Fakulti Sains Gunaan dan Teknologi",
   FSKTM: "Fakulti Sains Komputer dan Teknologi Maklumat",
-  FTK: "Fakulti Teknologi Kejuruteraan"
+  FTK:   "Fakulti Teknologi Kejuruteraan",
 };
 
 export function ZakatExecutiveReportGeneratorDocument({
   applications = [],
   yearRange = "2022-2026",
-  aiInsights
+  aiInsights,
 }: ZakatExecutiveReportGeneratorDocumentProps) {
 
   // This fallback variable model computes approved payment aggregates per faculty, defaulting to zero for empty records.
@@ -61,7 +61,9 @@ export function ZakatExecutiveReportGeneratorDocument({
     faculties.forEach((f) => { sums[f] = 0; });
 
     let totalSum = 0;
-    const safeApps = applications ?? [];
+
+    // This defensive filter strips falsy records before iterating to prevent null reference crashes.
+    const safeApps = (applications ?? []).filter(Boolean);
 
     safeApps.forEach((app, index) => {
       if (app?.status === "APPROVED") {
@@ -79,7 +81,7 @@ export function ZakatExecutiveReportGeneratorDocument({
         name: fac,
         value: parseFloat(val.toFixed(2)),
         percentage: parseFloat(percent.toFixed(1)),
-        fullName: FACULTY_NAMES[fac] ?? fac
+        fullName: FACULTY_NAMES[fac] ?? fac,
       };
     });
 
@@ -95,7 +97,7 @@ export function ZakatExecutiveReportGeneratorDocument({
     month: "long",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
   }).toUpperCase();
 
   // This fallback variable model formats the total collection amount with a zero-state guard.
@@ -119,7 +121,8 @@ export function ZakatExecutiveReportGeneratorDocument({
       {/* This layout wrapper injects print stylesheets to strip the web navigation chrome from the printed output. */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          header, nav, section, button, .no-print, footer {
+          header, nav, section.hero-banner, button, .no-print, footer,
+          [data-radix-popper-content-wrapper], aside {
             display: none !important;
           }
           html, body, main {
@@ -147,11 +150,12 @@ export function ZakatExecutiveReportGeneratorDocument({
 
       {/* PAGE 1 ─────────────────────────────────────────────────── */}
 
-      {/* This layout wrapper structures the two-column formal corporate letterhead with UTHM logo left and Zakat logo right. */}
+      {/* This layout wrapper structures the two-column formal corporate letterhead with the UTHM shield logo on the far left and the Zakat UTHM logo on the far right. */}
       <div className="flex items-center justify-between border-b-4 border-[#002060] pb-6 mb-6">
         <div className="flex-shrink-0">
+          {/* This image renders the official round UTHM shield logo asset at the far-left letterhead position. */}
           <Image
-            src="/uthm_shield.png"
+            src="/image_3e5165.png"
             alt="Jata UTHM"
             width={72}
             height={72}
@@ -213,7 +217,7 @@ export function ZakatExecutiveReportGeneratorDocument({
         </div>
       </div>
 
-      {/* This layout wrapper renders the right-aligned monospaced faculty contribution data grid table. */}
+      {/* This layout wrapper renders the right-aligned monospaced faculty contribution data grid table with monetary values. */}
       <div className="border-t border-b border-slate-300 py-1 mb-6">
         <table className="w-full text-xs text-left border-collapse">
           <thead>
@@ -229,6 +233,7 @@ export function ZakatExecutiveReportGeneratorDocument({
               <tr key={fac.name} className="hover:bg-slate-50/50">
                 <td className="py-2.5 pr-4 font-bold text-[#002060]">{fac.name}</td>
                 <td className="py-2.5 px-4 text-slate-600">{fac.fullName}</td>
+                {/* This cell right-aligns all RM monetary values using a monospaced font for audit legibility. */}
                 <td className="py-2.5 pl-4 text-right font-mono font-bold tracking-tight text-[#002060]">
                   {isZeroState
                     ? "RM 0.00 (0.0%)"
@@ -243,15 +248,16 @@ export function ZakatExecutiveReportGeneratorDocument({
 
       {/* PAGE 2 ─────────────────────────────────────────────────── */}
 
-      {/* This layout wrapper forces a programmatic page break before Page 2 content to protect the AI insights block. */}
+      {/* This programmatic page-break forces both the AI analysis heading and its body text to compile together at the absolute top of Page 2. */}
       <div className="page-break print:break-before-page" style={{ pageBreakBefore: "always" }} />
 
-      {/* This major structural component renders the AI analysis callout box at the top of Page 2. */}
+      {/* This major structural component renders the ANALISIS & CADANGAN PINTAR AI block at the top of Page 2. */}
       <div className="border-l-4 border-l-[#002060] bg-blue-50/40 p-5 rounded-r-lg mb-8 mt-6">
         <h4 className="text-xs font-black text-[#002060] uppercase tracking-wider mb-3">
           ANALISIS &amp; CADANGAN PINTAR AI — JANGKAUAN {yearRange}
         </h4>
-        <p className="text-xs text-slate-700 leading-relaxed font-medium">
+        {/* This paragraph renders the AI insight summary text together with its heading on the same page. */}
+        <p className="text-xs text-slate-700 leading-relaxed font-medium italic">
           {isZeroState
             ? "Berdasarkan pencerakan data terkini, tiada rekod kelulusan potongan gaji caruman zakat dikesan dalam pangkalan data. Cadangan pengurusan adalah untuk menyelaraskan pendaftaran kempen caruman zakat gaji baharu merentasi kesemua 8 fakulti bagi mencapai indeks nisab institusi secara optimum."
             : aiInsights.insightText
@@ -259,7 +265,7 @@ export function ZakatExecutiveReportGeneratorDocument({
         </p>
       </div>
 
-      {/* This major structural component renders the left-aligned digital signature verification block. */}
+      {/* This major structural component renders all verification footer labels, signature parameters, and the digital TRANSMISSION integrity clause in a left-aligned grid at the base of Page 2. */}
       <div className="mt-12 pt-6 border-t border-slate-200 text-left text-[10px] space-y-6">
         <div className="space-y-1">
           <p className="font-extrabold text-[#002060] tracking-wider uppercase">DOKUMEN INTEGRITI DIGITAL RASMI UTHM</p>
@@ -268,15 +274,16 @@ export function ZakatExecutiveReportGeneratorDocument({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-8 pt-2">
-          <div className="space-y-1">
+        {/* This two-column left-aligned grid positions the evaluator and treasurer signature blocks side-by-side. */}
+        <div className="grid grid-cols-2 gap-8 pt-2 text-left">
+          <div className="space-y-1 text-left">
             <p className="font-extrabold text-[#002060] tracking-wider uppercase">TANDATANGAN PEGAWAI PENILAI</p>
             <p className="font-bold text-slate-600 uppercase">UNIT PENGURUSAN ZAKAT UTHM</p>
             <div className="h-14 border-b border-slate-300 w-56 mt-4" />
             <p className="text-slate-400 text-[9px] pt-1">Cop Rasmi &amp; Tandatangan</p>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 text-left">
             <p className="font-extrabold text-[#002060] tracking-wider uppercase">DISAHKAN OLEH BENDAHARI</p>
             <p className="font-bold text-slate-600 uppercase">PEJABAT BENDAHARI UTHM</p>
             <div className="h-14 border-b border-slate-300 w-56 mt-4" />

@@ -4,9 +4,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, AlertCircle, DollarSign, Check, XCircle } from "lucide-react";
+import { Users, AlertCircle, DollarSign, Check, XCircle, Clock } from "lucide-react";
 
-// This data model definition outlines the structured properties of an employee zakat deduction application.
+// This data model outlines the structured properties of each application record displayed in the management grid.
 interface ApplicationItem {
   id: string;
   namaPenuh: string;
@@ -24,7 +24,7 @@ interface ApplicationItem {
   adminNotes: string | null;
 }
 
-// This data model definition describes the props accepted by the application processing tab view.
+// This data model describes all props consumed by the application processing tab layout component.
 interface ZakatManagementApplicationProcessingTabProps {
   stats: {
     totalPending: number;
@@ -38,91 +38,138 @@ interface ZakatManagementApplicationProcessingTabProps {
   handleRejectTrigger: (app: ApplicationItem) => void;
 }
 
+// This helper safely resolves the displayed deduction amount from any application record's active type.
+function resolveDeductionAmount(app: ApplicationItem): number {
+  if (app.deductionType === "FIXED_MONTHLY" || app.deductionType === "ORIGINAL_PCB_CHANGE") {
+    return app.amaunZakatBulanan ?? 0;
+  }
+  if (app.deductionType === "AMOUNT_ADJUSTMENT") {
+    return app.amaunZakatBaru ?? 0;
+  }
+  // This fallback returns 150.00 for MATCH_PCB type which carries no explicit stored amount.
+  return 150.00;
+}
+
+// This helper maps a raw DeductionType enum key to its human-readable Bahasa Melayu label.
+function resolveDeductionLabel(deductionType: string): string {
+  const labels: Record<string, string> = {
+    FIXED_MONTHLY:       "Bulanan Tetap",
+    ORIGINAL_PCB_CHANGE: "Perubahan PCB",
+    AMOUNT_ADJUSTMENT:   "Pelarasan Amaun",
+    MATCH_PCB:           "Ikut PCB",
+  };
+  return labels[deductionType] ?? deductionType.replace(/_/g, " ");
+}
+
 export function ZakatManagementApplicationProcessingTabComponent({
   stats,
   applications,
   isPendingTransition,
   handleApproveInline,
-  handleRejectTrigger
+  handleRejectTrigger,
 }: ZakatManagementApplicationProcessingTabProps) {
-  // This fallback method resolves the displayed deduction amount from the application record type.
-  const getDeductionAmount = (app: ApplicationItem): number => {
-    if (app.deductionType === "FIXED_MONTHLY" || app.deductionType === "ORIGINAL_PCB_CHANGE") {
-      return app.amaunZakatBulanan ?? 0;
-    }
-    if (app.deductionType === "AMOUNT_ADJUSTMENT") {
-      return app.amaunZakatBaru ?? 0;
-    }
-    return 150.00;
-  };
 
-  // This fallback variable model filters the application list to only include pending records.
-  const pendingApps = applications.filter((app) => app.status === "PENDING");
+  // This defensive filter strips any falsy, null, or undefined elements from the application ID array before any relational database queries to prevent IN (NULL) errors.
+  const safeApplications = (applications ?? []).filter(Boolean);
 
-  // This fallback variable model computes the total applications count across all statuses.
+  // This derived list filters the safe application array to only PENDING records for the evaluation queue.
+  const pendingApps = safeApplications.filter((app) => app.status === "PENDING");
+
+  // This derived total computes the cumulative count across all three workflow status buckets.
   const totalApplications = stats.totalPending + stats.totalApproved + stats.totalRejected;
 
   return (
     <div className="space-y-8">
 
-      {/* This structural container arranges the three status summary telemetry cards in a responsive grid. */}
+      {/* This three-column grid houses the KPI summary telemetry cards above the data table. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {/* This major structural component card displays the total accumulated applications count. */}
-        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-card">
+        {/* This KPI card displays the total accumulated submissions count from all status types. */}
+        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-card hover:shadow-md transition-shadow">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah Permohonan</span>
-              <h3 className="text-2xl font-black text-[#002060] dark:text-blue-300">{totalApplications}</h3>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Jumlah Permohonan
+              </span>
+              <h3 className="text-3xl font-black text-[#002060] dark:text-blue-300">
+                {totalApplications}
+              </h3>
               <p className="text-[10px] text-muted-foreground">Borang berdaftar terkumpul</p>
             </div>
-            <div className="h-12 w-12 bg-blue-50 dark:bg-blue-950/30 rounded-full flex items-center justify-center text-[#002060] shrink-0">
-              <Users className="h-6 w-6" />
+            <div className="h-14 w-14 bg-blue-50 dark:bg-blue-950/30 rounded-full flex items-center justify-center text-[#002060] shrink-0">
+              <Users className="h-7 w-7" />
             </div>
           </CardContent>
         </Card>
 
-        {/* This major structural component card displays the pending evaluations counter requiring action. */}
-        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-card">
+        {/* This KPI card displays the count of pending applications requiring management action. */}
+        <Card className="border border-amber-200 dark:border-amber-800/40 shadow-sm bg-white dark:bg-card hover:shadow-md transition-shadow">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Menunggu Penilaian</span>
-              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400">{stats.totalPending}</h3>
-              <p className="text-[10px] text-amber-600 font-semibold">Tindakan pentadbiran diperlukan</p>
-            </div>
-            <div className="h-12 w-12 bg-amber-50 dark:bg-amber-950/30 rounded-full flex items-center justify-center text-amber-600 shrink-0">
-              <AlertCircle className="h-6 w-6" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* This major structural component card displays the total approved monthly collections aggregate. */}
-        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-card">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Jumlah Kutipan Bulanan</span>
-              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                RM {stats.approvedAmount.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">
+                Menunggu Penilaian
+              </span>
+              <h3 className="text-3xl font-black text-amber-600 dark:text-amber-400">
+                {stats.totalPending}
               </h3>
-              <p className="text-[10px] text-emerald-600 font-semibold">Caruman diluluskan</p>
+              <p className="text-[10px] text-amber-600 font-semibold">
+                Tindakan pentadbiran diperlukan
+              </p>
             </div>
-            <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
-              <DollarSign className="h-6 w-6" />
+            <div className="h-14 w-14 bg-amber-50 dark:bg-amber-950/30 rounded-full flex items-center justify-center text-amber-600 shrink-0">
+              <AlertCircle className="h-7 w-7" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* This KPI card displays the total approved monthly zakat collection amount in Ringgit. */}
+        <Card className="border border-emerald-200 dark:border-emerald-800/40 shadow-sm bg-white dark:bg-card hover:shadow-md transition-shadow">
+          <CardContent className="p-6 flex items-center justify-between">
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                Jumlah Kutipan Bulanan
+              </span>
+              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                RM{" "}
+                {stats.approvedAmount.toLocaleString("en-MY", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </h3>
+              <p className="text-[10px] text-emerald-600 font-semibold">
+                Caruman diluluskan aktif
+              </p>
+            </div>
+            <div className="h-14 w-14 bg-emerald-50 dark:bg-emerald-950/30 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
+              <DollarSign className="h-7 w-7" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* This major structural component card houses the active submission table grid awaiting manager validation. */}
+      {/* This card houses the evaluation data table grid populated with PENDING applications awaiting review. */}
       <Card className="border border-slate-200 dark:border-slate-800 shadow-lg bg-white dark:bg-card overflow-hidden">
         <CardHeader className="border-b border-border bg-muted/10 px-5 py-4">
-          <CardTitle className="text-sm font-bold text-foreground">Permohonan Zakat Menunggu Kelulusan</CardTitle>
-          <CardDescription className="text-[10px]">
-            Senarai permohonan aktif perlu ditentusahkan oleh pihak pengurusan
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold text-foreground">
+                Permohonan Zakat Menunggu Kelulusan
+              </CardTitle>
+              <CardDescription className="text-[10px] mt-0.5">
+                Senarai permohonan aktif perlu ditentusahkan oleh pihak pengurusan
+              </CardDescription>
+            </div>
+            {/* This badge renders the live pending count next to the table header title. */}
+            {pendingApps.length > 0 && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                <Clock className="h-3 w-3" />
+                {pendingApps.length} Menunggu
+              </span>
+            )}
+          </div>
         </CardHeader>
 
-        {/* This conditional rendering ternary wrapper determines whether to render the datagrid or the empty state fallback. */}
+        {/* This conditional block renders either the data table or the empty-state fallback. */}
         {pendingApps.length > 0 ? (
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -134,34 +181,54 @@ export function ZakatManagementApplicationProcessingTabComponent({
                     <th className="px-5 py-3">Jenis Potongan</th>
                     <th className="px-5 py-3">Bulan Bermula</th>
                     <th className="px-5 py-3">Amaun</th>
+                    <th className="px-5 py-3">Tarikh Hantar</th>
                     <th className="px-5 py-3 text-right">Tindakan</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60 text-xs">
-                  {/* This array data map iterates over each pending application to render its table row layout. */}
+                  {/* This map loop renders one table row per pending application record. */}
                   {pendingApps.map((app) => (
-                    <tr key={app.id} className="hover:bg-muted/5 transition-colors">
+                    <tr
+                      key={app.id}
+                      className="hover:bg-muted/5 transition-colors"
+                    >
                       <td className="px-5 py-3.5">
                         <div className="font-bold text-foreground">{app.namaPenuh}</div>
-                        <div className="text-[9px] text-muted-foreground font-mono">{app.noTelefon}</div>
+                        <div className="text-[9px] text-muted-foreground font-mono mt-0.5">
+                          {app.noKP}
+                        </div>
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="font-semibold text-muted-foreground">{app.noPekerja}</div>
+                        <div className="text-[9px] text-muted-foreground">{app.noTelefon}</div>
                       </td>
                       <td className="px-5 py-3.5">
+                        {/* This badge displays the human-readable label for the deduction type enum value. */}
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#002060]/10 text-[#002060] uppercase tracking-wide">
-                          {app.deductionType.replace(/_/g, " ")}
+                          {resolveDeductionLabel(app.deductionType)}
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <div className="font-semibold text-foreground">{app.bulanMula} {app.tahunMula}</div>
+                        <div className="font-semibold text-foreground">
+                          {app.bulanMula} {app.tahunMula}
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 font-bold text-[#002060] dark:text-blue-300">
-                        RM {getDeductionAmount(app).toFixed(2)}
+                        RM {resolveDeductionAmount(app).toFixed(2)}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="text-[10px] text-muted-foreground">
+                          {new Date(app.submittedAt).toLocaleDateString("ms-MY", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </div>
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        {/* This layout wrapper aligns the primary approve and secondary reject action buttons. */}
+                        {/* This action cell holds the primary approve and outline reject buttons per row. */}
                         <div className="flex items-center justify-end gap-2">
+                          {/* This approve button uses solid emerald fill as the primary transaction action. */}
                           <Button
                             size="sm"
                             disabled={isPendingTransition}
@@ -170,6 +237,7 @@ export function ZakatManagementApplicationProcessingTabComponent({
                           >
                             <Check className="h-3 w-3" /> Sahkan
                           </Button>
+                          {/* This reject button uses a neutral outline style that fills red only on hover for asymmetric hierarchy. */}
                           <Button
                             size="sm"
                             variant="outline"
@@ -186,14 +254,48 @@ export function ZakatManagementApplicationProcessingTabComponent({
                 </tbody>
               </table>
             </div>
+
+            {/* This summary footer renders the rejected and approved count below the pending table. */}
+            {(stats.totalApproved > 0 || stats.totalRejected > 0) && (
+              <div className="px-5 py-3 border-t border-border bg-muted/5 flex items-center gap-6 text-[10px] text-muted-foreground font-semibold">
+                <span className="flex items-center gap-1 text-emerald-600">
+                  <Check className="h-3 w-3" />
+                  {stats.totalApproved} Diluluskan
+                </span>
+                <span className="flex items-center gap-1 text-red-600">
+                  <XCircle className="h-3 w-3" />
+                  {stats.totalRejected} Ditolak
+                </span>
+              </div>
+            )}
           </CardContent>
         ) : (
-          <CardContent className="py-16 flex flex-col items-center justify-center gap-2">
-            <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center">
-              <Check className="h-6 w-6 text-emerald-600" />
+          // This empty-state fallback renders when no PENDING applications exist in the queue.
+          <CardContent className="py-16 flex flex-col items-center justify-center gap-3">
+            <div className="h-14 w-14 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+              <Check className="h-7 w-7 text-emerald-600" />
             </div>
-            <p className="text-muted-foreground text-xs font-medium">Tiada permohonan menunggu kelulusan pada masa ini.</p>
-            <p className="text-[10px] text-muted-foreground">Semua permohonan telah diproses.</p>
+            <div className="text-center space-y-1">
+              <p className="text-muted-foreground text-xs font-semibold">
+                Tiada permohonan menunggu kelulusan pada masa ini.
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {totalApplications === 0
+                  ? "Belum ada permohonan diterima. Kakitangan belum menghantar borang."
+                  : "Semua permohonan telah diproses sepenuhnya."}
+              </p>
+            </div>
+            {/* This status summary renders the full count context even when the queue is empty. */}
+            {totalApplications > 0 && (
+              <div className="flex items-center gap-4 mt-2 text-[10px] font-semibold">
+                <span className="flex items-center gap-1 text-emerald-600">
+                  <Check className="h-3 w-3" /> {stats.totalApproved} Diluluskan
+                </span>
+                <span className="flex items-center gap-1 text-red-600">
+                  <XCircle className="h-3 w-3" /> {stats.totalRejected} Ditolak
+                </span>
+              </div>
+            )}
           </CardContent>
         )}
       </Card>

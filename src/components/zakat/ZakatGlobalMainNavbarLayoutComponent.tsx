@@ -49,15 +49,15 @@ export function ZakatGlobalMainNavbarLayoutComponent({
     <header className="sticky top-0 z-45 w-full border-b border-border bg-white/95 backdrop-blur-md dark:bg-card/95 shadow-xs">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 
-        {/* This layout wrapper anchors the primary corporate identity logo on the far left. */}
+        {/* This layout wrapper anchors the primary corporate identity logo on the far left at h-14 height. */}
         <div className="flex items-center justify-start h-14 py-1 shrink-0">
           <Image
             src="/image_bb5246.png"
             alt="Logo UTHM"
-            width={180}
+            width={196}
             height={56}
             priority
-            className="h-12 w-auto object-contain select-none"
+            className="h-14 w-auto object-contain select-none"
             style={{ width: "auto" }}
           />
         </div>
@@ -71,9 +71,9 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                 <>
                   {/* This array data map renders the management tab navigation buttons. */}
                   {[
-                    { key: "proses", label: "Proses Permohonan", Icon: FileText },
-                    { key: "analisis", label: "Analisis Kutipan", Icon: TrendingUp },
-                    { key: "profile", label: "Profil Peribadi", Icon: UserIcon },
+                    { key: "proses",   label: "Proses Permohonan", Icon: FileText },
+                    { key: "analisis", label: "Analisis Kutipan",  Icon: TrendingUp },
+                    { key: "profile",  label: "Profil Peribadi",   Icon: UserIcon },
                   ].map(({ key, label, Icon }) => (
                     <button
                       key={key}
@@ -95,9 +95,9 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                 <>
                   {/* This array data map renders the staff employee tab navigation buttons. */}
                   {[
-                    { key: "info", label: "Maklumat Terkini", Icon: Info, match: ["info", "home", "news"] },
-                    { key: "form", label: "Borang Permohonan", Icon: FileText, match: ["form", "mohon"] },
-                    { key: "profile", label: "Profil Peribadi", Icon: UserIcon, match: ["profile"] },
+                    { key: "info",    label: "Maklumat Terkini", Icon: Info,     match: ["info", "home", "news"] },
+                    { key: "form",    label: "Borang Permohonan", Icon: FileText, match: ["form", "mohon"] },
+                    { key: "profile", label: "Profil Peribadi",  Icon: UserIcon, match: ["profile"] },
                   ].map(({ key, label, Icon, match }) => (
                     <button
                       key={key}
@@ -160,13 +160,14 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     </span>
                   </div>
                   <div className="border-t border-border pt-2">
+                    {/* This sign-out button scales and fills red on hover to signal the destructive action clearly. */}
                     <button
                       type="button"
                       onClick={() => {
                         setProfileDropdownOpen(false);
                         setSignOutModalOpen(true);
                       }}
-                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all select-none cursor-pointer text-left"
+                      className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-bold text-rose-600 hover:bg-red-600 hover:text-white hover:scale-105 dark:hover:bg-red-700 transition-all duration-200 select-none cursor-pointer text-left"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Log Keluar</span>

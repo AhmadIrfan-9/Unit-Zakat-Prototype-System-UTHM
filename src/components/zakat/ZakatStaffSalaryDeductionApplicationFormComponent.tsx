@@ -3,19 +3,45 @@
 "use client";
 
 import { useActionState, useState, useCallback, useRef } from "react";
-import { handleZakatDeductionSubmission, type ZakatStaffSalaryDeductionActionResult } from "@/app/actions/zakatDeductionServerActions";
-import { MALAY_MONTHS, NEGERI_LIST, type ZakatStaffSalaryDeductionFieldErrors } from "@/lib/validations/zakatDeductionValidationSchema";
+import {
+  submitZakatApplicationAction,
+  type ZakatSubmissionResult,
+} from "@/app/actions/zakatSubmissionServerActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { AlertCircle, HelpCircle } from "lucide-react";
+import {
+  AlertCircle,
+  HelpCircle,
+  CheckCircle2,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
 
-// This data model definition outlines the session-sourced personal attributes passed into the form.
+// This constant array stores the official Bahasa Melayu month names rendered in the deduction start month selector.
+const MALAY_MONTHS = [
+  "Januari", "Februari", "Mac", "April", "Mei", "Jun",
+  "Julai", "Ogos", "September", "Oktober", "November", "Disember",
+] as const;
+
+// This constant array stores all valid Malaysian state names for the state dropdown selector.
+const NEGERI_LIST = [
+  "Johor", "Melaka", "Negeri Sembilan", "Pahang", "Selangor", "Terengganu",
+  "Kelantan", "Perak", "Pulau Pinang", "Kedah", "Perlis",
+  "W.P. Kuala Lumpur", "W.P. Putrajaya", "W.P. Labuan",
+] as const;
+
+// This data model outlines the session-sourced personal attributes passed into the application form.
 interface AuthenticatedUserProps {
   name?: string | null;
   email?: string | null;
@@ -25,19 +51,20 @@ interface AuthenticatedUserProps {
   alamatRumah?: string | null;
 }
 
-// This data model definition describes the component props structure for the salary deduction form.
-interface ZakatStaffSalaryDeductionApplicationFormProps {
+// This data model describes the component props structure for the salary deduction form container.
+interface FormProps {
   user: AuthenticatedUserProps;
+  onSwitchToProfile?: () => void;
 }
 
-// This data model definition extends standard input attributes with Ringgit-specific identifiers.
+// This data model extends standard input HTML attributes with Ringgit Malaysia-specific identifiers.
 interface RmInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   name: string;
   error?: string;
 }
 
-// This input component renders a Ringgit Malaysia prefix field with a focused ring highlight.
+// This sub-component renders a prefixed RM currency input with a focused ring highlight on interaction.
 function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps) {
   return (
     <div className="flex flex-col gap-1 w-full">
@@ -55,6 +82,7 @@ function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps
           id={id}
           name={name}
           type="text"
+          inputMode="decimal"
           placeholder="0.00"
           disabled={disabled}
           className={cn(
@@ -69,7 +97,7 @@ function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps
   );
 }
 
-// This data model definition describes the props for each deduction option row.
+// This data model defines the props for a single selectable deduction type option row.
 interface SectionCRowProps {
   value: string;
   label: string;
@@ -80,8 +108,16 @@ interface SectionCRowProps {
   children?: React.ReactNode;
 }
 
-// This component renders one selectable deduction method option row with an institutional definition tooltip.
-function SectionCRow({ value, label, selected, onSelect, disabled, tooltipText, children }: SectionCRowProps) {
+// This sub-component renders one selectable deduction method row with an accessible tooltip definition.
+function SectionCRow({
+  value,
+  label,
+  selected,
+  onSelect,
+  disabled,
+  tooltipText,
+  children,
+}: SectionCRowProps) {
   const isSelected = selected === value;
   return (
     <div
@@ -112,7 +148,7 @@ function SectionCRow({ value, label, selected, onSelect, disabled, tooltipText, 
           </Label>
         </div>
 
-        {/* This layout wrapper renders the icon-based accessible tooltip button for the deduction method definition. */}
+        {/* This tooltip wrapper displays an institutional definition card on hover or keyboard focus. */}
         <div className="relative group inline-block shrink-0">
           <button
             type="button"
@@ -121,16 +157,17 @@ function SectionCRow({ value, label, selected, onSelect, disabled, tooltipText, 
           >
             <HelpCircle className="h-4 w-4" />
           </button>
-          {/* This conditional rendering block displays the tooltip definition card on hover or focus. */}
           <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-white dark:bg-card border border-border text-foreground rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 z-50 text-xs font-normal leading-normal">
-            <div className="font-bold text-[#002060] mb-1 text-[10px] uppercase tracking-wider">Definisi Institusi</div>
+            <div className="font-bold text-[#002060] mb-1 text-[10px] uppercase tracking-wider">
+              Definisi Institusi
+            </div>
             <p className="text-muted-foreground">{tooltipText}</p>
             <div className="absolute top-full right-3 border-4 border-transparent border-t-white dark:border-t-card" />
           </div>
         </div>
       </div>
 
-      {/* This conditional rendering block expands the child amount fields when this row is selected. */}
+      {/* This conditional block expands the nested amount fields when this deduction row is selected. */}
       {isSelected && children && (
         <div className="ml-8 mt-1 border-l-2 border-[#002060]/20 pl-4 space-y-4">
           {children}
@@ -140,85 +177,94 @@ function SectionCRow({ value, label, selected, onSelect, disabled, tooltipText, 
   );
 }
 
-// This main form component coordinates the read-only applicant header, deduction type selections, and formal declaration lifecycle.
-export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: ZakatStaffSalaryDeductionApplicationFormProps) {
-  // This state hook manages the server action submission lifecycle and result state.
-  const [state, dispatch, isPending] = useActionState<ZakatStaffSalaryDeductionActionResult | null, FormData>(
-    handleZakatDeductionSubmission,
+// This main form component coordinates the read-only applicant header, deduction type selectors, and DBP success banner lifecycle.
+export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwitchToProfile }: FormProps) {
+
+  // This action state hook wires the server action to the form and tracks its pending and result states.
+  const [state, dispatch, isPending] = useActionState<ZakatSubmissionResult | null, FormData>(
+    submitZakatApplicationAction,
     null
   );
 
-  // This state hook tracks the active deduction type selection.
+  // This state hook tracks the currently selected deduction type option.
   const [selectedType, setSelectedType] = useState<string | null>(null);
 
-  // This state hook tracks the selected deduction start month.
+  // This state hook tracks the selected deduction start month value.
   const [bulanMula, setBulanMula] = useState<string>("");
 
-  // This state hook tracks the selected deduction start year.
+  // This state hook tracks the selected deduction start year value.
   const [tahunMula, setTahunMula] = useState<string>("");
 
-  // This state hook tracks the official deduction amount entered by the applicant.
+  // This state hook tracks the official deduction amount entered in the lafaz declaration field.
   const [targetDeductionValue, setTargetDeductionValue] = useState<string>("");
 
-  // This state hook tracks whether the lafaz declaration checkbox is confirmed.
+  // This state hook tracks whether the lafaz declaration checkbox has been confirmed by the user.
   const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
 
-  // This state hook tracks whether the Akta 709 personal data consent checkbox is confirmed.
+  // This state hook tracks whether the Akta 709 personal data consent checkbox has been confirmed.
   const [persetujuanAkta709, setPersetujuanAkta709] = useState<boolean>(false);
 
-  // This state hook controls the visibility of the submission confirmation modal.
+  // This state hook controls the visibility of the pre-submission confirmation modal dialog.
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const formRef = useRef<HTMLFormElement>(null);
+  // This ref connects to the hidden submit button that triggers the server action form dispatch.
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
 
-  // This callback toggles or clears the active deduction type selection.
+  // This memoized callback toggles or deselects the active deduction type option.
   const handleTypeSelect = useCallback((type: string) => {
     setSelectedType((prev) => (prev === type ? null : type));
   }, []);
 
-  // This utility extracts a specific field validation error from the server action response.
-  const err = (field: keyof ZakatStaffSalaryDeductionFieldErrors): string | undefined => {
+  // This helper extracts a specific field validation error string from the server action response.
+  const err = (field: string): string | undefined => {
     if (state?.success === false && state.fieldErrors) {
-      return state.fieldErrors[field]?.[0];
+      return (state.fieldErrors as Record<string, string[]>)[field]?.[0];
     }
     return undefined;
   };
 
-  // This function triggers the hidden native form submit after modal confirmation.
+  // This function executes the hidden form submit after the confirmation modal is accepted.
   const handleConfirmSubmit = () => {
     setIsConfirmOpen(false);
     hiddenSubmitRef.current?.click();
   };
 
+  // This computed flag resolves whether the server action returned a successful write result.
   const isSuccess = state?.success === true;
 
-  // This conditional rendering block shows the DBP-compliant success receipt panel after submission.
-  if (isSuccess && state?.data) {
+  // This block generates a dynamic year range for the tahun mula deduction start year selector.
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => String(currentYear + i));
+
+  // This conditional block renders the DBP-compliant success receipt panel upon a confirmed database write.
+  if (isSuccess && state.applicationId) {
     return (
-      // This major structural component card displays the official application receipt after successful submission.
+      // This major structural card displays the official application receipt after successful submission.
       <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/10 w-full animate-in fade-in duration-300">
-        <CardContent className="pt-8 text-center space-y-5">
+        <CardContent className="pt-8 pb-8 text-center space-y-5">
+
+          {/* This success icon container renders an animated bouncing check badge. */}
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 animate-bounce">
-            <svg className="h-8 w-8 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
 
-          {/* This layout wrapper displays the Dewan Bahasa dan Pustaka validated formal submission confirmation message. */}
+          {/* This DBP-validated banner delivers the official submission confirmation text payload. */}
           <div className="bg-emerald-600 text-white font-bold px-6 py-4 rounded-xl shadow-md max-w-2xl mx-auto text-xs sm:text-sm tracking-wide leading-relaxed">
-            Permohonan Berjaya Dihantar. Borang anda telah diterima secara rasmi dan akan diproses dalam tempoh masa yang ditetapkan oleh Unit Pengurusan Zakat UTHM.
+            {state.message}
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-lg font-bold text-emerald-800 dark:text-emerald-300">Hantaran Borang Selesai!</h3>
+            <h3 className="text-lg font-bold text-emerald-800 dark:text-emerald-300">
+              Hantaran Borang Selesai!
+            </h3>
             <p className="text-xs text-emerald-700 dark:text-emerald-400 max-w-md mx-auto">
               Permohonan potongan zakat gaji anda berjaya direkodkan dalam pangkalan data UTHM.
             </p>
           </div>
 
+          {/* This reference display renders the unique application ID for audit tracing purposes. */}
           <div className="inline-block px-4 py-2 bg-background border rounded-lg shadow-xs text-xs font-mono font-bold text-muted-foreground select-all">
-            No. Rujukan: {state.data.applicationId}
+            No. Rujukan: {state.applicationId}
           </div>
 
           <div className="pt-4">
@@ -236,28 +282,32 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
     );
   }
 
-  const years = Array.from({ length: 10 }, (_, i) => String(2026 + i));
-
   return (
-    // This layout wrapper contains the entire salary deduction form submission tree.
-    <form ref={formRef} action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
-      {selectedType && <input type="hidden" name="deductionType" value={selectedType} />}
-      <input type="hidden" name="namaPenuh" value={user.name ?? ""} />
-      <input type="hidden" name="noKP" value={user.noKP ?? ""} />
-      <input type="hidden" name="noPekerja" value={user.noPekerja ?? ""} />
-      <button type="submit" ref={hiddenSubmitRef} className="hidden" />
+    // This layout wrapper contains the complete salary deduction application form tree.
+    <form action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
 
-      {/* This conditional rendering block overlays the loading spinner during server action processing. */}
+      {/* These hidden inputs inject the session-sourced immutable identity values into the form payload. */}
+      <input type="hidden" name="namaPenuh"  value={user.name      ?? ""} />
+      <input type="hidden" name="noKP"       value={user.noKP      ?? ""} />
+      <input type="hidden" name="noPekerja"  value={user.noPekerja ?? ""} />
+      {selectedType && <input type="hidden" name="deductionType" value={selectedType} />}
+
+      {/* This hidden button is the actual native form submit target triggered by the confirmation modal. */}
+      <button type="submit" ref={hiddenSubmitRef} className="hidden" aria-hidden="true" />
+
+      {/* This full-screen overlay renders the loading spinner during the server action pending state. */}
       {isPending && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="flex flex-col items-center gap-3 bg-white dark:bg-card p-6 rounded-xl shadow-2xl border border-border">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-[#002060]" />
-            <p className="text-xs font-bold text-[#002060] dark:text-blue-300">Memproses permohonan anda...</p>
+            <Loader2 className="h-10 w-10 animate-spin text-[#002060]" />
+            <p className="text-xs font-bold text-[#002060] dark:text-blue-300">
+              Memproses permohonan anda...
+            </p>
           </div>
         </div>
       )}
 
-      {/* This major structural component card displays the read-only session-sourced applicant identity block. */}
+      {/* This read-only metadata card block auto-populates session identity values in a 3-column grid with the address spanning full width. */}
       <div className="bg-[#002060]/5 border border-[#002060]/10 rounded-xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4 border-b border-[#002060]/15 pb-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[#002060]">
@@ -267,41 +317,72 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             Sesi Disahkan
           </span>
         </div>
-        {/* This layout wrapper arranges the four identity metadata labels in a responsive four-column grid. */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+        {/* This three-column grid renders Nama Penuh, No. KP, and No. Pekerja in the first row. */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Nama Penuh</span>
-            <span className="text-xs font-semibold text-[#002060] block truncate">{user.name ?? "-"}</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+              Nama Penuh
+            </span>
+            <span className="text-xs font-semibold text-[#002060] block truncate">
+              {user.name ?? "—"}
+            </span>
           </div>
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">No. Kad Pengenalan</span>
-            <span className="text-xs font-semibold text-foreground block">{user.noKP ?? "-"}</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+              No. Kad Pengenalan
+            </span>
+            <span className="text-xs font-semibold text-foreground block">
+              {user.noKP ?? "—"}
+            </span>
           </div>
           <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">No. Pekerja</span>
-            <span className="text-xs font-semibold text-foreground block">{user.noPekerja ?? "-"}</span>
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+              No. Pekerja
+            </span>
+            <span className="text-xs font-semibold text-foreground block">
+              {user.noPekerja ?? "—"}
+            </span>
           </div>
-          <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Gaji Semasa</span>
-            <span className="text-xs font-bold text-[#002060] block">
-              {user.gajiSemasa != null ? `RM ${user.gajiSemasa.toFixed(2)}` : "RM 0.00"}
+
+          {/* This address field spans all three columns in the second row for full readability. */}
+          <div className="md:col-span-3 space-y-1">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                Alamat Rumah
+              </span>
+              {/* This deep-link button switches the active workspace tab to the editable profile panel. */}
+              {onSwitchToProfile && (
+                <button
+                  type="button"
+                  onClick={onSwitchToProfile}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[#002060] hover:underline hover:text-[#002060]/80 transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Kemaskini Alamat
+                </button>
+              )}
+            </div>
+            <span className="text-xs font-semibold text-foreground block leading-relaxed">
+              {user.alamatRumah ?? "—"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* This layout wrapper groups the contact details and residential address fields of Bahagian A. */}
+      {/* This section header labels the personal contact and address inputs of Bahagian A. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
-            BAHAGIAN A: MAKLUMAT PERIBADI (PROFIL KAKITANGAN)
+            BAHAGIAN A: MAKLUMAT HUBUNGAN
           </h2>
         </div>
 
-        {/* This major structural component card notifies users how to amend fixed identity records. */}
+        {/* This amber notice banner informs staff how to request corrections to locked identity fields. */}
         <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
           <p className="leading-relaxed">
-            <strong>Pemberitahuan Pindaan:</strong> Untuk membetulkan nama atau maklumat profil, sila hubungi bahagian penggajian zakat.
+            <strong>Pemberitahuan Pindaan:</strong> Untuk membetulkan nama atau maklumat profil,
+            sila hubungi bahagian penggajian zakat.
           </p>
           <a
             href={`mailto:zakat-desk@uthm.edu.my?subject=Pindaan%20Profil%20Zakat%20-%20${user.noPekerja ?? ""}`}
@@ -311,7 +392,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </a>
         </div>
 
-        {/* This layout wrapper arranges the editable contact and address fields in a responsive grid. */}
+        {/* This grid lays out the editable contact number, address, postcode, city, and state fields. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2 space-y-1">
             <Label htmlFor="noTelefon" className="font-semibold text-xs text-[#002060]">
@@ -324,41 +405,62 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
               className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
               placeholder="Contoh: 0123456789"
             />
-            {err("noTelefon") && <p className="text-xs text-destructive font-medium">{err("noTelefon")}</p>}
+            {err("noTelefon") && (
+              <p className="text-xs text-destructive font-medium">{err("noTelefon")}</p>
+            )}
           </div>
 
           <div className="sm:col-span-2 space-y-1">
             <Label htmlFor="alamatRumah" className="font-semibold text-xs text-[#002060]">
               Alamat Kediaman <span className="text-destructive">*</span>
             </Label>
-            <Textarea
+            <textarea
               id="alamatRumah"
               name="alamatRumah"
               defaultValue={user.alamatRumah ?? ""}
               disabled={isPending}
-              className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs"
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002060] focus-visible:ring-offset-2 focus-visible:border-[#002060] disabled:cursor-not-allowed disabled:opacity-50 resize-none"
               placeholder="Masukkan alamat kediaman lengkap"
               rows={3}
             />
-            {err("alamatRumah") && <p className="text-xs text-destructive font-medium">{err("alamatRumah")}</p>}
+            {err("alamatRumah") && (
+              <p className="text-xs text-destructive font-medium">{err("alamatRumah")}</p>
+            )}
           </div>
 
-          {/* This layout wrapper arranges the postcode, city, and state selectors in a three-column row. */}
+          {/* This three-column sub-grid renders the postcode, city, and state selectors. */}
           <div className="grid grid-cols-3 sm:col-span-2 gap-4">
             <div className="space-y-1 col-span-1">
               <Label htmlFor="poskod" className="font-semibold text-xs text-[#002060]">
                 Poskod <span className="text-destructive">*</span>
               </Label>
-              <Input id="poskod" name="poskod" maxLength={5} disabled={isPending} className="focus-visible:ring-[#002060] text-xs h-9" placeholder="86400" />
-              {err("poskod") && <p className="text-xs text-destructive font-medium">{err("poskod")}</p>}
+              <Input
+                id="poskod"
+                name="poskod"
+                maxLength={5}
+                disabled={isPending}
+                className="focus-visible:ring-[#002060] text-xs h-9"
+                placeholder="86400"
+              />
+              {err("poskod") && (
+                <p className="text-xs text-destructive font-medium">{err("poskod")}</p>
+              )}
             </div>
 
             <div className="space-y-1 col-span-1">
               <Label htmlFor="bandar" className="font-semibold text-xs text-[#002060]">
                 Bandar <span className="text-destructive">*</span>
               </Label>
-              <Input id="bandar" name="bandar" disabled={isPending} className="focus-visible:ring-[#002060] text-xs h-9" placeholder="Parit Raja" />
-              {err("bandar") && <p className="text-xs text-destructive font-medium">{err("bandar")}</p>}
+              <Input
+                id="bandar"
+                name="bandar"
+                disabled={isPending}
+                className="focus-visible:ring-[#002060] text-xs h-9"
+                placeholder="Parit Raja"
+              />
+              {err("bandar") && (
+                <p className="text-xs text-destructive font-medium">{err("bandar")}</p>
+              )}
             </div>
 
             <div className="space-y-1 col-span-1">
@@ -370,19 +472,23 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
                   <SelectValue placeholder="Pilih Negeri" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
-                  {/* This array data map renders the state dropdown options. */}
+                  {/* This array map renders all valid Malaysian state options in the state dropdown. */}
                   {NEGERI_LIST.map((neg) => (
-                    <SelectItem key={neg} value={neg}>{neg}</SelectItem>
+                    <SelectItem key={neg} value={neg}>
+                      {neg}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {err("negeri") && <p className="text-xs text-destructive font-medium">{err("negeri")}</p>}
+              {err("negeri") && (
+                <p className="text-xs text-destructive font-medium">{err("negeri")}</p>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* This layout wrapper groups the four salary deduction method option rows of Bahagian C. */}
+      {/* This section header labels the four selectable deduction method rows of Bahagian C. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
@@ -390,7 +496,6 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
-        {/* This layout wrapper stacks the four selectable deduction method rows vertically. */}
         <div className="space-y-3">
           <SectionCRow
             value="ORIGINAL_PCB_CHANGE"
@@ -402,12 +507,26 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
               <div className="space-y-1.5">
-                <Label htmlFor="amaunPcbAsal" className="text-xs font-semibold text-muted-foreground">Potongan PCB Asal</Label>
-                <RmInput id="amaunPcbAsal" name="amaunPcbAsal" disabled={isPending} error={err("amaunPcbAsal")} />
+                <Label htmlFor="amaunPcbAsal" className="text-xs font-semibold text-muted-foreground">
+                  Potongan PCB Asal
+                </Label>
+                <RmInput
+                  id="amaunPcbAsal"
+                  name="amaunPcbAsal"
+                  disabled={isPending}
+                  error={err("amaunPcbAsal")}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="amaunZakatBulanan" className="text-xs font-semibold text-muted-foreground">Potongan Zakat Baru Sebulan</Label>
-                <RmInput id="amaunZakatBulanan" name="amaunZakatBulanan" disabled={isPending} error={err("amaunZakatBulanan")} />
+                <Label htmlFor="amaunZakatBulanan-pcb" className="text-xs font-semibold text-muted-foreground">
+                  Potongan Zakat Baru Sebulan
+                </Label>
+                <RmInput
+                  id="amaunZakatBulanan-pcb"
+                  name="amaunZakatBulanan"
+                  disabled={isPending}
+                  error={err("amaunZakatBulanan")}
+                />
               </div>
             </div>
           </SectionCRow>
@@ -421,8 +540,15 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             tooltipText="Caruman zakat bulanan dengan amaun tetap dan konsisten yang dipilih sendiri oleh pemohon setiap bulan."
           >
             <div className="max-w-xs space-y-1.5">
-              <Label htmlFor="amaunZakatBulanan-fixed" className="text-xs font-semibold text-muted-foreground">Jumlah Potongan Tetap Sebulan</Label>
-              <RmInput id="amaunZakatBulanan-fixed" name="amaunZakatBulanan" disabled={isPending} error={err("amaunZakatBulanan")} />
+              <Label htmlFor="amaunZakatBulanan-fixed" className="text-xs font-semibold text-muted-foreground">
+                Jumlah Potongan Tetap Sebulan
+              </Label>
+              <RmInput
+                id="amaunZakatBulanan-fixed"
+                name="amaunZakatBulanan"
+                disabled={isPending}
+                error={err("amaunZakatBulanan")}
+              />
             </div>
           </SectionCRow>
 
@@ -436,12 +562,26 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
               <div className="space-y-1.5">
-                <Label htmlFor="amaunZakatAsal" className="text-xs font-semibold text-muted-foreground">Daripada (Amaun Semasa)</Label>
-                <RmInput id="amaunZakatAsal" name="amaunZakatAsal" disabled={isPending} error={err("amaunZakatAsal")} />
+                <Label htmlFor="amaunZakatAsal" className="text-xs font-semibold text-muted-foreground">
+                  Daripada (Amaun Semasa)
+                </Label>
+                <RmInput
+                  id="amaunZakatAsal"
+                  name="amaunZakatAsal"
+                  disabled={isPending}
+                  error={err("amaunZakatAsal")}
+                />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="amaunZakatBaru" className="text-xs font-semibold text-muted-foreground">Kepada (Amaun Baru)</Label>
-                <RmInput id="amaunZakatBaru" name="amaunZakatBaru" disabled={isPending} error={err("amaunZakatBaru")} />
+                <Label htmlFor="amaunZakatBaru" className="text-xs font-semibold text-muted-foreground">
+                  Kepada (Amaun Baru)
+                </Label>
+                <RmInput
+                  id="amaunZakatBaru"
+                  name="amaunZakatBaru"
+                  disabled={isPending}
+                  error={err("amaunZakatBaru")}
+                />
               </div>
             </div>
           </SectionCRow>
@@ -455,7 +595,8 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             tooltipText="Kadar caruman zakat diselaraskan secara automatik menyamai amaun Potongan Cukai Bulanan (PCB) aktif — tiada input manual diperlukan."
           >
             <p className="text-xs text-muted-foreground leading-relaxed italic">
-              * Tiada pengisian amaun diperlukan. Sistem akan menyelaraskan amaun potongan zakat bulanan anda secara automatik menyamai Potongan Cukai Bulanan (PCB) semasa.
+              * Tiada pengisian amaun diperlukan. Sistem akan menyelaraskan amaun potongan zakat
+              bulanan anda secara automatik menyamai Potongan Cukai Bulanan (PCB) semasa.
             </p>
           </SectionCRow>
 
@@ -465,7 +606,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </div>
       </div>
 
-      {/* This layout wrapper groups the formal lafaz declaration fields and acknowledgement checkboxes of Bahagian D. */}
+      {/* This section header labels the lafaz declaration and consent acknowledgement area of Bahagian D. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
@@ -476,7 +617,8 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         <div className="space-y-4">
           <div className="max-w-xs space-y-1.5">
             <Label htmlFor="targetDeductionValue" className="font-semibold text-xs text-[#002060]">
-              Amaun Potongan Zakat Bulanan Rasmi (RM) <span className="text-destructive">*</span>
+              Amaun Potongan Zakat Bulanan Rasmi (RM){" "}
+              <span className="text-destructive">*</span>
             </Label>
             <RmInput
               id="targetDeductionValue"
@@ -488,7 +630,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             />
           </div>
 
-          {/* This layout wrapper places the start month and year selectors side-by-side. */}
+          {/* This two-column grid places the start month and start year selectors side-by-side. */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="bulanMula" className="font-semibold text-xs text-[#002060]">
@@ -499,13 +641,17 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
                   <SelectValue placeholder="Pilih Bulan" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
-                  {/* This array data map renders the Malay month names as dropdown options. */}
+                  {/* This array map renders the twelve Bahasa Melayu month names as dropdown options. */}
                   {MALAY_MONTHS.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {err("bulanMula") && <p className="text-xs text-destructive font-medium">{err("bulanMula")}</p>}
+              {err("bulanMula") && (
+                <p className="text-xs text-destructive font-medium">{err("bulanMula")}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -517,17 +663,21 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
                   <SelectValue placeholder="Pilih Tahun" />
                 </SelectTrigger>
                 <SelectContent className="max-h-56">
-                  {/* This array data map renders the available deduction start year options. */}
+                  {/* This array map renders the available deduction start year options from the current year forward. */}
                   {years.map((y) => (
-                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {err("tahunMula") && <p className="text-xs text-destructive font-medium">{err("tahunMula")}</p>}
+              {err("tahunMula") && (
+                <p className="text-xs text-destructive font-medium">{err("tahunMula")}</p>
+              )}
             </div>
           </div>
 
-          {/* This major structural component card renders the live lafaz declaration text preview. */}
+          {/* This amber card renders the live-preview lafaz declaration text populated from the user's form inputs. */}
           <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs">
             <p className="text-sm text-amber-900 font-semibold mb-2">Lafaz Niat Zakat Gaji:</p>
             <p className="text-sm leading-relaxed text-foreground font-medium italic">
@@ -546,11 +696,14 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             </p>
           </div>
 
+          {/* This checkbox block captures the lafaz declaration acknowledgment from the staff member. */}
           <div className="space-y-1">
             <div
               className={cn(
                 "flex items-start gap-3 rounded-lg border p-4 bg-card/40",
-                err("pengesahanLafaz") ? "border-destructive bg-destructive/5" : "border-border hover:bg-card/70"
+                err("pengesahanLafaz")
+                  ? "border-destructive bg-destructive/5"
+                  : "border-border hover:bg-card/70"
               )}
             >
               <Checkbox
@@ -562,18 +715,27 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
                 disabled={isPending}
                 className="mt-0.5 h-5 w-5 rounded border-muted-foreground/40 data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
               />
-              <Label htmlFor="pengesahanLafaz" className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none">
-                Saya mengesahkan dengan ini akad lafaz pembayaran zakat gaji di atas dibaca dengan penuh kesedaran dan persetujuan bertulis.
+              <Label
+                htmlFor="pengesahanLafaz"
+                className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none"
+              >
+                Saya mengesahkan dengan ini akad lafaz pembayaran zakat gaji di atas dibaca dengan
+                penuh kesedaran dan persetujuan bertulis.
               </Label>
             </div>
-            {err("pengesahanLafaz") && <p className="text-xs text-destructive font-medium mt-1">{err("pengesahanLafaz")}</p>}
+            {err("pengesahanLafaz") && (
+              <p className="text-xs text-destructive font-medium mt-1">{err("pengesahanLafaz")}</p>
+            )}
           </div>
 
+          {/* This checkbox block captures the Akta 709 personal data protection consent from the staff member. */}
           <div className="space-y-1">
             <div
               className={cn(
                 "flex items-start gap-3 rounded-lg border p-4 bg-card/40",
-                err("persetujuanAkta709") ? "border-destructive bg-destructive/5" : "border-border hover:bg-card/70"
+                err("persetujuanAkta709")
+                  ? "border-destructive bg-destructive/5"
+                  : "border-border hover:bg-card/70"
               )}
             >
               <Checkbox
@@ -585,22 +747,30 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
                 disabled={isPending}
                 className="mt-0.5 h-5 w-5 rounded border-muted-foreground/40 data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
               />
-              <Label htmlFor="persetujuanAkta709" className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none">
-                Saya memberikan kebenaran bertulis pemprosesan maklumat peribadi selaras dengan Akta Perlindungan Data Peribadi 2010 (Akta 709).
+              <Label
+                htmlFor="persetujuanAkta709"
+                className="cursor-pointer text-xs leading-relaxed text-muted-foreground select-none"
+              >
+                Saya memberikan kebenaran bertulis pemprosesan maklumat peribadi selaras dengan
+                Akta Perlindungan Data Peribadi 2010 (Akta 709).
               </Label>
             </div>
-            {err("persetujuanAkta709") && <p className="text-xs text-destructive font-medium mt-1">{err("persetujuanAkta709")}</p>}
+            {err("persetujuanAkta709") && (
+              <p className="text-xs text-destructive font-medium mt-1">{err("persetujuanAkta709")}</p>
+            )}
           </div>
         </div>
       </div>
 
+      {/* This error banner renders any non-field-level server error messages returned from the action. */}
       {state?.success === false && !state.fieldErrors && (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive font-semibold">
-          {state.error}
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
+          <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+          <p className="text-sm text-destructive font-semibold">{state.error}</p>
         </div>
       )}
 
-      {/* This layout wrapper centers the primary submission button at the base of the form. */}
+      {/* This centered submit button area places the emerald green primary action button at the base of the form. */}
       <div className="pt-4 flex justify-center">
         <Button
           type="button"
@@ -613,14 +783,20 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           aria-busy={isPending}
           className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50"
         >
-          {isPending ? "MEMPROSES..." : "HANTAR BORANG PERMOHONAN"}
+          {isPending ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              MEMPROSES...
+            </span>
+          ) : (
+            "HANTAR BORANG PERMOHONAN"
+          )}
         </Button>
       </div>
 
-      {/* This conditional rendering block overlays the submission confirmation modal dialog. */}
+      {/* This confirmation modal overlay requires the user to explicitly accept before the form payload is dispatched. */}
       {isConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
-          {/* This major structural component card prompts the user to confirm their form submission. */}
           <div className="w-full max-w-sm border border-border shadow-2xl rounded-xl bg-white dark:bg-card p-6 space-y-4 animate-in zoom-in-95 duration-200 text-left">
             <div className="flex items-center gap-3 text-amber-600">
               <div className="h-10 w-10 bg-amber-50 dark:bg-amber-950/40 rounded-full flex items-center justify-center shrink-0">
@@ -629,9 +805,11 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
               <h3 className="font-bold text-sm text-foreground">Sahkan Penghantaran Borang</h3>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Adakah anda bersetuju untuk menghantar borang permohonan potongan zakat gaji ini dan mengaktifkan lafaz akad secara sah?
+              Adakah anda bersetuju untuk menghantar borang permohonan potongan zakat gaji ini dan
+              mengaktifkan lafaz akad secara sah?
             </p>
             <div className="flex items-center justify-end gap-3 pt-2">
+              {/* This cancel button uses a neutral outline style that fills red only on hover for asymmetric button hierarchy. */}
               <Button
                 type="button"
                 variant="outline"
@@ -641,6 +819,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
               >
                 Batal
               </Button>
+              {/* This confirm button uses a solid emerald fill as the primary transaction confirmation action. */}
               <Button
                 type="button"
                 onClick={handleConfirmSubmit}

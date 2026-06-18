@@ -61,7 +61,7 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
     router.push(`/dashboard/zakat?tab=${tab}`, { scroll: false });
   };
 
-  // This fallback variable model resolves the active view scope from the current tab state.
+  // This fallback variable model resolves the active view scope from the current tab state using strict equality checks.
   const viewScope =
     activeTab === "form" || activeTab === "mohon"
       ? "mohon"
@@ -112,37 +112,36 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
       {/* This major structural component provides the max-w-7xl container for all staff content panels. */}
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
 
-        {/* This conditional rendering block mounts the user profile card exclusively when the profile tab is active. */}
-        {viewScope === "profile" && (
+        {/* This conditional rendering block mounts the user profile card exclusively when the profile tab is strictly active; returns null otherwise. */}
+        {viewScope === "profile" ? (
           <div className="w-full max-w-3xl mx-auto">
             <ZakatStaffProfileManagementCardComponent />
           </div>
-        )}
+        ) : null}
 
-        {/* This conditional rendering block mounts the news hub and Nisab metric row exclusively when the home tab is active. */}
-        {viewScope === "home" && (
+        {/* This conditional rendering block mounts the news hub and Nisab metric row exclusively when the home tab is strictly active; returns null otherwise. */}
+        {viewScope === "home" ? (
           <div className="space-y-8">
             <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
-
             {/* This conditional rendering block displays the news announcements grid only on the home/news/info scope. */}
-            {(activeTab === "info" || activeTab === "news" || activeTab === "home") && (
-              <ZakatStaffNewsAnnouncementsComponent />
-            )}
+            <ZakatStaffNewsAnnouncementsComponent />
           </div>
-        )}
+        ) : null}
 
-        {/* This conditional rendering block mounts the salary deduction form exclusively when the mohon tab is active. */}
-        {viewScope === "mohon" && (
+        {/* This conditional rendering block mounts the salary deduction form exclusively when the mohon tab is strictly active; returns null otherwise. */}
+        {viewScope === "mohon" ? (
           <div className="space-y-8">
             <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
-
             <div className="w-full max-w-3xl mx-auto">
               <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
-                <ZakatStaffSalaryDeductionApplicationFormComponent user={user} />
+                <ZakatStaffSalaryDeductionApplicationFormComponent
+                  user={user}
+                  onSwitchToProfile={() => handleTabChange("profile")}
+                />
               </Card>
             </div>
           </div>
-        )}
+        ) : null}
 
       </main>
     </div>

@@ -1,5 +1,5 @@
 // src/app/dashboard/pengurusan/page.tsx
-// This directive forces server-side rendering on every request to ensure fresh application data is always displayed.
+// This executive page template initializes analytical data feeds and structures a type-safe user session context equipped with robust string fallbacks.
 export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
@@ -8,38 +8,39 @@ import { fetchManagementAnalyticsDashboardData } from "@/app/actions/zakatSalary
 import { ZakatManagementDashboardMasterViewComponent } from "@/components/zakat/ZakatManagementDashboardMasterViewComponent";
 import type { Metadata } from "next";
 
-// Define meta details for the administrative management dashboard portal.
+// This metadata block configures the browser tab title and description for the management analytics portal.
 export const metadata: Metadata = {
   title: "Dashboard Pengurusan | Sistem Caruman Zakat Gaji UTHM",
-  description: "Uruskan permohonan potongan zakat kakitangan UTHM dan analisis data caruman bulanan.",
+  description:
+    "Uruskan permohonan potongan zakat kakitangan UTHM dan analisis data caruman bulanan.",
 };
 
 // This server component verifies user management roles and renders the analytics interface framework.
 export default async function ManagementDashboardPage() {
-  // Confirm that the user session is active and authenticated before rendering page templates.
+  // This guard redirects unauthenticated requests to the login page before any data is fetched.
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
 
-  // Restrict access exclusively to members of the management staff.
+  // This role gate blocks non-management users from accessing the executive dashboard and sends them to the staff portal.
   if (session.user.role !== "MANAGEMENT_STAFF") {
     redirect("/dashboard/zakat");
   }
 
-  // Retrieve analytical collection sums and workflow listings from database resources.
+  // This call fetches all analytical statistics and application records required by the management dashboard layout.
   const data = await fetchManagementAnalyticsDashboardData();
 
-  // Create a structured user session object for identity representation.
+  // This object constructs a type-safe, null-coalesced session identity record to prevent hook dependency array size shifts in child components.
   const formattedUser = {
-    name: session.user.name,
-    email: session.user.email,
-    noPekerja: session.user.noPekerja,
-    role: session.user.role,
+    name:      session?.user?.name      ?? "",
+    email:     session?.user?.email     ?? "",
+    noPekerja: session?.user?.noPekerja ?? "",
+    role:      session?.user?.role      ?? "MANAGEMENT_STAFF",
   };
 
   return (
-    // Renders the executive management dashboard layout wrapper.
+    // This component mounts the full executive management workspace including the single-ribbon navbar and analytics panels.
     <ZakatManagementDashboardMasterViewComponent
       stats={data.stats}
       chartData={data.chartData}

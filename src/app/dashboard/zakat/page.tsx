@@ -1,5 +1,5 @@
 // src/app/dashboard/zakat/page.tsx
-// This directive forces server-side rendering on every request to ensure the user profile is always loaded fresh.
+// This server view component validates employee session roles and rejects administrative profiles with an automatic redirect to the management dashboard.
 export const dynamic = "force-dynamic";
 
 import { auth } from "@/lib/auth";
@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { ZakatStaffDashboardMasterViewComponent } from "@/components/zakat/ZakatStaffDashboardMasterViewComponent";
 import type { Metadata } from "next";
 
-// Define metadata for the staff salary deduction form page.
+// This metadata block sets the browser tab title and search description for the staff application portal.
 export const metadata: Metadata = {
   title: "Permohonan Zakat Gaji | Sistem Caruman Zakat UTHM",
   description:
@@ -17,34 +17,40 @@ export const metadata: Metadata = {
 
 // This server component validates the session, retrieves staff database profiles, and renders the layout wrapper.
 export default async function ZakatApplicationPage() {
-  // Validate that the user is authenticated prior to rendering page assets.
+  // This guard redirects any unauthenticated request immediately to the login page.
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
 
-  // Fetch the user's fresh database profile to populate the form parameters.
+  // This query fetches the authenticated user's full database record to verify their role and populate form fields.
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
   });
 
+  // This guard redirects requests whose database record no longer exists back to the login page.
   if (!dbUser) {
     redirect("/login");
   }
 
-  // Format the user profile properties safely for the client form container component.
+  // This role gate prevents management staff from accessing the employee submission channel by forwarding them to their correct dashboard.
+  if (dbUser.role === "MANAGEMENT_STAFF") {
+    redirect("/dashboard/pengurusan");
+  }
+
+  // This object maps database columns to the stable, serializable shape expected by the client dashboard component.
   const formattedUser = {
-    name: dbUser.name,
-    email: dbUser.email,
-    noPekerja: dbUser.noPekerja,
-    noKP: dbUser.noKP,
-    gajiSemasa: dbUser.gajiSemasa ? Number(dbUser.gajiSemasa) : null,
-    alamatRumah: dbUser.alamatRumah,
-    role: dbUser.role,
+    name:        dbUser.name         ?? "",
+    email:       dbUser.email        ?? "",
+    noPekerja:   dbUser.noPekerja    ?? "",
+    noKP:        dbUser.noKP         ?? "",
+    gajiSemasa:  dbUser.gajiSemasa ? Number(dbUser.gajiSemasa) : null,
+    alamatRumah: dbUser.alamatRumah  ?? "",
+    role:        dbUser.role,
   };
 
   return (
-    // Renders the master view component which handles full navbar layout and contents.
+    // This component mounts the full single-ribbon staff workspace including navbar, tabs, and content panels.
     <ZakatStaffDashboardMasterViewComponent user={formattedUser} />
   );
 }

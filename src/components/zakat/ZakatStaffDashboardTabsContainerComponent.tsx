@@ -43,6 +43,7 @@ export function ZakatStaffDashboardTabsContainerComponent({ user }: ZakatStaffDa
               height={80}
               priority
               className="h-16 w-auto object-contain"
+              style={{ width: "auto" }}
             />
             
             {/* The secondary UTHM Zakat department logo display aligned underneath */}
@@ -53,6 +54,7 @@ export function ZakatStaffDashboardTabsContainerComponent({ user }: ZakatStaffDa
               height={60}
               priority
               className="h-10 w-auto object-contain mt-2"
+              style={{ width: "auto" }}
             />
             
             {/* Title header block for the salary deduction application */}

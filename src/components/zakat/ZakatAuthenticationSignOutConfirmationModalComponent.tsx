@@ -49,6 +49,7 @@ export function ZakatAuthenticationSignOutConfirmationModalComponent({
               height={38}
               priority
               className="h-9 w-auto object-contain select-none"
+              style={{ width: "auto" }}
             />
           </div>
           <div className="h-12 w-12 rounded-full bg-red-50 dark:bg-red-950/20 flex items-center justify-center text-red-650 animate-bounce">

@@ -211,6 +211,7 @@ export function ZakatManagementDashboardMasterViewComponent({
               height={130}
               priority
               className="h-24 w-auto object-contain bg-white p-2.5 rounded-xl shadow-xs select-none"
+              style={{ width: "auto" }}
             />
           </div>
         </div>

@@ -150,6 +150,7 @@ function LoginForm() {
                     height={40}
                     priority
                     className="h-10 w-auto object-contain"
+                    style={{ width: "auto" }}
                   />
                   <Image
                     src="/image_bb546b.png"
@@ -158,6 +159,7 @@ function LoginForm() {
                     height={30}
                     priority
                     className="h-8 w-auto object-contain"
+                    style={{ width: "auto" }}
                   />
                 </div>
 
@@ -247,6 +249,7 @@ function LoginForm() {
                     height={40}
                     priority
                     className="h-10 w-auto object-contain"
+                    style={{ width: "auto" }}
                   />
                   <Image
                     src="/image_bb546b.png"
@@ -255,6 +258,7 @@ function LoginForm() {
                     height={30}
                     priority
                     className="h-8 w-auto object-contain"
+                    style={{ width: "auto" }}
                   />
                 </div>
 

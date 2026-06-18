@@ -1,9 +1,10 @@
-// This document engine unmounts web-browser chrome components, forces a page-break before the AI insights card, and left-aligns the final verification blocks to match institutional auditing standards.
+// This report generator compiles data records into an official multi-page vector PDF asset with a clean corporate letterhead and left-aligned signature metrics.
 
 "use client";
 
 import Image from "next/image";
 
+// This data model definition describes the detailed properties of user deduction entries.
 interface ApplicationItem {
   id: string;
   namaPenuh: string;
@@ -21,6 +22,7 @@ interface ApplicationItem {
   adminNotes: string | null;
 }
 
+// This data model definition outlines the props accepted by the vector report compiler.
 interface ZakatExecutiveReportGeneratorDocumentProps {
   applications: ApplicationItem[];
   yearRange: string;
@@ -51,7 +53,7 @@ export function ZakatExecutiveReportGeneratorDocument({
   aiInsights
 }: ZakatExecutiveReportGeneratorDocumentProps) {
   
-  // This cell mapping reducer aggregates approved payments per faculty or defaults all sums to zero.
+  // This fallback variable model computes approved payment aggregates per faculty or defaults all sums to zero.
   const getFacultyData = () => {
     const faculties = ["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"];
     const sums: Record<string, number> = {};
@@ -86,7 +88,7 @@ export function ZakatExecutiveReportGeneratorDocument({
   const { data, totalSum } = getFacultyData();
   const isZeroState = totalSum === 0;
 
-  // This style object declaration outlines standard metrics for A4-page padding and structural layout lines.
+  // This fallback variable model defines standard metrics for A4-page padding and structural layout lines.
   const reportLayoutStyles = {
     containerClass: "w-full max-w-4xl mx-auto p-10 bg-white text-slate-900 border border-slate-200 rounded-none print:border-0 print:p-0 font-sans print-container",
     dividerClass: "border-t-2 border-[#002060] my-4"
@@ -112,7 +114,7 @@ export function ZakatExecutiveReportGeneratorDocument({
     // This major structural component layout block renders the complete A4 printable corporate audit document frame.
     <div className={reportLayoutStyles.containerClass}>
       
-      {/* This print action trigger injects print stylesheets to hide web application navigation chrome. */}
+      {/* This layout wrapper injects print stylesheets to hide web application navigation chrome. */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           header, section, nav, button, .no-print {
@@ -137,7 +139,7 @@ export function ZakatExecutiveReportGeneratorDocument({
         }
       `}} />
       
-      {/* Two-Column Corporate Letterhead row wrapper */}
+      {/* This layout wrapper structures the two-column corporate letterhead. */}
       <div className="flex items-center justify-between border-b-4 border-[#002060] pb-6 mb-6">
         <div className="flex-shrink-0">
           <Image
@@ -176,18 +178,18 @@ export function ZakatExecutiveReportGeneratorDocument({
         </div>
       </div>
 
-      {/* Formatted Audit Metadata Box container */}
+      {/* This layout wrapper styles the formal audit metadata box. */}
       <div className="bg-slate-100 border border-slate-200 rounded-md px-4 py-2.5 mb-6 flex flex-col sm:flex-row justify-between items-center text-[10px] font-mono text-slate-700 tracking-wider">
         <span>ID LAPORAN: RPT-ZKT-2026-9932</span>
         <span>TARIKH CETAKAN: 16 JUN 2026 PADA 02:58 PTG</span>
         <span>STATUS DOKUMEN: LAPORAN RASMI EKSEKUTIF</span>
       </div>
 
-      {/* High-Impact Monetary KPI Row container */}
+      {/* This layout wrapper displays high-impact monetary statistics cards. */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="border border-slate-200 rounded-lg p-3 text-center bg-white shadow-xs">
           <p className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest">JUMLAH KUTIPAN</p>
-          <p className="font-black text-[#002060] mt-1 tracking-tight" style={{ fontSize: "24pt" }}>
+          <p className="font-black text-[#002060] mt-1 tracking-tight font-sans text-xl md:text-2xl">
             {displayTotalAmount}
           </p>
         </div>
@@ -214,7 +216,7 @@ export function ZakatExecutiveReportGeneratorDocument({
         </div>
       </div>
 
-      {/* Professional Accounting Data Table container */}
+      {/* This layout wrapper displays the professional accounting data table. */}
       <div className="border-t border-b border-slate-300 py-1 mb-6">
         <table className="w-full text-xs text-left border-collapse">
           <thead>
@@ -225,10 +227,11 @@ export function ZakatExecutiveReportGeneratorDocument({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 font-medium">
+            {/* This array data map renders each faculty contribution record inside the table. */}
             {data.map((fac) => (
               <tr key={fac.name} className="hover:bg-slate-50/50">
                 <td className="py-2.5 pr-4 font-bold text-[#002060]">{fac.name}</td>
-                <td className="py-2.5 px-4 text-slate-655">{fac.fullName}</td>
+                <td className="py-2.5 px-4 text-slate-600">{fac.fullName}</td>
                 <td className="py-2.5 pl-4 text-right font-mono font-bold tracking-tight text-[#002060]">
                   {isZeroState ? "RM 0.00 (0.0%)" : `RM ${fac.value.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${fac.percentage.toFixed(1)}%)`}
                 </td>
@@ -238,11 +241,11 @@ export function ZakatExecutiveReportGeneratorDocument({
         </table>
       </div>
 
-      {/* This page-break condition forces the AI insights card to unmount headings from the first page. */}
+      {/* This layout wrapper forces a programmatic page-break before rendering the second page contents. */}
       <div className="print:break-before-page" style={{ pageBreakBefore: "always" }} />
 
-      {/* Shaded AI Insights Box callout wrapper */}
-      <div className="border-l-4 border-l-[#002060] bg-blue-50/40 p-5 rounded-r-lg mb-8">
+      {/* This major structural component layout block visualizes the AI analysis callout box. */}
+      <div className="border-l-4 border-l-[#002060] bg-blue-50/40 p-5 rounded-r-lg mb-8 mt-6">
         <h4 className="text-xs font-black text-[#002060] uppercase tracking-wider mb-2">
           ANALISIS & CADANGAN PINTAR AI
         </h4>
@@ -257,14 +260,14 @@ export function ZakatExecutiveReportGeneratorDocument({
       <div className="mt-12 pt-6 border-t border-slate-200 text-left text-[10px] space-y-4">
         <div className="space-y-1">
           <p className="font-extrabold text-[#002060] tracking-wider uppercase">DOKUMEN INTEGRITI DIGITAL RASMI UTHM</p>
-          <p className="text-slate-550 italic leading-normal">
+          <p className="text-slate-500 italic leading-normal">
             Dokumen ini ditransmisi secara digital melalui Sistem Zakat Gaji UTHM. Tandatangan fizikal tidak diperlukan untuk kesahihan rasmi.
           </p>
         </div>
         
         <div className="pt-4 space-y-1">
           <p className="font-extrabold text-[#002060] tracking-wider uppercase">TANDATANGAN PEGAWAI PENILAI</p>
-          <p className="font-bold text-slate-650 uppercase">UNIT PENGURUSAN ZAKAT UTHM</p>
+          <p className="font-bold text-slate-600 uppercase">UNIT PENGURUSAN ZAKAT UTHM</p>
           <div className="h-14 border-b border-slate-300 w-64"></div>
         </div>
       </div>

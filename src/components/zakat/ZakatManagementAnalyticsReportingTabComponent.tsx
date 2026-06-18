@@ -1,4 +1,4 @@
-// This analytics interface renders symmetrical collection distribution graphs, displays inline AI data insight panels, and initializes the accessible vector PDF generation engine.
+// This analytical dashboard module handles cross-component data graphs and integrates smart text insight panels alongside printable report exporters.
 
 "use client";
 
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ZakatManagementFacultyDonutChartComponent } from "./ZakatManagementFacultyDonutChartComponent";
 import { ZakatExecutiveReportGeneratorDocument } from "@/lib/pdf/ZakatExecutiveReportGeneratorDocument";
 
+// This data model definition describes the detailed properties of user deduction entries.
 interface ApplicationItem {
   id: string;
   namaPenuh: string;
@@ -28,6 +29,7 @@ interface ApplicationItem {
   adminNotes: string | null;
 }
 
+// This data model definition defines the stats parameters required by the analytics view.
 interface ZakatManagementAnalyticsReportingTabProps {
   applications?: ApplicationItem[];
   chartData?: {
@@ -51,13 +53,13 @@ export function ZakatManagementAnalyticsReportingTabComponent({
   applications = [],
   chartData = []
 }: ZakatManagementAnalyticsReportingTabProps) {
-  // This state hook tracks the selected 5-year range to switch chronological line charts dynamically.
+  // This lifecycle state hook manages the selected 5-year range to switch chronological line charts dynamically.
   const [selectedRangeKey, setSelectedRangeKey] = useState<string>("2022-2026");
 
-  // This state hook manages the printable display status to compile vector PDF documents on demand.
+  // This lifecycle state hook manages the printable display status to compile vector PDF documents on demand.
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
 
-  // This trigger hook coordinates browser printing actions when the vector rendering template unmounts normal views.
+  // This lifecycle state hook coordinates browser printing actions when the vector rendering template unmounts normal views.
   useEffect(() => {
     if (isPrinting) {
       const timer = setTimeout(() => {
@@ -75,7 +77,7 @@ export function ZakatManagementAnalyticsReportingTabComponent({
     "2018-2022": ["2018", "2019", "2020", "2021", "2022"]
   };
 
-  // This compiler aggregates annual Approved collections to populate the chronological trend line chart.
+  // This fallback variable model computes chronological dataset items dynamically from approved collections.
   const getLineChartDataset = () => {
     const targetYears = yearRanges[selectedRangeKey] || ["2022", "2023", "2024", "2025", "2026"];
     let hasLineData = false;
@@ -98,9 +100,10 @@ export function ZakatManagementAnalyticsReportingTabComponent({
     return !hasLineData ? zeroStateDataset : dynamicData;
   };
 
+  // This fallback variable model retrieves the calculated line chart dataset.
   const lineData = getLineChartDataset();
 
-  // This analytical method computes summary statistics and trend projections dynamically from approved collections.
+  // This fallback variable model calculates summary statistics and trend projections dynamically from database records.
   const getAIInsights = () => {
     const faculties = ["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"];
     const sums: Record<string, number> = {};
@@ -158,16 +161,16 @@ export function ZakatManagementAnalyticsReportingTabComponent({
     };
   };
 
+  // This fallback variable model retrieves the dynamic AI insight outcomes.
   const aiInsights = getAIInsights();
 
-  // This component block represents the custom hover tooltip displaying chronological trend variables.
   const CustomLineTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-md text-xs">
           <p className="font-bold text-[#002060] dark:text-blue-400">Tahun {data.year}</p>
-          <p className="text-slate-655 dark:text-slate-300 font-semibold mt-1">
+          <p className="text-slate-600 dark:text-slate-300 font-semibold mt-1">
             Kutipan Tahunan: <span className="font-bold text-[#002060] dark:text-emerald-500">RM {data.total.toFixed(2)}</span>
           </p>
         </div>
@@ -176,7 +179,7 @@ export function ZakatManagementAnalyticsReportingTabComponent({
     return null;
   };
 
-  // This conditional visibility check unmounts normal views to isolate the print layout component.
+  // This conditional rendering ternary wrapper determines if the high-fidelity print template should be rendered.
   if (isPrinting) {
     return (
       <ZakatExecutiveReportGeneratorDocument
@@ -188,16 +191,15 @@ export function ZakatManagementAnalyticsReportingTabComponent({
   }
 
   return (
-    // This layout block aligns the collection breakdown donut charts and multi-year trend line graphs side-by-side.
     <div className="space-y-8 max-w-7xl mx-auto w-full">
       
-      {/* This grid flex container structures the interactive charts side-by-side across desktop viewports. */}
+      {/* This structural container arranges the side-by-side analytics charts. */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
         
-        {/* This layout block handles the faculty collection donut chart visualization. */}
+        {/* This major structural component card visualizes collection allocations across all university departments. */}
         <ZakatManagementFacultyDonutChartComponent applications={applications} />
 
-        {/* This layout container handles the annual collection line chart visualization. */}
+        {/* This major structural component card displays the annual collection line chart visualization. */}
         <Card className="border border-slate-200 dark:border-slate-800 shadow-lg bg-white dark:bg-card h-[450px] flex flex-col justify-between overflow-hidden">
           <CardHeader className="border-b border-border bg-muted/10 px-5 py-4 flex flex-row items-center justify-between space-y-0">
             <div>
@@ -227,10 +229,10 @@ export function ZakatManagementAnalyticsReportingTabComponent({
               </ResponsiveContainer>
             </div>
 
-            {/* This button switcher component toggles between consecutive 5-year chronological ranges. */}
             <div className="pt-4 border-t mt-2 flex flex-col gap-2">
               <span className="text-[10px] font-bold text-slate-500">Pilih Jangkauan 5-Tahun</span>
               <div className="grid grid-cols-3 gap-2">
+                {/* This array data map renders selector buttons for each 5-year chronological interval. */}
                 {Object.keys(yearRanges).map((rangeKey) => (
                   <Button
                     key={rangeKey}
@@ -252,7 +254,7 @@ export function ZakatManagementAnalyticsReportingTabComponent({
         </Card>
       </div>
 
-      {/* This card container hosts the AI Smart Insight Panel displaying dynamic collection analysis. */}
+      {/* This major structural component card houses the AI Smart Insight Panel displaying dynamic collection analysis. */}
       <Card className="border border-slate-200 dark:border-slate-800 shadow-lg bg-white dark:bg-card overflow-hidden">
         <CardHeader className="border-b border-border bg-muted/10 px-5 py-4 flex flex-row items-center justify-between space-y-0">
           <div className="flex items-center gap-2">
@@ -277,9 +279,9 @@ export function ZakatManagementAnalyticsReportingTabComponent({
           </Button>
         </CardHeader>
         
-        {/* This block container styles the soft light-blue background and structured typography list for AI insights. */}
         <CardContent className="p-5">
-          <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-[#002060]/5 border border-blue-100/50 dark:border-[#002060]/20">
+          {/* This structural container wraps the automated AI text summaries with an aligned solid left accent line. */}
+          <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-[#002060]/5 border-l-4 border-[#002060] border-y border-r border-blue-100/50 dark:border-[#002060]/20">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="space-y-1">
                 <span className="text-[9px] uppercase tracking-wider font-extrabold text-slate-500 block">Fakulti Tertinggi</span>

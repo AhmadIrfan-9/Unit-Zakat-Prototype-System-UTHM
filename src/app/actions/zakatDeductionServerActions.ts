@@ -130,6 +130,7 @@ export async function handleZakatDeductionSubmission(
     // This step clears cache regions to refresh layouts across active pages in real time.
     revalidatePath("/");
     revalidatePath("/dashboard/zakat");
+    revalidatePath("/dashboard/pengurusan");
 
     return {
       success: true,

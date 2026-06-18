@@ -1,4 +1,4 @@
-// This script manages the form interaction lifecycle by throwing temporary loading states and rendering successful notification messages upon completion.
+// This form captures salary deduction data using read-only applicant headers and triggers a formal DBP-compliant success banner upon submission.
 
 "use client";
 
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, HelpCircle } from "lucide-react";
 
 interface AuthenticatedUserProps {
   name?: string | null;
@@ -34,7 +34,7 @@ interface RmInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-// This input component formats monetary amounts in Ringgit Malaysia.
+// This input component formats monetary amounts in Ringgit Malaysia with absolute positioning.
 function RmInput({ id, name, error, className, disabled, ...rest }: RmInputProps) {
   return (
     <div className="flex flex-col gap-1 w-full animate-in slide-in-from-top-2 duration-250">
@@ -75,11 +75,12 @@ interface SectionCRowProps {
   selected: string | null;
   onSelect: (value: string) => void;
   disabled: boolean;
+  tooltipText: string;
   children?: React.ReactNode;
 }
 
 // This component renders individual option rows for specific salary deduction types.
-function SectionCRow({ value, label, selected, onSelect, disabled, children }: SectionCRowProps) {
+function SectionCRow({ value, label, selected, onSelect, disabled, tooltipText, children }: SectionCRowProps) {
   const isSelected = selected === value;
   return (
     <div
@@ -90,23 +91,40 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
           : "border-border hover:border-muted-foreground/30 hover:bg-card/80"
       )}
     >
-      <div className="flex items-center gap-3">
-        <Checkbox
-          id={`type-${value}`}
-          checked={isSelected}
-          onCheckedChange={() => onSelect(value)}
-          disabled={disabled}
-          className="h-5 w-5 rounded border-muted-foreground/40 text-[#002060] data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
-        />
-        <Label
-          htmlFor={`type-${value}`}
-          className={cn(
-            "cursor-pointer font-semibold text-sm leading-tight select-none",
-            isSelected ? "text-[#002060] dark:text-blue-300" : "text-foreground"
-          )}
-        >
-          {label}
-        </Label>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id={`type-${value}`}
+            checked={isSelected}
+            onCheckedChange={() => onSelect(value)}
+            disabled={disabled}
+            className="h-5 w-5 rounded border-muted-foreground/40 text-[#002060] data-[state=checked]:bg-[#002060] data-[state=checked]:border-[#002060] focus:ring-[#002060]"
+          />
+          <Label
+            htmlFor={`type-${value}`}
+            className={cn(
+              "cursor-pointer font-semibold text-sm leading-tight select-none",
+              isSelected ? "text-[#002060] dark:text-blue-300" : "text-foreground"
+            )}
+          >
+            {label}
+          </Label>
+        </div>
+
+        <div className="relative group inline-block ml-2 align-middle shrink-0">
+          <button
+            type="button"
+            className="text-slate-400 hover:text-[#002060] focus:text-[#002060] transition-colors cursor-help outline-none p-1 rounded-full hover:bg-muted focus:bg-muted"
+            aria-label={`Penerangan bagi ${label}`}
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
+          <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-white dark:bg-card border border-border text-foreground rounded-lg shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 z-50 text-xs font-normal leading-normal">
+            <div className="font-bold text-[#002060] mb-1">Definisi Korporat</div>
+            <p className="text-muted-foreground">{tooltipText}</p>
+            <div className="absolute top-full right-3 border-4 border-transparent border-t-white dark:border-t-card" />
+          </div>
+        </div>
       </div>
       
       {isSelected && children && (
@@ -118,44 +136,29 @@ function SectionCRow({ value, label, selected, onSelect, disabled, children }: S
   );
 }
 
-// This main form component coordinates employee credentials and processes salary deduction configurations.
+// This form component captures employee details and compiles salary deduction configurations for submission.
 export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: ZakatStaffSalaryDeductionApplicationFormProps) {
-  // This hook coordinates the server action execution for form submission state.
+  // This asynchronous state hook handles the server action lifecycle for form submission transactions.
   const [state, dispatch, isPending] = useActionState<ZakatStaffSalaryDeductionActionResult | null, FormData>(
     handleZakatDeductionSubmission,
     null
   );
 
-  // This state hook tracks the active payment deduction method selected.
   const [selectedType, setSelectedType] = useState<string | null>(null);
-
-  // This state hook tracks the month when the salary deduction begins.
   const [bulanMula, setBulanMula] = useState<string>("");
-
-  // This state hook tracks the year when the salary deduction begins.
   const [tahunMula, setTahunMula] = useState<string>("");
-
-  // This state hook tracks the raw text input of the zakat deduction amount.
   const [targetDeductionValue, setTargetDeductionValue] = useState<string>("");
-
-  // This state hook tracks whether the staff member confirmed their zakat declaration.
   const [pengesahanLafaz, setPengesahanLafaz] = useState<boolean>(false);
-
-  // This state hook tracks whether the staff member accepted the personal data protection declaration.
   const [persetujuanAkta709, setPersetujuanAkta709] = useState<boolean>(false);
-
-  // This state hook tracks the visibility of the transaction confirmation dialog overlay.
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
 
-  // This callback handles selection toggles between different deduction categories.
   const handleTypeSelect = useCallback((type: string) => {
     setSelectedType((prev) => (prev === type ? null : type));
   }, []);
 
-  // This utility resolves field-level validation errors returned from the server action.
   const err = (field: keyof ZakatStaffSalaryDeductionFieldErrors) => {
     if (state?.success === false && state.fieldErrors) {
       return state.fieldErrors[field]?.[0];
@@ -163,7 +166,6 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
     return undefined;
   };
 
-  // This function submits the parent form after user confirmation.
   const handleConfirmSubmit = () => {
     setIsConfirmOpen(false);
     hiddenSubmitRef.current?.click();
@@ -171,8 +173,10 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
 
   const isSuccess = state?.success === true;
 
+  // This view-gating conditional block determines if the submission succeeded to display the receipt screen.
   if (isSuccess && state?.data) {
     return (
+      // This major structural component card displays the official submission receipt details.
       <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/10 w-full animate-in fade-in duration-300">
         <CardContent className="pt-8 text-center space-y-5">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 animate-bounce">
@@ -181,9 +185,9 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             </svg>
           </div>
           
-          {/* High-visibility feedback message banner */}
-          <div className="bg-emerald-600 text-white font-bold px-4 py-3 rounded-lg shadow-md max-w-xl mx-auto text-xs sm:text-sm tracking-wide">
-            Borang berjaya dihantar, permohonan anda akan diproses tidak lama lagi.
+          {/* This layout wrapper container displays the Dewan Bahasa dan Pustaka validated success announcement. */}
+          <div className="bg-emerald-600 text-white font-bold px-6 py-4 rounded-xl shadow-md max-w-2xl mx-auto text-xs sm:text-sm tracking-wide leading-relaxed">
+            Permohonan Berjaya Dihantar. Borang anda telah diterima secara rasmi dan akan diproses dalam tempoh masa yang ditetapkan oleh Unit Pengurusan Zakat UTHM.
           </div>
 
           <div className="space-y-1">
@@ -203,7 +207,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
               type="button"
               variant="outline"
               onClick={() => window.location.reload()}
-              className="px-6 py-2 border-[#002060] text-[#002060] hover:bg-[#002060]/5 font-bold cursor-pointer"
+              className="px-6 py-2 border-[#002060] text-[#002060] hover:bg-[#002060] hover:text-white font-bold cursor-pointer transition-all duration-200"
             >
               Hantar Permohonan Baru
             </Button>
@@ -216,6 +220,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
   const years = Array.from({ length: 10 }, (_, i) => String(2026 + i));
 
   return (
+    // This layout wrapper container structures the form submission tree and tracking attributes.
     <form ref={formRef} action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
       {selectedType && <input type="hidden" name="deductionType" value={selectedType} />}
       
@@ -225,8 +230,9 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
 
       <button type="submit" ref={hiddenSubmitRef} className="hidden" />
 
-      {/* Loading overlay spinner wrapper */}
+      {/* This view-gating conditional block displays the modal loading overlay when transactions are pending. */}
       {isPending && (
+        // This layout wrapper container dims the viewport to emphasize the transaction submission progress indicator.
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="flex flex-col items-center gap-3 bg-white dark:bg-card p-6 rounded-xl shadow-2xl border border-border">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-muted border-t-[#002060]" />
@@ -235,7 +241,39 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </div>
       )}
 
-      {/* BAHAGIAN A: MAKLUMAT PERIBADI */}
+      {/* This major structural component card shows the verified applicant identity details from the current session. */}
+      <div className="bg-[#002060]/5 border border-[#002060]/10 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4 border-b border-[#002060]/15 pb-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#002060]">
+            Maklumat Pemohon (Sesi Aktif)
+          </span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#002060] text-white">
+            Sesi Disahkan
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Nama Penuh</span>
+            <span className="text-xs font-semibold text-[#002060] block truncate">{user.name || "-"}</span>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">No. Kad Pengenalan</span>
+            <span className="text-xs font-semibold text-foreground block">{user.noKP || "-"}</span>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">No. Pekerja</span>
+            <span className="text-xs font-semibold text-foreground block">{user.noPekerja || "-"}</span>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">Gaji Semasa</span>
+            <span className="text-xs font-bold text-[#002060] block">
+              {user.gajiSemasa ? `RM ${user.gajiSemasa.toFixed(2)}` : "RM 0.00"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* This layout wrapper container groups the contact information and residential address inputs. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
@@ -243,6 +281,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
+        {/* This major structural component card informs users about updating fixed identity parameters. */}
         <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
           <p className="leading-relaxed">
             <strong>Pemberitahuan Pindaan:</strong> Untuk membetulkan nama atau maklumat profil, sila hubungi bahagian penggajian zakat.
@@ -255,27 +294,8 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </a>
         </div>
         
+        {/* This layout wrapper container arranges the editable contact address fields into a two-column responsive grid. */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <Label className="font-semibold text-xs text-[#002060]">Nama Penuh</Label>
-            <Input value={user.name || "-"} disabled className="bg-muted/50 cursor-not-allowed border-muted font-medium text-foreground opacity-90 text-xs h-9" />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="font-semibold text-xs text-[#002060]">No. Kad Pengenalan</Label>
-            <Input value={user.noKP || "-"} disabled className="bg-muted/50 cursor-not-allowed border-muted font-medium text-foreground opacity-90 text-xs h-9" />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="font-semibold text-xs text-[#002060]">No. Pekerja</Label>
-            <Input value={user.noPekerja || "-"} disabled className="bg-muted/50 cursor-not-allowed border-muted font-medium text-foreground opacity-90 text-xs h-9" />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="font-semibold text-xs text-[#002060]">Gaji Semasa</Label>
-            <Input value={user.gajiSemasa ? `RM ${user.gajiSemasa.toFixed(2)}` : "RM 0.00"} disabled className="bg-muted/50 cursor-not-allowed border-muted font-semibold text-foreground opacity-90 text-xs h-9" />
-          </div>
-
           <div className="sm:col-span-2 space-y-1">
             <Label htmlFor="noTelefon" className="font-semibold text-xs text-[#002060]">No. Telefon <span className="text-destructive">*</span></Label>
             <Input id="noTelefon" name="noTelefon" disabled={isPending} className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9" placeholder="Contoh: 0123456789" />
@@ -288,6 +308,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             {err("alamatRumah") && <p className="text-xs text-destructive font-medium">{err("alamatRumah")}</p>}
           </div>
 
+          {/* This layout wrapper container aligns the residential location details on a shared grid row. */}
           <div className="grid grid-cols-3 sm:col-span-2 gap-4">
             <div className="space-y-1 col-span-1">
               <Label htmlFor="poskod" className="font-semibold text-xs text-[#002060]">Poskod <span className="text-destructive">*</span></Label>
@@ -319,7 +340,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </div>
       </div>
 
-      {/* BAHAGIAN C: KAEDAH POTONGAN */}
+      {/* This layout wrapper container lists the primary calculation methods for salary deductions. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
@@ -327,6 +348,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
+        {/* This layout wrapper container stacks the four customizable method selection components vertically. */}
         <div className="space-y-3">
           <SectionCRow
             value="ORIGINAL_PCB_CHANGE"
@@ -334,6 +356,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             selected={selectedType}
             onSelect={handleTypeSelect}
             disabled={isPending}
+            tooltipText="Membolehkan kakitangan melaraskan sumbangan zakat berdasarkan pengiraan potongan PCB sedia ada."
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
               <div className="space-y-1.5">
@@ -353,6 +376,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             selected={selectedType}
             onSelect={handleTypeSelect}
             disabled={isPending}
+            tooltipText="Pilihan caruman zakat bulanan dengan amaun tetap yang konsisten mengikut kehendak pemohon."
           >
             <div className="max-w-xs space-y-1.5">
               <Label htmlFor="amaunZakatBulanan-fixed" className="text-xs font-semibold text-muted-foreground">Jumlah Potongan Tetap Sebulan</Label>
@@ -366,6 +390,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             selected={selectedType}
             onSelect={handleTypeSelect}
             disabled={isPending}
+            tooltipText="Membolehkan pengubahsuaian kadar caruman zakat sedia ada sama ada ditambah atau dikurangkan."
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
               <div className="space-y-1.5">
@@ -385,6 +410,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             selected={selectedType}
             onSelect={handleTypeSelect}
             disabled={isPending}
+            tooltipText="Kadar caruman zakat diselaraskan secara automatik menyamai amaun Potongan Cukai Bulanan (PCB) semasa."
           >
             <p className="text-xs text-muted-foreground leading-relaxed italic">
               * Tiada pengisian amaun diperlukan. Sistem potongan gaji akan menyelaraskan amaun potongan zakat bulanan anda secara automatik menyamai amaun Potongan Cukai Bulanan (PCB) semasa.
@@ -397,7 +423,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </div>
       </div>
 
-      {/* BAHAGIAN D: LAFAZ MEMBAYAR ZAKAT */}
+      {/* This layout wrapper container aggregates the formal declaration text, confirmation checkboxes, and submit triggers. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
@@ -405,6 +431,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
           </h2>
         </div>
 
+        {/* This layout wrapper container stacks the formal declaration fields and acknowledgements. */}
         <div className="space-y-4">
           <div className="max-w-xs space-y-1.5">
             <Label htmlFor="targetDeductionValue" className="font-semibold text-xs text-[#002060]">
@@ -452,6 +479,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             </div>
           </div>
 
+          {/* This major structural component card presents the official electronic lafaz translation text. */}
           <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-xs">
             <p className="text-sm text-amber-900 font-semibold mb-2">
               Lafaz Niat Zakat Gaji:
@@ -526,7 +554,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </div>
       )}
 
-      {/* Main button has type="button" to prompt confirmation dialog overlay instead of direct execution */}
+      {/* This layout wrapper container centers the submission control elements at the base of the form. */}
       <div className="pt-4 flex justify-center">
         <Button
           type="button"
@@ -543,9 +571,11 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
         </Button>
       </div>
 
-      {/* Confirmation modal prompt */}
+      {/* This view-gating conditional block renders the confirmation modal overlay when the user triggers the form submission. */}
       {isConfirmOpen && (
+        // This layout wrapper container locks focus and overlays the main workspace with the confirmation prompt.
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
+          {/* This major structural component card prompts the user to finalize their deduction request. */}
           <div className="w-full max-w-sm border border-border shadow-2xl rounded-xl bg-white dark:bg-card p-6 space-y-4 animate-in zoom-in-95 duration-200 text-left">
             <div className="flex items-center gap-3 text-amber-600">
               <div className="h-10 w-10 bg-amber-50 dark:bg-amber-950/40 rounded-full flex items-center justify-center">
@@ -561,10 +591,10 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
             <div className="flex items-center justify-end gap-3 pt-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => setIsConfirmOpen(false)}
                 disabled={isPending}
-                className="h-9 px-4 text-xs font-semibold cursor-pointer"
+                className="h-9 px-4 text-xs font-semibold cursor-pointer border-slate-200 text-slate-600 hover:bg-red-600 hover:text-white hover:border-red-600 focus:bg-red-600 focus:text-white focus:border-red-600 transition-all duration-200"
               >
                 Batal
               </Button>
@@ -572,7 +602,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user }: Zaka
                 type="button"
                 onClick={handleConfirmSubmit}
                 disabled={isPending}
-                className="h-9 px-5 text-xs font-bold bg-[#002060] hover:bg-[#002060]/95 text-white shadow-sm cursor-pointer"
+                className="h-9 px-5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm cursor-pointer border-none transition-colors"
               >
                 Ya, Hantar
               </Button>

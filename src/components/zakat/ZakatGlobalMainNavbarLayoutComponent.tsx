@@ -1,15 +1,15 @@
-// This global layout component expands the corporate university logo to standard legibility heights and aligns all center navigation controls across a shared horizontal axis.
+// This global master navbar combines branding elements, core navigation selectors, and administrative tools into a single high-visibility top header ribbon.
 
 "use client";
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Info, FileText, User as UserIcon, LogOut, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZakatGlobalNotificationBellPopoverComponent } from "./ZakatGlobalNotificationBellPopoverComponent";
 import { ZakatAuthenticationSignOutConfirmationModalComponent } from "./ZakatAuthenticationSignOutConfirmationModalComponent";
 
+// This data model definition outlines the personal user info structure.
 interface UserInfo {
   name?: string | null;
   email?: string | null;
@@ -17,6 +17,7 @@ interface UserInfo {
   role?: string | null;
 }
 
+// This data model definition describes the navbar properties.
 interface ZakatGlobalMainNavbarProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
@@ -28,19 +29,20 @@ export function ZakatGlobalMainNavbarLayoutComponent({
   onTabChange,
   user
 }: ZakatGlobalMainNavbarProps) {
-  // This state hook manages the open or closed state of the user profile dropdown container.
+  // This lifecycle state hook tracks the open state of the profile avatar dropdown.
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  // This state hook manages the open or closed state of the session log out confirmation modal.
+  // This lifecycle state hook tracks the open state of the logout confirmation dialog.
   const [signOutModalOpen, setSignOutModalOpen] = useState(false);
 
   return (
-    // This layout block renders the sticky top master navigation header ribbon spanning full viewport width.
+    // This layout wrapper structures the sticky top master navigation header ribbon.
     <header className="sticky top-0 z-45 w-full border-b border-border bg-white/95 backdrop-blur-md dark:bg-card/95 shadow-xs">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* This branding container mounts the primary university identity logo on the far-left. */}
+        {/* This layout wrapper anchors the primary corporate identity logo on the far-left. */}
         <div className="flex items-center justify-start h-14 py-1 pr-2">
+          {/* This major structural component card renders the UTHM shield logo. */}
           <Image
             src="/image_bb5246.png"
             alt="Logo UTHM"
@@ -52,8 +54,9 @@ export function ZakatGlobalMainNavbarLayoutComponent({
           />
         </div>
 
-        {/* This center zone navigation tab group coordinates switches for the user role workspace. */}
+        {/* This layout wrapper groups the active tab selector buttons. */}
         <div className="hidden md:flex items-center justify-center">
+          {/* This conditional rendering ternary wrapper decides between the management cockpit tabs and staff employee navigation selectors based on user role. */}
           {onTabChange ? (
             <div className="flex items-center gap-1 bg-muted/65 p-1 rounded-xl border border-border/40">
               {user.role === "MANAGEMENT_STAFF" ? (
@@ -107,7 +110,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     onClick={() => onTabChange("info")}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
-                      activeTab === "info"
+                      activeTab === "info" || activeTab === "home" || activeTab === "news"
                         ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -121,7 +124,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                     onClick={() => onTabChange("form")}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none",
-                      activeTab === "form"
+                      activeTab === "form" || activeTab === "mohon"
                         ? "bg-white dark:bg-card text-[#002060] shadow-xs ring-1 ring-black/5"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -153,8 +156,9 @@ export function ZakatGlobalMainNavbarLayoutComponent({
           )}
         </div>
 
-        {/* This right zone flex group organizes the operational alert notification bell and avatar utilities. */}
+        {/* This layout wrapper aligns notifications and profile controls on the right of the header ribbon. */}
         <div className="flex items-center gap-4 relative">
+          {/* This major structural component card displays the alerts bell popover. */}
           <ZakatGlobalNotificationBellPopoverComponent
             role={user.role === "MANAGEMENT_STAFF" ? "MANAGEMENT_STAFF" : "USER_STAFF"}
           />
@@ -168,15 +172,14 @@ export function ZakatGlobalMainNavbarLayoutComponent({
               {user.name ? user.name.charAt(0).toUpperCase() : "U"}
             </button>
 
+            {/* This conditional rendering ternary wrapper displays the avatar dropdown card menu when open. */}
             {profileDropdownOpen && (
               <>
-                {/* This background overlay element triggers dropdown closure when user clicks outside. */}
                 <div 
                   className="fixed inset-0 z-40" 
                   onClick={() => setProfileDropdownOpen(false)} 
                 />
                 
-                {/* This absolute dropdown card shows user profile credentials and sign-out controls. */}
                 <div className="absolute right-0 mt-2.5 w-56 rounded-xl border border-border bg-white dark:bg-card p-4 shadow-xl z-50 animate-in fade-in slide-in-from-top-3 duration-200">
                   <div className="space-y-1 mb-3">
                     <p className="text-xs font-bold text-foreground truncate">{user.name ?? user.email}</p>
@@ -206,7 +209,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
 
       </div>
 
-      {/* This conditional view switcher renders the session sign out verification popup modal. */}
+      {/* This major structural component card displays the logout verification popup modal. */}
       <ZakatAuthenticationSignOutConfirmationModalComponent
         isOpen={signOutModalOpen}
         onClose={() => setSignOutModalOpen(false)}

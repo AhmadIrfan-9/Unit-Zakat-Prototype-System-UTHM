@@ -1,19 +1,19 @@
-// src/lib/auth/zakatAuthenticationRoleAccessConfiguration.ts
+// This central configuration file registers authentication providers and maps custom user role parameters securely across token and session lifecycles.
 
 import NextAuth, { type DefaultSession } from "next-auth";
-import { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 
-// This declaration block extends the standard Auth.js User, Session, and JWT interfaces to recognize staff roles and numbers.
+// This declaration block extends the Auth.js v5 User and Session interfaces to surface staff roles, employee numbers, and address data on every server and client session object.
 declare module "next-auth" {
   interface User {
     id?: string;
     noPekerja?: string | null;
     noKP?: string | null;
     gajiSemasa?: number | null;
+    alamatRumah?: string | null;
     role?: "USER_STAFF" | "MANAGEMENT_STAFF";
   }
   interface Session {
@@ -22,119 +22,158 @@ declare module "next-auth" {
       noPekerja?: string | null;
       noKP?: string | null;
       gajiSemasa?: number | null;
+      alamatRumah?: string | null;
       role?: "USER_STAFF" | "MANAGEMENT_STAFF";
     } & DefaultSession["user"];
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id?: string;
-    noPekerja?: string | null;
-    noKP?: string | null;
-    gajiSemasa?: number | null;
-    role?: "USER_STAFF" | "MANAGEMENT_STAFF";
-  }
-}
-
-// This credentials schema ensures login parameters are validated prior to querying database resources.
+// This credentials schema validates that the login payload meets minimum character constraints before any database query executes.
 const credentialsSchema = z.object({
   noPekerja: z.string().min(3, "No. Pekerja minimum 3 aksara"),
-  password: z.string().min(6, "Kata laluan minimum 6 aksara"),
+  password:  z.string().min(6, "Kata laluan minimum 6 aksara"),
 });
 
-// This authentication config monitors user credentials and embeds explicit user roles into server sessions to secure system route boundaries.
+// This authentication configuration registers the Credentials provider and wires all custom token-to-session mapping callbacks.
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
+
   providers: [
-    // This provider maps staff worker IDs and credentials to authenticate portal logins.
+    // This provider maps staff employee numbers and hashed passwords to authenticate portal sign-in requests.
     Credentials({
       name: "Credentials",
       credentials: {
         noPekerja: { label: "No. Pekerja", type: "text" },
-        password: { label: "Kata Laluan", type: "password" },
+        password:  { label: "Kata Laluan", type: "password" },
       },
+
       async authorize(credentials) {
         if (!credentials) return null;
+
+        // This schema parse step rejects malformed credentials before any database round-trip.
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
         const { noPekerja, password } = parsed.data;
 
-        // Perform a database lookup to retrieve user details by worker number.
+        // This query retrieves the unique user record matched by the submitted employee number.
         const user = await prisma.user.findUnique({
           where: { noPekerja },
+          select: {
+            id:           true,
+            name:         true,
+            email:        true,
+            noPekerja:    true,
+            noKP:         true,
+            gajiSemasa:   true,
+            alamatRumah:  true,
+            role:         true,
+            passwordHash: true,
+          },
         });
 
-        if (!user || !user.passwordHash) {
-          return null;
-        }
+        if (!user || !user.passwordHash) return null;
 
-        // Compare the submitted password with the saved bcrypt hash value.
+        // This bcrypt comparison verifies the submitted plaintext password against the stored hash.
         const isValid = await compare(password, user.passwordHash);
-        if (!isValid) {
-          return null;
-        }
+        if (!isValid) return null;
 
+        // This return object seeds the JWT on the first sign-in event with all required identity fields.
         return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          noPekerja: user.noPekerja,
-          noKP: user.noKP,
-          gajiSemasa: user.gajiSemasa ? Number(user.gajiSemasa) : null,
-          role: user.role,
+          id:          user.id,
+          name:        user.name,
+          email:       user.email,
+          noPekerja:   user.noPekerja,
+          noKP:        user.noKP,
+          gajiSemasa:  user.gajiSemasa ? Number(user.gajiSemasa) : null,
+          alamatRumah: user.alamatRumah ?? null,
+          role:        user.role,
         };
       },
     }),
   ],
+
   callbacks: {
-    // This callback looks up the active user record on each JWT generation to sync roles directly at the network edge.
+    // This jwt callback uses a two-phase strategy: on initial sign-in it seeds the token directly from the authorize return object; on subsequent refreshes it re-syncs from the database using the stable token.sub claim.
     async jwt({ token, user }) {
-      const targetId = token.sub || user?.id;
-      if (targetId) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: targetId },
-          select: {
-            id: true,
-            noPekerja: true,
-            noKP: true,
-            gajiSemasa: true,
-            role: true,
-          },
-        });
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.noPekerja = dbUser.noPekerja;
-          token.noKP = dbUser.noKP;
-          token.gajiSemasa = dbUser.gajiSemasa ? Number(dbUser.gajiSemasa) : null;
-          token.role = dbUser.role;
+      // Phase 1: Initial sign-in — the `user` object exists only on this first invocation.
+      if (user) {
+        // This block copies all custom identity fields directly from the authorize payload into the JWT state.
+        token.id          = user.id;
+        token.noPekerja   = (user.noPekerja   as string | null | undefined) ?? null;
+        token.noKP        = (user.noKP        as string | null | undefined) ?? null;
+        token.gajiSemasa  = (user.gajiSemasa  as number | null | undefined) ?? null;
+        token.alamatRumah = (user.alamatRumah as string | null | undefined) ?? null;
+        token.role        = (user.role        as "USER_STAFF" | "MANAGEMENT_STAFF" | undefined) ?? "USER_STAFF";
+        return token;
+      }
+
+      // Phase 2: Subsequent requests — re-sync custom fields from the database using the stable subject claim.
+      const lookupId = (token.id as string | undefined) ?? token.sub;
+      if (lookupId) {
+        try {
+          // This database query refreshes the JWT payload with the latest user profile values on every token rotation.
+          const dbUser = await prisma.user.findUnique({
+            where: { id: lookupId },
+            select: {
+              id:          true,
+              noPekerja:   true,
+              noKP:        true,
+              gajiSemasa:  true,
+              alamatRumah: true,
+              role:        true,
+            },
+          });
+
+          if (dbUser) {
+            // This block updates the token with fresh database values to reflect any profile changes between sessions.
+            token.id          = dbUser.id;
+            token.noPekerja   = dbUser.noPekerja   ?? null;
+            token.noKP        = dbUser.noKP         ?? null;
+            token.gajiSemasa  = dbUser.gajiSemasa   ? Number(dbUser.gajiSemasa) : null;
+            token.alamatRumah = dbUser.alamatRumah  ?? null;
+            token.role        = dbUser.role;
+          }
+        } catch (refreshError) {
+          // This catch block preserves the existing token payload when a transient database error occurs during refresh to avoid session invalidation.
+          console.warn(
+            "[auth.jwt] DB refresh skipped — preserving existing token payload:",
+            refreshError
+          );
         }
       }
+
       return token;
     },
-    // This callback exposes database roles and worker attributes within client-accessible session tokens.
+
+    // This session callback injects all custom JWT fields into the exposed session.user object so every server component and client context reads a fully-populated identity record.
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
-        session.user.noPekerja = token.noPekerja;
-        session.user.noKP = token.noKP;
-        session.user.gajiSemasa = token.gajiSemasa;
-        session.user.role = token.role;
+        // This assignment block propagates id, noPekerja, noKP, gajiSemasa, alamatRumah, and role from the JWT into the session user object.
+        session.user.id          = ((token.id as string | undefined) ?? token.sub ?? "") as string;
+        session.user.noPekerja   = (token.noPekerja   as string | null | undefined) ?? null;
+        session.user.noKP        = (token.noKP        as string | null | undefined) ?? null;
+        session.user.gajiSemasa  = (token.gajiSemasa  as number | null | undefined) ?? null;
+        (session.user as { alamatRumah?: string | null }).alamatRumah =
+          (token.alamatRumah as string | null | undefined) ?? null;
+        session.user.role        = (token.role as "USER_STAFF" | "MANAGEMENT_STAFF" | undefined) ?? "USER_STAFF";
       }
       return session;
     },
-    // This callback acts as an edge router guard restricting access to management sub-directories based on roles.
-    async authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isDashboard = nextUrl.pathname.startsWith("/dashboard");
+
+    // This authorized callback acts as an edge-layer route guard, blocking unauthenticated users from dashboard paths and redirecting non-management staff away from the executive portal.
+    async authorized({ auth: sessionAuth, request: { nextUrl } }) {
+      const isLoggedIn   = !!sessionAuth?.user;
+      const isDashboard  = nextUrl.pathname.startsWith("/dashboard");
       const isManagement = nextUrl.pathname.startsWith("/dashboard/pengurusan");
 
       if (isDashboard) {
         if (!isLoggedIn) {
-          return false;
+          // This redirect sends unauthenticated requests to the login page.
+          return Response.redirect(new URL("/login", nextUrl));
         }
-        if (isManagement && auth.user?.role !== "MANAGEMENT_STAFF") {
+        if (isManagement && sessionAuth.user?.role !== "MANAGEMENT_STAFF") {
+          // This redirect prevents non-management staff from accessing the executive dashboard.
           return Response.redirect(new URL("/dashboard/zakat", nextUrl));
         }
         return true;
@@ -142,8 +181,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
   },
+
   pages: {
     signIn: "/login",
-    error: "/login",
+    error:  "/login",
   },
 });

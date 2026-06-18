@@ -1,4 +1,4 @@
-// This server action validates incoming staff payroll deduction requests and commits records to the Prisma database while enforcing data validation rules.
+// This server mutation function validates employee session metadata blocks and commits payroll deduction forms to the database using explicit relationship binding.
 
 "use server";
 
@@ -8,20 +8,20 @@ import { revalidatePath } from "next/cache";
 import { DeductionType } from "@prisma/client";
 import { z } from "zod";
 
-// This constant list stores the valid Bahasa Melayu month names used for the deduction start date field.
+// This constant array stores the official Bahasa Melayu month names used for the deduction start date field validation.
 const VALID_MALAY_MONTHS = [
   "Januari", "Februari", "Mac", "April", "Mei", "Jun",
   "Julai", "Ogos", "September", "Oktober", "November", "Disember",
 ] as const;
 
-// This constant list stores the valid Malaysian state names used for the residential address field.
+// This constant array stores the complete list of valid Malaysian state names used for the residential address field validation.
 const VALID_NEGERI = [
   "Johor", "Melaka", "Negeri Sembilan", "Pahang", "Selangor", "Terengganu",
   "Kelantan", "Perak", "Pulau Pinang", "Kedah", "Perlis",
   "W.P. Kuala Lumpur", "W.P. Putrajaya", "W.P. Labuan",
 ] as const;
 
-// This Zod schema enforces strict type validation on all incoming form payloads before they reach the database.
+// This Zod schema enforces strict type and format validation on all incoming form payloads before they touch the database.
 const submissionSchema = z.object({
   namaPenuh:    z.string().trim().min(1, "Nama penuh diperlukan."),
   noKP:         z.string().trim().min(1, "No. KP diperlukan."),
@@ -44,12 +44,15 @@ const submissionSchema = z.object({
   targetDeductionValue: z
     .string()
     .trim()
-    .regex(/^\d+\.\d{2}$/, "Amaun mestilah dalam format dua perpuluhan (contoh: 150.00)."),
-  pengesahanLafaz:   z.literal("true", { error: "Pengesahan lafaz diperlukan." }),
+    .regex(
+      /^\d+(\.\d{1,2})?$/,
+      "Amaun mestilah dalam format angka (contoh: 150.00)."
+    ),
+  pengesahanLafaz:    z.literal("true", { error: "Pengesahan lafaz diperlukan." }),
   persetujuanAkta709: z.string().min(1),
 });
 
-// This discriminated union type clearly separates the success and failure response payloads.
+// This discriminated union type cleanly separates success and failure response payloads returned to the client.
 type SubmitSuccess = {
   success: true;
   applicationId: string;
@@ -64,29 +67,30 @@ type SubmitError = {
 
 export type ZakatSubmissionResult = SubmitSuccess | SubmitError;
 
-// This helper safely parses a decimal string into a number, returning undefined when the input is absent or invalid.
+// This helper function safely converts an optional form string value into a floating-point number, returning undefined for blank or non-numeric inputs.
 function parseOptionalDecimal(raw: FormDataEntryValue | null): number | undefined {
   if (!raw || String(raw).trim() === "") return undefined;
   const parsed = parseFloat(String(raw));
   return isNaN(parsed) ? undefined : parsed;
 }
 
-// This exported async function is the primary entry point for all staff zakat deduction form submissions.
+// This exported async server action is the primary entry point for all staff zakat salary deduction form submissions.
 export async function submitZakatApplicationAction(
   _previousState: ZakatSubmissionResult | null,
   formData: FormData
 ): Promise<ZakatSubmissionResult> {
 
-  // This guard verifies the caller has a valid authenticated session before touching database resources.
+  // This guard clause verifies the caller holds a valid authenticated session with a resolved user ID before touching any database resource.
   const session = await auth();
   if (!session?.user?.id) {
     return {
       success: false,
-      error: "Sesi anda telah tamat. Sila log masuk semula untuk menghantar permohonan.",
+      error:
+        "Sesi anda telah tamat atau tidak sah. Sila log masuk semula untuk menghantar permohonan.",
     };
   }
 
-  // This block extracts all raw form values into a plain object for Zod validation.
+  // This block extracts all raw form field values into a plain object keyed for Zod schema validation.
   const rawPayload = {
     namaPenuh:            formData.get("namaPenuh"),
     noKP:                 formData.get("noKP"),
@@ -108,7 +112,7 @@ export async function submitZakatApplicationAction(
     persetujuanAkta709:   formData.get("persetujuanAkta709") ?? "false",
   };
 
-  // This validation step parses the payload through the Zod schema and returns structured field errors on failure.
+  // This validation step runs the raw payload through the Zod schema and returns structured field-level errors on failure.
   const parsed = submissionSchema.safeParse(rawPayload);
   if (!parsed.success) {
     const fieldErrors = parsed.error.flatten().fieldErrors as Record<string, string[]>;
@@ -122,12 +126,12 @@ export async function submitZakatApplicationAction(
 
   const v = parsed.data;
 
-  // This try-catch block wraps the Prisma write operation to guarantee clean error reporting on any database failure.
+  // This try-catch block wraps the Prisma write operation to isolate and report database-layer failures without exposing internal stack traces.
   try {
-
-    // This Prisma call explicitly awaits the database insert operation before returning a response to the client.
+    // This explicit await ensures the Prisma INSERT statement completes and returns the new record ID before this function resolves.
     const newRecord = await prisma.zakatStaffSalaryDeductionApplication.create({
       data: {
+        // This userId binding anchors the submission record permanently to the authenticated employee's account.
         userId:    session.user.id,
         namaPenuh: v.namaPenuh,
         noKP:      v.noKP,
@@ -143,7 +147,7 @@ export async function submitZakatApplicationAction(
         pengesahanLafaz:    true,
         persetujuanAkta709: true,
 
-        // This conditional block maps optional numeric amounts based on the chosen deduction type.
+        // This conditional block maps optional decimal amounts to the corresponding schema columns based on the selected deduction type.
         amaunPcbAsal:
           v.deductionType === "ORIGINAL_PCB_CHANGE"
             ? parseOptionalDecimal(formData.get("amaunPcbAsal"))
@@ -167,12 +171,13 @@ export async function submitZakatApplicationAction(
       select: { id: true },
     });
 
-    // This revalidation call purges the ISR cache for both dashboard routes so managers see the new record immediately.
+    // This revalidatePath call purges the ISR cache for both dashboard routes so management sees the new record immediately on next load.
     revalidatePath("/dashboard/pengurusan");
     revalidatePath("/dashboard/zakat");
 
-    console.log("[submitZakatApplicationAction] Record created:", newRecord.id);
+    console.log("[submitZakatApplicationAction] Record committed:", newRecord.id);
 
+    // This return block delivers the DBP-validated success message payload to the client form component for display.
     return {
       success: true,
       applicationId: newRecord.id,
@@ -181,11 +186,12 @@ export async function submitZakatApplicationAction(
     };
 
   } catch (dbError) {
-    // This catch block logs the raw database error and returns a safe, user-facing message without exposing internals.
+    // This catch block logs the raw database error object and returns a safe user-facing message without exposing internal implementation details.
     console.error("[submitZakatApplicationAction] Database write failed:", dbError);
     return {
       success: false,
-      error: "Ralat pangkalan data berlaku semasa menyimpan permohonan anda. Sila cuba semula atau hubungi pentadbir sistem.",
+      error:
+        "Ralat pangkalan data berlaku semasa menyimpan permohonan anda. Sila cuba semula atau hubungi pentadbir sistem.",
     };
   }
 }

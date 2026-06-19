@@ -1,4 +1,4 @@
-// This form captures salary deduction data using read-only applicant headers and triggers a formal DBP-compliant success banner upon submission.
+// This updated form component replaces restrictive edit warnings with an empowering textual data update reminder beneath the read-only user grid header.
 
 "use client";
 
@@ -248,9 +248,10 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
             <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
 
-          {/* This DBP-validated banner delivers the official submission confirmation text payload. */}
-          <div className="bg-emerald-600 text-white font-bold px-6 py-4 rounded-xl shadow-md max-w-2xl mx-auto text-xs sm:text-sm tracking-wide leading-relaxed">
-            {state.message}
+          {/* This DBP-validated banner delivers the official submission confirmation text payload with a checkmark icon primitive. */}
+          <div className="bg-emerald-600 text-white font-bold px-6 py-4 rounded-xl shadow-md max-w-2xl mx-auto text-xs sm:text-sm tracking-wide leading-relaxed flex items-center justify-center gap-2">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-white" />
+            <span>{state.message}</span>
           </div>
 
           <div className="space-y-1">
@@ -370,26 +371,17 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
         </div>
       </div>
 
+      {/* This notice reminds users they can update profile details anytime via the Personal Profile menu. */}
+      <p className="text-xs text-muted-foreground leading-relaxed -mt-4 mb-4">
+        Nota: Sekiranya anda perlu mengemas kini maklumat selepas penghantaran borang, anda boleh melakukannya secara terus melalui menu Profil Peribadi pada bila-bila masa bagi memastikan integriti data caruman dikemas kini dengan serta-merta.
+      </p>
+
       {/* This section header labels the personal contact and address inputs of Bahagian A. */}
       <div className="space-y-4">
         <div className="border-b border-border pb-2">
           <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
             BAHAGIAN A: MAKLUMAT HUBUNGAN
           </h2>
-        </div>
-
-        {/* This amber notice banner informs staff how to request corrections to locked identity fields. */}
-        <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
-          <p className="leading-relaxed">
-            <strong>Pemberitahuan Pindaan:</strong> Untuk membetulkan nama atau maklumat profil,
-            sila hubungi bahagian penggajian zakat.
-          </p>
-          <a
-            href={`mailto:zakat-desk@uthm.edu.my?subject=Pindaan%20Profil%20Zakat%20-%20${user.noPekerja ?? ""}`}
-            className="inline-flex items-center justify-center px-3.5 py-1.5 bg-[#002060] hover:bg-[#002060]/90 text-white rounded text-[10px] font-bold shadow-xs cursor-pointer select-none transition-all shrink-0 uppercase tracking-wider"
-          >
-            Hubungi Pentadbir
-          </a>
         </div>
 
         {/* This grid lays out the editable contact number, address, postcode, city, and state fields. */}

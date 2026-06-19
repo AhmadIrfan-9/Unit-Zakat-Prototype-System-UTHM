@@ -1,4 +1,4 @@
-// This profile management card displays empty form inputs styled with low-opacity format placeholders to guide staff data entry cleanly.
+// This component manages user profile updates and includes a newly integrated faculty select selector to align collection data with management metrics.
 
 "use client";
 
@@ -29,14 +29,15 @@ interface ProfileDefaultValues {
   poskod?: string;
   bandar?: string;
   negeri?: string;
+  fakulti?: string;
   isManagement?: boolean;
 }
 
-interface ZakatStaffProfileManagementCardProps {
+interface ZakatStaffProfileComponentProps {
   defaultValues?: ProfileDefaultValues;
 }
 
-export function ZakatStaffProfileManagementCardComponent({ defaultValues }: ZakatStaffProfileManagementCardProps) {
+export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileComponentProps) {
   // This hook handles the React server action transition state.
   const [isPending, startTransition] = useTransition();
 
@@ -44,21 +45,23 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<any>({
     resolver: zodResolver(zakatProfileSchema),
     defaultValues: {
-      namaPenuh: "",
-      noKP: "",
-      umur: undefined,
-      noTelefon: "",
-      noPekerja: "",
-      gajiSemasa: undefined,
-      negeri: "",
-      bandar: "",
-      poskod: "",
-      alamatRumah: "",
+      namaPenuh: defaultValues?.namaPenuh ?? "",
+      noKP: defaultValues?.noKP ?? "",
+      umur: defaultValues?.umur ?? undefined,
+      noTelefon: defaultValues?.noTelefon ?? "",
+      noPekerja: defaultValues?.noPekerja ?? "",
+      gajiSemasa: defaultValues?.gajiSemasa ?? undefined,
+      negeri: defaultValues?.negeri ?? "",
+      bandar: defaultValues?.bandar ?? "",
+      poskod: defaultValues?.poskod ?? "",
+      alamatRumah: defaultValues?.alamatRumah ?? "",
+      fakulti: defaultValues?.fakulti ?? "",
       persetujuanAkta709: false,
     }
   });
 
   const negeriValue = watch("negeri");
+  const fakultiValue = watch("fakulti");
   const consentValue = watch("persetujuanAkta709");
 
   // This method submits the validated fields to the server database mutation.
@@ -71,6 +74,7 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
         umur: data.umur,
         gajiSemasa: data.gajiSemasa,
         alamatRumah: data.alamatRumah,
+        fakulti: data.fakulti,
       });
 
       if (result.success) {
@@ -220,6 +224,28 @@ export function ZakatStaffProfileManagementCardComponent({ defaultValues }: Zaka
                 </Select>
                 {errors.negeri && (
                   <p className="text-xs text-destructive font-semibold">{String(errors.negeri.message)}</p>
+                )}
+              </div>
+
+              {/* Fakulti select dropdown */}
+              <div className="space-y-1.5">
+                <Label htmlFor="fakulti" className="font-semibold text-xs text-[#002060]">Fakulti</Label>
+                {/* This loop maps each of the eight UTHM faculty codes into the selector component options. */}
+                <Select
+                  value={fakultiValue}
+                  onValueChange={(val) => setValue("fakulti", val, { shouldValidate: true })}
+                >
+                  <SelectTrigger id="fakulti" className="w-full text-xs h-9 focus:ring-[#002060]">
+                    <SelectValue placeholder="Pilih Fakulti" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56">
+                    {["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"].map((fac) => (
+                      <SelectItem key={fac} value={fac}>{fac}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.fakulti && (
+                  <p className="text-xs text-destructive font-semibold">{String(errors.fakulti.message)}</p>
                 )}
               </div>
 

@@ -13,10 +13,8 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const apps = await prisma.zakatStaffSalaryDeductionApplication.findMany({
-    orderBy: { submittedAt: 'desc' }
-  });
-  console.log("APPLICATIONS:", JSON.stringify(apps, null, 2));
+  const users = await prisma.user.findMany();
+  console.log("USERS:", JSON.stringify(users, null, 2));
 }
 
 main().catch(console.error).finally(() => pool.end());

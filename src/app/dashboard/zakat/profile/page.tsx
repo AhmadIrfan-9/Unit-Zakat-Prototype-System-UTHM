@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ZakatStaffProfileManagementCardComponent } from "@/components/zakat/ZakatStaffProfileManagementCardComponent";
+import { ZakatStaffProfileComponent } from "@/components/zakat/ZakatStaffProfileComponent";
 
 export default async function ZakatProfilePage() {
   // This statement verifies that the active session is valid and retrieves user credentials.
@@ -30,13 +30,14 @@ export default async function ZakatProfilePage() {
     umur: dbUser.umur || undefined,
     gajiSemasa: dbUser.gajiSemasa ? dbUser.gajiSemasa.toString() : "",
     alamatRumah: dbUser.alamatRumah || "",
+    fakulti: dbUser.fakulti || "",
   };
 
   return (
     // This container wraps the form in a centered layout with padding.
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-4xl">
-        <ZakatStaffProfileManagementCardComponent defaultValues={formattedUser} />
+        <ZakatStaffProfileComponent defaultValues={formattedUser} />
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { updateZakatApplicationWorkflowStatus } from "@/app/actions/zakatSalaryDeductionManagementServerActions";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
-import { ZakatStaffProfileManagementCardComponent } from "./ZakatStaffProfileManagementCardComponent";
+import { ZakatStaffProfileComponent } from "./ZakatStaffProfileComponent";
 import { ZakatManagementApplicationProcessingTabComponent } from "./ZakatManagementApplicationProcessingTabComponent";
 import { ZakatManagementAnalyticsReportingTabComponent } from "./ZakatManagementAnalyticsReportingTabComponent";
 import { Check, XCircle } from "lucide-react";
@@ -224,7 +224,7 @@ export function ZakatManagementDashboardMasterViewComponent({
         {activeTab === "profile" && (
           <div className="w-full max-w-3xl mx-auto">
             {/* This major structural component card handles management profile configuration updates. */}
-            <ZakatStaffProfileManagementCardComponent
+            <ZakatStaffProfileComponent
               defaultValues={{
                 namaPenuh: user.name ?? "Prof. Dr. Zainal bin Ibrahim",
                 noPekerja: user.noPekerja ?? "MGR001",
@@ -236,6 +236,7 @@ export function ZakatManagementDashboardMasterViewComponent({
                 poskod: "86400",
                 bandar: "Parit Raja",
                 negeri: "Johor",
+                fakulti: "FSKTM",
                 isManagement: true
               }}
             />

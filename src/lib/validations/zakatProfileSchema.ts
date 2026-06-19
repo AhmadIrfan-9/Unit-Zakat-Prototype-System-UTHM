@@ -34,6 +34,11 @@ export const zakatProfileSchema = z.object({
   // The detailed home address constraint.
   alamatRumah: z.string().min(10, { message: "Sila masukkan alamat rumah yang lengkap." }),
 
+  // The institutional faculty selection constraint.
+  fakulti: z.enum(["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"], {
+    message: "Sila pilih fakulti yang sah.",
+  }),
+
   // The Akta 709 compliance consent constraint.
   persetujuanAkta709: z.boolean().refine((val) => val === true, {
     message: "Anda mestilah bersetuju dengan pengesahan Akta 709.",

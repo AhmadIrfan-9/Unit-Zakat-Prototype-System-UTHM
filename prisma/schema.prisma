@@ -39,6 +39,8 @@ model User {
   alamatRumah   String?   @db.Text @map("alamat_rumah")
   gajiSemasa    Decimal?  @db.Decimal(10, 2) @map("gaji_semasa")
   role          Role      @default(USER_STAFF)
+  // This mapping definition maps the institutional faculty attribute to the user model.
+  fakulti       String?   @map("fakulti")
 
   accounts                    Account[]
   sessions                    Session[]

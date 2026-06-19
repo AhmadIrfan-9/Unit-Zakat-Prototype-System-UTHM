@@ -1,4 +1,4 @@
-// This popover header module handles role-based system notifications using a constant-length hook dependency array to avoid invariant rendering crashes.
+// This header popover shell dynamically loops through system notice arrays to serve live deduction status revisions and news updates to the active user profile.
 
 "use client";
 
@@ -34,6 +34,31 @@ interface NotificationBellProps {
   role: "USER_STAFF" | "MANAGEMENT_STAFF";
   initialApplications?: NotificationAppItem[];
 }
+
+// These are the official institutional announcements loaded into the notifications system.
+const ANNOUNCEMENTS = [
+  {
+    id: 1,
+    badge: "WARTA NISAB 2026",
+    title: "Kemas Kini Had Paras Nisab Bulanan Negeri Johor Suku Kedua 2026",
+    content: "Majlis Agama Islam Negeri Johor (MAINJ) secara rasmi menetapkan had paras nisab bulanan semasa pada kadar RM 2,150.00 untuk panduan taksiran caruman gaji.",
+    date: "2026-06-15",
+  },
+  {
+    id: 2,
+    badge: "PANDUAN HAUL",
+    title: "Penyelarasan Kitaran Haul 12 Bulan Bagi Caruman Gaji Kakitangan",
+    content: "Penyelarasan tempoh haul 12 bulan penuh kini diselaraskan secara automatik bagi memastikan potongan gaji selari dengan tempoh pemilikan harta yang sah.",
+    date: "2026-06-10",
+  },
+  {
+    id: 3,
+    badge: "REBAT CUKAI",
+    title: "Automasi Resit Pelepasan Cukai Pendapatan Melalui Unit Kutipan Zakat",
+    content: "Penyatuan sistem automasi membolehkan penyata caruman tahunan digunakan terus sebagai resit pelepasan cukai pendapatan untuk urusan pemfailan LHDN.",
+    date: "2026-06-05",
+  },
+];
 
 export function ZakatGlobalNotificationBellPopoverComponent({
   role,
@@ -123,24 +148,26 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     app: NotificationAppItem;
   }[] = [];
 
-  // This loop classifies each application record into the appropriate role-based notification list.
-  applications.forEach((app) => {
-    const safeDate = new Date(app.submittedAt ?? Date.now());
-
-    if (!isManagement) {
+  // This notification array parser tool merges public announcements and user-specific status transitions into a reactive feed.
+  if (!isManagement) {
+    ANNOUNCEMENTS.forEach((ann) => {
       staffNotifications.push({
-        id: `${app.id}-received`,
-        title: "Permohonan Diterima",
-        desc: "Borang caruman zakat anda telah berjaya diterima dan kini sedang disemak.",
+        id: `announcement-${ann.id}`,
+        title: `Pengumuman: ${ann.title}`,
+        desc: ann.content,
         type: "info",
-        date: safeDate,
-        app,
+        date: new Date(ann.date),
+        app: null as any,
       });
+    });
+
+    applications.forEach((app) => {
+      const safeDate = new Date(app.submittedAt ?? Date.now());
       if (app.status === "APPROVED") {
         staffNotifications.push({
           id: `${app.id}-approved`,
-          title: "Permohonan Diluluskan",
-          desc: "Tahniah! Permohonan caruman zakat anda telah diluluskan dan berkuat kuasa untuk penggajian.",
+          title: "Permohonan DISAHKAN",
+          desc: "Tahniah! Permohonan caruman zakat anda telah disahkan dan berkuat kuasa untuk penggajian.",
           type: "success",
           date: safeDate,
           app,
@@ -148,14 +175,17 @@ export function ZakatGlobalNotificationBellPopoverComponent({
       } else if (app.status === "REJECTED") {
         staffNotifications.push({
           id: `${app.id}-rejected`,
-          title: "Permohonan Ditolak",
+          title: "Permohonan DITOLAK",
           desc: `Ditolak: ${app.adminNotes ?? "Sila semak butiran atau hubungi pentadbir."}`,
           type: "error",
           date: safeDate,
           app,
         });
       }
-    } else {
+    });
+  } else {
+    applications.forEach((app) => {
+      const safeDate = new Date(app.submittedAt ?? Date.now());
       if (app.status === "PENDING") {
         managementNotifications.push({
           id: `${app.id}-pending-mgmt`,
@@ -175,11 +205,14 @@ export function ZakatGlobalNotificationBellPopoverComponent({
           app,
         });
       }
-    }
-  });
+    });
+  }
 
   // This fallback variable selects the correct notification list based on the stable role boolean.
   const notifications = isManagement ? managementNotifications : staffNotifications;
+
+  // Sort the notifications chronologically with newest first.
+  notifications.sort((a, b) => b.date.getTime() - a.date.getTime());
 
   // This derived value counts the number of notifications that have not yet been opened by the user.
   const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;

@@ -8,7 +8,7 @@ import Image from "next/image";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
 import { ZakatStaffInformativeNisabHaulCardComponent } from "./ZakatStaffInformativeNisabHaulCardComponent";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./ZakatStaffSalaryDeductionApplicationFormComponent";
-import { ZakatStaffProfileManagementCardComponent } from "./ZakatStaffProfileManagementCardComponent";
+import { ZakatStaffProfileComponent } from "./ZakatStaffProfileComponent";
 import { ZakatStaffNewsAnnouncementsComponent } from "./ZakatStaffNewsAnnouncementsComponent";
 import { Card } from "@/components/ui/card";
 
@@ -21,6 +21,7 @@ interface AuthenticatedUserProps {
   gajiSemasa?: number | null;
   alamatRumah?: string | null;
   role?: string | null;
+  fakulti?: string | null;
 }
 
 // This data model definition describes the parameters expected by the staff dashboard view.
@@ -115,7 +116,16 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
         {/* This conditional rendering block mounts the user profile card exclusively when the profile tab is strictly active; returns null otherwise. */}
         {viewScope === "profile" ? (
           <div className="w-full max-w-3xl mx-auto">
-            <ZakatStaffProfileManagementCardComponent />
+            <ZakatStaffProfileComponent
+              defaultValues={{
+                namaPenuh: user.name ?? "",
+                noPekerja: user.noPekerja ?? "",
+                noKP: user.noKP ?? "",
+                gajiSemasa: user.gajiSemasa ? String(user.gajiSemasa) : "",
+                alamatRumah: user.alamatRumah ?? "",
+                fakulti: user.fakulti ?? "",
+              }}
+            />
           </div>
         ) : null}
 

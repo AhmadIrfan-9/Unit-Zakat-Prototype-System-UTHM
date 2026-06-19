@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ZakatStaffInformativeNisabHaulCardComponent } from "./ZakatStaffInformativeNisabHaulCardComponent";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./ZakatStaffSalaryDeductionApplicationFormComponent";
-import { ZakatStaffProfileManagementCardComponent } from "./ZakatStaffProfileManagementCardComponent";
+import { ZakatStaffProfileComponent } from "./ZakatStaffProfileComponent";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle, FileCheck2, Info } from "lucide-react";
 
@@ -115,7 +115,15 @@ export function ZakatStaffDashboardTabsContainerComponent({ user }: ZakatStaffDa
 
             {/* Employee profile template editor panel */}
             <TabsContent value="profile" className="focus-visible:outline-none">
-              <ZakatStaffProfileManagementCardComponent />
+              <ZakatStaffProfileComponent
+                defaultValues={{
+                  namaPenuh: user.name ?? "",
+                  noPekerja: user.noPekerja ?? "",
+                  noKP: user.noKP ?? "",
+                  gajiSemasa: user.gajiSemasa ? String(user.gajiSemasa) : "",
+                  alamatRumah: user.alamatRumah ?? "",
+                }}
+              />
             </TabsContent>
 
           </Tabs>

@@ -22,6 +22,7 @@ interface AuthenticatedUserProps {
   alamatRumah?: string | null;
   role?: string | null;
   fakulti?: string | null;
+  umur?: number | null;
 }
 
 // This data model definition describes the parameters expected by the staff dashboard view.
@@ -124,6 +125,7 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
                 gajiSemasa: user.gajiSemasa ? String(user.gajiSemasa) : "",
                 alamatRumah: user.alamatRumah ?? "",
                 fakulti: user.fakulti ?? "",
+                umur: user.umur ?? undefined,
               }}
             />
           </div>

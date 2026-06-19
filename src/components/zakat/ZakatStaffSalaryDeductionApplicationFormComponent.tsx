@@ -371,10 +371,10 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
         </div>
       </div>
 
-      {/* This notice reminds users they can update profile details anytime via the Personal Profile menu. */}
-      <p className="text-xs text-muted-foreground leading-relaxed -mt-4 mb-4">
-        Nota: Sekiranya anda perlu mengemas kini maklumat selepas penghantaran borang, anda boleh melakukannya secara terus melalui menu Profil Peribadi pada bila-bila masa bagi memastikan integriti data caruman dikemas kini dengan serta-merta.
-      </p>
+      {/* Incremental patch removing the rigid yellow warning box and rendering a standard data flexibility statement. */}
+      <div className="mt-2 text-xs text-slate-500 bg-slate-50 border border-slate-200/80 rounded-lg p-3 leading-relaxed animate-in fade-in duration-300">
+        <span className="font-bold text-[#002060]">Nota:</span> Sekiranya anda perlu mengemas kini maklumat selepas penghantaran borang, anda boleh melakukannya secara terus melalui menu Profil Peribadi pada bila-bila masa bagi memastikan integriti data caruman dikemas kini dengan serta-merta.
+      </div>
 
       {/* This section header labels the personal contact and address inputs of Bahagian A. */}
       <div className="space-y-4">

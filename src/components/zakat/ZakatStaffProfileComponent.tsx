@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, ShieldAlert } from "lucide-react";
@@ -41,6 +41,14 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
   // This hook handles the React server action transition state.
   const [isPending, startTransition] = useTransition();
 
+  // 1. Tambah baris state ini di bahagian atas komponen profil
+  const user = defaultValues;
+  const [fakulti, _setFakulti] = useState(user?.fakulti || "");
+  const setFakulti = (val: string) => {
+    _setFakulti(val);
+    setValue("fakulti", val, { shouldValidate: true });
+  };
+
   // This form state manages initialization with empty defaults to enforce user input guided by placeholders.
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<any>({
     resolver: zodResolver(zakatProfileSchema),
@@ -61,7 +69,6 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
   });
 
   const negeriValue = watch("negeri");
-  const fakultiValue = watch("fakulti");
   const consentValue = watch("persetujuanAkta709");
 
   // This method submits the validated fields to the server database mutation.
@@ -227,20 +234,16 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
                 )}
               </div>
 
-              {/* Fakulti select dropdown */}
+              {/* Incremental patch adding the isolated faculty selection dropdown inside the staff profile work container. */}
               <div className="space-y-1.5">
-                <Label htmlFor="fakulti" className="font-semibold text-xs text-[#002060]">Fakulti</Label>
-                {/* This loop maps each of the eight UTHM faculty codes into the selector component options. */}
-                <Select
-                  value={fakultiValue}
-                  onValueChange={(val) => setValue("fakulti", val, { shouldValidate: true })}
-                >
-                  <SelectTrigger id="fakulti" className="w-full text-xs h-9 focus:ring-[#002060]">
+                <Label htmlFor="fakulti" className="font-bold text-xs text-[#002060]">Fakulti</Label>
+                <Select value={fakulti} onValueChange={setFakulti}>
+                  <SelectTrigger id="fakulti" className="text-xs h-10 focus-visible:ring-[#002060]">
                     <SelectValue placeholder="Pilih Fakulti" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-56">
+                  <SelectContent>
                     {["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"].map((fac) => (
-                      <SelectItem key={fac} value={fac}>{fac}</SelectItem>
+                      <SelectItem key={fac} value={fac} className="text-xs">{fac}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

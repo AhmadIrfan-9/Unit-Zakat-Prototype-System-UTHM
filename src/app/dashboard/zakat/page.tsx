@@ -48,6 +48,7 @@ export default async function ZakatApplicationPage() {
     alamatRumah: dbUser.alamatRumah  ?? "",
     role:        dbUser.role,
     fakulti:     dbUser.fakulti      ?? "",
+    umur:        dbUser.umur         ?? null,
   };
 
   return (

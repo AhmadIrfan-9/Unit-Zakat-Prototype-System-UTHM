@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run fast type-checks first, then execute Playwright E2E browser automation only if compilation passes.
+npx tsc --noEmit && npm run lint && npx playwright test

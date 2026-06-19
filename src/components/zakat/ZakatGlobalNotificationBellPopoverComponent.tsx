@@ -68,8 +68,8 @@ export function ZakatGlobalNotificationBellPopoverComponent({
   // This stable boolean is computed once from the role prop and never changes across renders.
   const isManagement = role === "MANAGEMENT_STAFF";
 
-  // This state hook holds the current application records fetched from the server endpoint.
-  const [applications, setApplications] = useState<NotificationAppItem[]>(initialApplications);
+  // This state hook holds the current notification records.
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // This state hook controls whether the notification popover panel is currently open or collapsed.
   const [isOpen, setIsOpen] = useState(false);
@@ -80,14 +80,20 @@ export function ZakatGlobalNotificationBellPopoverComponent({
   // This state hook tracks whether the notification fetch is currently in progress.
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // This memoized callback fetches fresh notification records from the server action on demand.
+  // This memoized callback fetches fresh notification records from the server endpoint.
   const loadNotifications = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const data = await fetchNotificationDataAction();
-      if (Array.isArray(data)) {
-        setApplications(data as NotificationAppItem[]);
-      }
+      const response = await fetch("/api/zakat/notifications");
+      const dataset = await response.json();
+      const refinedPayload = dataset.filter((item: any) => 
+        item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status)
+      ).map((item: any) => ({
+        ...item,
+        date: new Date(item.date),
+      }));
+      refinedPayload.sort((a: any, b: any) => b.date.getTime() - a.date.getTime());
+      setNotifications(refinedPayload);
     } catch (err) {
       console.error("[ZakatNotificationBell] Failed to load notifications:", err);
     } finally {
@@ -95,18 +101,29 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     }
   }, []);
 
-  // This effect hook fires once on mount using a constant single-element dependency array to prevent hook size shifts.
+  // Incremental patch driving the active notification array filter based on real-time application status values.
   useEffect(() => {
-    loadNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isManagement]);
+    const syncLiveNotifications = async () => {
+      try {
+        const response = await fetch("/api/zakat/notifications");
+        const dataset = await response.json();
+        
+        // Menapis ralat: Hanya paparkan berita atau permohonan yang bertukar status secara rasmi
+        const refinedPayload = dataset.filter((item: any) => 
+          item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status)
+        ).map((item: any) => ({
+          ...item,
+          date: new Date(item.date),
+        }));
+        refinedPayload.sort((a: any, b: any) => b.date.getTime() - a.date.getTime());
+        setNotifications(refinedPayload);
+      } catch (error) {
+        console.error("Notification stream synchronization failed:", error);
+      }
+    };
 
-  // This effect hook re-fetches notification data each time the popover panel transitions to open.
-  useEffect(() => {
-    if (isOpen) {
-      loadNotifications();
-    }
-  }, [isOpen, loadNotifications]);
+    syncLiveNotifications();
+  }, [isManagement]); // Fixed dependency size array node to eliminate client browser runtime variant crashes completely
 
   // This utility composes a formatted mailto appeal link for rejected application notifications.
   const handleEmailAppeal = (app: NotificationAppItem) => {
@@ -127,92 +144,6 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     ].join("\n");
     window.location.href = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
-
-  // This block builds the staff notification feed from submitted application status transitions.
-  const staffNotifications: {
-    id: string;
-    title: string;
-    desc: string;
-    type: "info" | "success" | "error";
-    date: Date;
-    app: NotificationAppItem;
-  }[] = [];
-
-  // This block builds the management notification feed from incoming PENDING staff submissions.
-  const managementNotifications: {
-    id: string;
-    title: string;
-    desc: string;
-    type: "info" | "success" | "error";
-    date: Date;
-    app: NotificationAppItem;
-  }[] = [];
-
-  // This notification array parser tool merges public announcements and user-specific status transitions into a reactive feed.
-  if (!isManagement) {
-    ANNOUNCEMENTS.forEach((ann) => {
-      staffNotifications.push({
-        id: `announcement-${ann.id}`,
-        title: `Pengumuman: ${ann.title}`,
-        desc: ann.content,
-        type: "info",
-        date: new Date(ann.date),
-        app: null as any,
-      });
-    });
-
-    applications.forEach((app) => {
-      const safeDate = new Date(app.submittedAt ?? Date.now());
-      if (app.status === "APPROVED") {
-        staffNotifications.push({
-          id: `${app.id}-approved`,
-          title: "Permohonan DISAHKAN",
-          desc: "Tahniah! Permohonan caruman zakat anda telah disahkan dan berkuat kuasa untuk penggajian.",
-          type: "success",
-          date: safeDate,
-          app,
-        });
-      } else if (app.status === "REJECTED") {
-        staffNotifications.push({
-          id: `${app.id}-rejected`,
-          title: "Permohonan DITOLAK",
-          desc: `Ditolak: ${app.adminNotes ?? "Sila semak butiran atau hubungi pentadbir."}`,
-          type: "error",
-          date: safeDate,
-          app,
-        });
-      }
-    });
-  } else {
-    applications.forEach((app) => {
-      const safeDate = new Date(app.submittedAt ?? Date.now());
-      if (app.status === "PENDING") {
-        managementNotifications.push({
-          id: `${app.id}-pending-mgmt`,
-          title: "Permohonan Baru Masuk",
-          desc: `Borang baru daripada ${app.namaPenuh ?? ""} (${app.noPekerja ?? ""}) memerlukan penentusahan anda.`,
-          type: "info",
-          date: safeDate,
-          app,
-        });
-      } else if (app.status === "REJECTED") {
-        managementNotifications.push({
-          id: `${app.id}-appeal-mgmt`,
-          title: "Rayuan E-mel Sedia Ada",
-          desc: `Kakitangan ${app.namaPenuh ?? ""} mungkin mengemukakan rayuan bagi permohonan yang ditolak.`,
-          type: "error",
-          date: safeDate,
-          app,
-        });
-      }
-    });
-  }
-
-  // This fallback variable selects the correct notification list based on the stable role boolean.
-  const notifications = isManagement ? managementNotifications : staffNotifications;
-
-  // Sort the notifications chronologically with newest first.
-  notifications.sort((a, b) => b.date.getTime() - a.date.getTime());
 
   // This derived value counts the number of notifications that have not yet been opened by the user.
   const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
@@ -281,7 +212,7 @@ export function ZakatGlobalNotificationBellPopoverComponent({
                     {notif.type === "error" && (
                       <XCircle className="h-4 w-4 text-red-600" />
                     )}
-                    {notif.type === "info" && (
+                    {(notif.type === "info" || notif.type === "NEWS") && (
                       <Inbox className="h-4 w-4 text-[#002060]" />
                     )}
                   </div>

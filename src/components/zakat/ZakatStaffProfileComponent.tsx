@@ -38,36 +38,35 @@ interface ZakatStaffProfileComponentProps {
 }
 
 export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileComponentProps) {
-  // This hook handles the React server action transition state.
   const [isPending, startTransition] = useTransition();
 
-  // 1. Tambah baris state ini di bahagian atas komponen profil
-  const user = defaultValues;
-  const [fakulti, _setFakulti] = useState(user?.fakulti || "");
-  const setFakulti = (val: string) => {
-    _setFakulti(val);
-    setValue("fakulti", val, { shouldValidate: true });
-  };
-
-  // This form state manages initialization with empty defaults to enforce user input guided by placeholders.
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<any>({
-    resolver: zodResolver(zakatProfileSchema),
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<ZakatProfileInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(zakatProfileSchema) as any,
     defaultValues: {
       namaPenuh: defaultValues?.namaPenuh ?? "",
       noKP: defaultValues?.noKP ?? "",
       umur: defaultValues?.umur ?? undefined,
       noTelefon: defaultValues?.noTelefon ?? "",
       noPekerja: defaultValues?.noPekerja ?? "",
-      gajiSemasa: defaultValues?.gajiSemasa ?? undefined,
+      gajiSemasa: defaultValues?.gajiSemasa ? Number(defaultValues.gajiSemasa) : undefined,
       negeri: defaultValues?.negeri ?? "",
       bandar: defaultValues?.bandar ?? "",
       poskod: defaultValues?.poskod ?? "",
       alamatRumah: defaultValues?.alamatRumah ?? "",
-      fakulti: defaultValues?.fakulti ?? "",
+      fakulti: (defaultValues?.fakulti as ZakatProfileInput["fakulti"]) ?? undefined,
       persetujuanAkta709: false,
     }
   });
 
+  const user = defaultValues;
+  const [fakulti, _setFakulti] = useState<string>(user?.fakulti || "");
+  const setFakulti = (val: string) => {
+    _setFakulti(val);
+    setValue("fakulti", val as ZakatProfileInput["fakulti"], { shouldValidate: true });
+  };
+
+  // eslint-disable-next-line react-hooks/incompatible-library
   const negeriValue = watch("negeri");
   const consentValue = watch("persetujuanAkta709");
 

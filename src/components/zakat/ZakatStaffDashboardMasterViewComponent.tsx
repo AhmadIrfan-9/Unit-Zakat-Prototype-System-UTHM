@@ -37,8 +37,8 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
   // This navigation hook retrieves the active URL query parameters.
   const searchParams = useSearchParams();
 
-  // This state hook manages the currently active tab key for the staff workspace.
-  const [activeTab, setActiveTab] = useState<string>("info");
+  // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
+  const [activeTab, setActiveTab] = useState<string>(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") || "info" : "info");
 
   // This effect hook redirects management staff to the correct executive dashboard route.
   useEffect(() => {
@@ -48,14 +48,7 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
     }
   }, [user.role, router, searchParams]);
 
-  // This effect hook synchronises the active tab with the browser URL query parameter.
-  useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    const validTabs = ["info", "home", "news", "form", "mohon", "profile"];
-    if (tabParam && validTabs.includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
+
 
   // This helper function updates both local state and the URL when a tab changes.
   const handleTabChange = (tab: string) => {

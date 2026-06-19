@@ -17,8 +17,6 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { fetchNotificationDataAction } from "@/app/actions/zakatWorkflowManagementServerActions";
-
 // This data model defines the minimal application properties required for notification display.
 interface NotificationAppItem {
   id: string;
@@ -29,47 +27,29 @@ interface NotificationAppItem {
   adminNotes: string | null;
 }
 
-// This data model describes the props accepted by the notification bell popover component.
-interface NotificationBellProps {
-  role: "USER_STAFF" | "MANAGEMENT_STAFF";
-  initialApplications?: NotificationAppItem[];
+interface PopoverNotificationItem {
+  id: string;
+  type: "success" | "error" | "info" | "NEWS";
+  status: string;
+  title: string;
+  desc: string;
+  date: Date;
+  app: NotificationAppItem | null;
 }
 
-// These are the official institutional announcements loaded into the notifications system.
-const ANNOUNCEMENTS = [
-  {
-    id: 1,
-    badge: "WARTA NISAB 2026",
-    title: "Kemas Kini Had Paras Nisab Bulanan Negeri Johor Suku Kedua 2026",
-    content: "Majlis Agama Islam Negeri Johor (MAINJ) secara rasmi menetapkan had paras nisab bulanan semasa pada kadar RM 2,150.00 untuk panduan taksiran caruman gaji.",
-    date: "2026-06-15",
-  },
-  {
-    id: 2,
-    badge: "PANDUAN HAUL",
-    title: "Penyelarasan Kitaran Haul 12 Bulan Bagi Caruman Gaji Kakitangan",
-    content: "Penyelarasan tempoh haul 12 bulan penuh kini diselaraskan secara automatik bagi memastikan potongan gaji selari dengan tempoh pemilikan harta yang sah.",
-    date: "2026-06-10",
-  },
-  {
-    id: 3,
-    badge: "REBAT CUKAI",
-    title: "Automasi Resit Pelepasan Cukai Pendapatan Melalui Unit Kutipan Zakat",
-    content: "Penyatuan sistem automasi membolehkan penyata caruman tahunan digunakan terus sebagai resit pelepasan cukai pendapatan untuk urusan pemfailan LHDN.",
-    date: "2026-06-05",
-  },
-];
+interface NotificationBellProps {
+  role: "USER_STAFF" | "MANAGEMENT_STAFF";
+}
 
 export function ZakatGlobalNotificationBellPopoverComponent({
   role,
-  initialApplications = [],
 }: NotificationBellProps) {
 
   // This stable boolean is computed once from the role prop and never changes across renders.
   const isManagement = role === "MANAGEMENT_STAFF";
 
   // This state hook holds the current notification records.
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<PopoverNotificationItem[]>([]);
 
   // This state hook controls whether the notification popover panel is currently open or collapsed.
   const [isOpen, setIsOpen] = useState(false);
@@ -85,14 +65,22 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     setIsRefreshing(true);
     try {
       const response = await fetch("/api/zakat/notifications");
-      const dataset = await response.json();
-      const refinedPayload = dataset.filter((item: any) => 
-        item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status)
-      ).map((item: any) => ({
-        ...item,
-        date: new Date(item.date),
-      }));
-      refinedPayload.sort((a: any, b: any) => b.date.getTime() - a.date.getTime());
+      const dataset = (await response.json()) as Array<{
+        id: string;
+        type: "success" | "error" | "info" | "NEWS";
+        status: string;
+        title: string;
+        desc: string;
+        date: string;
+        app: NotificationAppItem | null;
+      }>;
+      const refinedPayload = dataset
+        .filter((item) => item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status))
+        .map((item) => ({
+          ...item,
+          date: new Date(item.date),
+        }));
+      refinedPayload.sort((a, b) => b.date.getTime() - a.date.getTime());
       setNotifications(refinedPayload);
     } catch (err) {
       console.error("[ZakatNotificationBell] Failed to load notifications:", err);
@@ -106,16 +94,24 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     const syncLiveNotifications = async () => {
       try {
         const response = await fetch("/api/zakat/notifications");
-        const dataset = await response.json();
+        const dataset = (await response.json()) as Array<{
+          id: string;
+          type: "success" | "error" | "info" | "NEWS";
+          status: string;
+          title: string;
+          desc: string;
+          date: string;
+          app: NotificationAppItem | null;
+        }>;
         
         // Menapis ralat: Hanya paparkan berita atau permohonan yang bertukar status secara rasmi
-        const refinedPayload = dataset.filter((item: any) => 
-          item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status)
-        ).map((item: any) => ({
-          ...item,
-          date: new Date(item.date),
-        }));
-        refinedPayload.sort((a: any, b: any) => b.date.getTime() - a.date.getTime());
+        const refinedPayload = dataset
+          .filter((item) => item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status))
+          .map((item) => ({
+            ...item,
+            date: new Date(item.date),
+          }));
+        refinedPayload.sort((a, b) => b.date.getTime() - a.date.getTime());
         setNotifications(refinedPayload);
       } catch (error) {
         console.error("Notification stream synchronization failed:", error);
@@ -125,7 +121,7 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     syncLiveNotifications();
   }, [isManagement]); // Fixed dependency size array node to eliminate client browser runtime variant crashes completely
 
-  // This utility composes a formatted mailto appeal link for rejected application notifications.
+  // Incremental patch wrapping external window location redirections inside clean execution event side effects.
   const handleEmailAppeal = (app: NotificationAppItem) => {
     const emailTo = "zakat-desk@uthm.edu.my";
     const subject = `Rayuan Penolakan Permohonan Caruman Zakat Gaji UTHM - ${app.namaPenuh} (${app.noPekerja})`;
@@ -142,7 +138,9 @@ export function ZakatGlobalNotificationBellPopoverComponent({
       `${app.namaPenuh ?? ""}`,
       `No. Pekerja: ${app.noPekerja ?? ""}`,
     ].join("\n");
-    window.location.href = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (typeof window !== "undefined") {
+      window.location.assign(`mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    }
   };
 
   // This derived value counts the number of notifications that have not yet been opened by the user.
@@ -233,11 +231,11 @@ export function ZakatGlobalNotificationBellPopoverComponent({
                     </p>
 
                     {/* This block renders the email appeal button exclusively for rejected staff notifications. */}
-                    {!isManagement && notif.type === "error" && (
+                    {!isManagement && notif.type === "error" && notif.app && (
                       <div className="pt-1.5">
                         <Button
                           size="sm"
-                          onClick={() => handleEmailAppeal(notif.app)}
+                          onClick={() => notif.app && handleEmailAppeal(notif.app)}
                           className="h-6 text-[10px] font-bold bg-[#002060] hover:bg-[#002060]/90 text-white gap-1 inline-flex items-center rounded-md cursor-pointer px-2.5"
                         >
                           <Send className="h-2.5 w-2.5" /> Kemuka Rayuan Via Emel

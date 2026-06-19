@@ -99,7 +99,7 @@ export function ZakatManagementFacultyDonutChartComponent({
     : data.map(item => ({ ...item, chartValue: item.value }));
 
   // This fallback method handles hover parameters dynamically to coordinate accessibility updates.
-  const handlePieHover = (_: any, index: number) => {
+  const handlePieHover = (_: unknown, index: number) => {
     const item = data[index];
     if (item) {
       setHoveredFaculty(item.name);

@@ -16,7 +16,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { updateZakatApplicationStatus } from "@/app/actions/zakatWorkflowManagementServerActions";
-import { cn } from "@/lib/utils";
 
 interface ApplicationItem {
   id: string;

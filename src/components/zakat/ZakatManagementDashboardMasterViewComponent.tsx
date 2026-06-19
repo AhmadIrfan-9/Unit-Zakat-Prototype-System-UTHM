@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { updateZakatApplicationWorkflowStatus } from "@/app/actions/zakatSalaryDeductionManagementServerActions";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
@@ -66,11 +66,10 @@ export function ZakatManagementDashboardMasterViewComponent({
   // This navigation hook provides access to Next.js routing methods.
   const router = useRouter();
 
-  // This navigation hook retrieves the active URL query parameters.
-  const searchParams = useSearchParams();
 
-  // This state hook manages the active dashboard tab key.
-  const [activeTab, setActiveTab] = useState<string>("proses");
+
+  // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
+  const [activeTab, setActiveTab] = useState<string>(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") || "proses" : "proses");
 
   // This state hook tracks the local list of payroll deduction applications for reactive UI updates.
   const [applications, setApplications] = useState<ApplicationItem[]>(initialApplications);
@@ -92,16 +91,13 @@ export function ZakatManagementDashboardMasterViewComponent({
 
   // This sync hook updates the local application list whenever the server pushes refreshed props.
   useEffect(() => {
-    setApplications(initialApplications);
+    const timer = setTimeout(() => {
+      setApplications(initialApplications);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialApplications]);
 
-  // This sync hook aligns the active tab with the URL query parameter to prevent state bleeding.
-  useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam && ["proses", "analisis", "profile"].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams]);
+
 
   // This fallback method safely resolves the displayed deduction amount from the application record.
   const getDeductionAmount = (app: ApplicationItem): number => {

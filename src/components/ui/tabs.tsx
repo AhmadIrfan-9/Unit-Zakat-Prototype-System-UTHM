@@ -71,7 +71,8 @@ export function TabsTrigger({
         "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-xs font-bold transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer",
         isActive 
           ? "bg-white dark:bg-card text-[#002060] shadow-sm ring-1 ring-[#002060]/10" 
-          : "text-muted-foreground hover:text-foreground hover:bg-white/30 dark:hover:bg-card/30"
+          : "text-muted-foreground hover:text-foreground hover:bg-white/30 dark:hover:bg-card/30",
+        className
       )}
     >
       {children}

@@ -3,6 +3,7 @@
 "use client";
 
 import Image from "next/image";
+import { useMemo } from "react";
 
 // This data model definition describes the detailed properties of user deduction entries.
 interface ApplicationItem {
@@ -100,6 +101,13 @@ export function ZakatExecutiveReportGeneratorDocument({
     minute: "2-digit",
   }).toUpperCase();
 
+  // Incremental patch forcing rendering purity by deriving a stable report ID via memoized properties.
+  const reportId = useMemo(() => {
+    const fixedDate = new Date("2026-06-20");
+    const hash = printDateString.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % 9000 + 1000;
+    return `RPT-ZKT-${fixedDate.getFullYear()}-${hash}`;
+  }, [printDateString]);
+
   // This fallback variable model formats the total collection amount with a zero-state guard.
   const displayTotalAmount = isZeroState
     ? "RM 0.00"
@@ -192,7 +200,7 @@ export function ZakatExecutiveReportGeneratorDocument({
 
       {/* This layout wrapper styles the formal audit metadata box with report ID and print timestamp. */}
       <div className="bg-slate-100 border border-slate-200 rounded-md px-4 py-2.5 mb-6 flex flex-col sm:flex-row justify-between items-center text-[10px] font-mono text-slate-700 tracking-wider gap-2">
-        <span>ID LAPORAN: RPT-ZKT-{new Date().getFullYear()}-{Math.floor(Math.random() * 9000 + 1000)}</span>
+        <span>ID LAPORAN: {reportId}</span>
         <span>TARIKH CETAKAN: {printDateString}</span>
         <span>STATUS DOKUMEN: LAPORAN RASMI EKSEKUTIF</span>
       </div>

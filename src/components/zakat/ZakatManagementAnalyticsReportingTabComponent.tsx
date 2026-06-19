@@ -50,9 +50,32 @@ const FACULTY_NAMES: Record<string, string> = {
   FTK: "Fakulti Teknologi Kejuruteraan"
 };
 
+// This component renders the custom line chart tooltip overlay card.
+// Incremental patch declaring the line tooltip component outside the primary render pipeline to avoid state destruction.
+const CustomLineTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: { year: string; total: number } }[] }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-md text-xs">
+        <p className="font-bold text-[#002060] dark:text-blue-400">Tahun {data.year}</p>
+        <p className="text-slate-650 dark:text-slate-300 font-semibold mt-1">
+          Kutipan Tahunan: <span className="font-bold text-[#002060]">RM {data.total.toFixed(2)}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+// This constant defines the three available 5-year range intervals for the line chart selector.
+const YEAR_RANGES: Record<string, string[]> = {
+  "2022-2026": ["2022", "2023", "2024", "2025", "2026"],
+  "2020-2024": ["2020", "2021", "2022", "2023", "2024"],
+  "2018-2022": ["2018", "2019", "2020", "2021", "2022"]
+};
+
 export function ZakatManagementAnalyticsReportingTabComponent({
-  applications = [],
-  chartData = []
+  applications = []
 }: ZakatManagementAnalyticsReportingTabProps) {
   // This state hook manages the selected 5-year chronological range for the line chart.
   const [selectedRangeKey, setSelectedRangeKey] = useState<string>("2022-2026");
@@ -60,12 +83,7 @@ export function ZakatManagementAnalyticsReportingTabComponent({
   // This state hook coordinates the print view rendering state for the vector PDF export.
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
 
-  // This constant defines the three available 5-year range intervals for the line chart selector.
-  const yearRanges: Record<string, string[]> = {
-    "2022-2026": ["2022", "2023", "2024", "2025", "2026"],
-    "2020-2024": ["2020", "2021", "2022", "2023", "2024"],
-    "2018-2022": ["2018", "2019", "2020", "2021", "2022"]
-  };
+
 
   // This hook fires browser print after a brief rendering delay when the print state is activated.
   useEffect(() => {
@@ -81,7 +99,7 @@ export function ZakatManagementAnalyticsReportingTabComponent({
 
   // This callback computes the chronological line chart dataset from approved application records.
   const getLineChartDataset = useCallback(() => {
-    const targetYears = yearRanges[selectedRangeKey] ?? ["2022", "2023", "2024", "2025", "2026"];
+    const targetYears = YEAR_RANGES[selectedRangeKey] ?? ["2022", "2023", "2024", "2025", "2026"];
     let hasData = false;
     const safeApps = applications ?? [];
 
@@ -154,22 +172,6 @@ export function ZakatManagementAnalyticsReportingTabComponent({
   // This fallback variable model retrieves the computed AI insight data object.
   const aiInsights = getAIInsights();
 
-  // This component renders the custom line chart tooltip overlay card.
-  const CustomLineTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: { year: string; total: number } }[] }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-lg shadow-md text-xs">
-          <p className="font-bold text-[#002060] dark:text-blue-400">Tahun {data.year}</p>
-          <p className="text-slate-600 dark:text-slate-300 font-semibold mt-1">
-            Kutipan Tahunan: <span className="font-bold text-[#002060]">RM {data.total.toFixed(2)}</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   // This conditional rendering block replaces the analytics view with the print document when PDF export is triggered.
   if (isPrinting) {
     return (
@@ -223,7 +225,7 @@ export function ZakatManagementAnalyticsReportingTabComponent({
               <span className="text-[10px] font-bold text-slate-500">Pilih Jangkauan 5-Tahun</span>
               <div className="grid grid-cols-3 gap-2">
                 {/* This array data map renders the year range selector buttons. */}
-                {Object.keys(yearRanges).map((rangeKey) => (
+                {Object.keys(YEAR_RANGES).map((rangeKey) => (
                   <Button
                     key={rangeKey}
                     type="button"

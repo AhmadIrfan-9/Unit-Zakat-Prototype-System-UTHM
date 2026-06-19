@@ -75,12 +75,13 @@ const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     active?: boolean;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     payload?: any[];
     labelKey?: string;
     indicator?: "dot" | "line" | "dashed";
     hideLabel?: boolean;
   }
->(({ className, active, payload, labelKey, indicator = "dot", hideLabel = false, ...props }, ref) => {
+>(({ className, active, payload, indicator = "dot", ...props }, ref) => {
   const { config } = useChart();
 
   if (!active || !payload || !payload.length) {

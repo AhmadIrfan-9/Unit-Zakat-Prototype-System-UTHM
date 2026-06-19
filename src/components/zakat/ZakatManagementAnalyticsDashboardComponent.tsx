@@ -4,9 +4,9 @@
 
 import { useState } from "react";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, DollarSign, Users, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { TrendingUp, DollarSign, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 
 // This list maps the raw faculty acronyms to their official Malay Dewan Bahasa dan Pustaka designations.
@@ -56,7 +56,6 @@ interface AnalyticsDashboardProps {
 
 export function ZakatManagementAnalyticsDashboardComponent({
   stats,
-  chartData,
   facultyMetrics = [],
   historicalTrends = []
 }: AnalyticsDashboardProps) {
@@ -197,8 +196,9 @@ export function ZakatManagementAnalyticsDashboardComponent({
               <ChartContainer config={donutConfig} className="mx-auto min-h-80">
                 <PieChart>
                   <Tooltip
-                    formatter={(value: any, name: any) => {
-                      const dewanBahasaLabel = FACULTY_TRANSLATIONS[name] || name;
+                    formatter={(value: unknown, name: unknown) => {
+                      const nameStr = String(name);
+                      const dewanBahasaLabel = FACULTY_TRANSLATIONS[nameStr] || nameStr;
                       return [`RM ${Number(value).toLocaleString("en-MY", { minimumFractionDigits: 2 })}`, dewanBahasaLabel];
                     }}
                     contentStyle={{
@@ -315,7 +315,7 @@ export function ZakatManagementAnalyticsDashboardComponent({
                       borderRadius: "8px",
                       fontSize: "11px",
                     }}
-                    formatter={(val: any) => {
+                    formatter={(val: unknown) => {
                       const numericVal = typeof val === "number" ? val : Number(val) || 0;
                       return [`RM ${numericVal.toLocaleString("en-MY")}`, "Jumlah Caruman"];
                     }}

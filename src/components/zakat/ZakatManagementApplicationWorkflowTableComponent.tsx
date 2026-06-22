@@ -214,6 +214,15 @@ export function ZakatManagementApplicationWorkflowTableComponent({
                         >
                           <X className="h-3.5 w-3.5" /> Tolak
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={isPendingTransition}
+                          onClick={() => handleDefensiveDeleteInitiation(undefined as any, app.namaPenuh, app.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 font-bold h-8 px-3 rounded-lg flex items-center gap-1 cursor-pointer"
+                        >
+                          Padam
+                        </Button>
                       </div>
                     </td>
                   </tr>

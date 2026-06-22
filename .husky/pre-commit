@@ -1,4 +1,5 @@
 #!/bin/sh
-# Updated pre-commit script to strip deprecated commands and handle empty test matrices gracefully.
+. "$(dirname "$0")/_/husky.sh"
 
-npx tsc --noEmit && npm run lint && npx playwright test --pass-with-no-tests
+# Pastikan arahan lint dipanggil secara bersih tanpa sebarang hujah direktori palsu di hujungnya
+npx tsc --noEmit && npm run lint

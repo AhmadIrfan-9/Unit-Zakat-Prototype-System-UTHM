@@ -272,6 +272,7 @@ export async function fetchUserManagementList() {
         noPekerja: true,
         noKP: true,
         fakulti: true,
+        role: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
@@ -306,3 +307,27 @@ export async function deleteUserAction(userId: string) {
   }
 }
 
+/**
+ * Incremental patch mutating the targeted user security role directly inside the Prisma database engine.
+ * Mengemaskini ruangan role pengguna bersandarkan userId unik yang dihantar dari komponen pengurusan.
+ */
+export async function updateUserRoleAction(userId: string, newRole: string) {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
+    return { success: false, error: "Akses tidak dibenarkan." };
+  }
+
+  try {
+    // Mengemaskini rekod model User bersandarkan parameter ID unik yang dihantar
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole as "USER_STAFF" | "MANAGEMENT_STAFF" },
+    });
+
+    revalidatePath("/dashboard/pengurusan");
+    return { success: true };
+  } catch (error) {
+    console.error("FAILED_ROLE_ELEVATION:", error);
+    return { success: false, error: "Gagal menukar peranan keselamatan pengguna." };
+  }
+}

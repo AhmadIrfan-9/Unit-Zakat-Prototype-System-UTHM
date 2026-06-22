@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2, Mail, Search } from "lucide-react";
-import { fetchUserManagementList, deleteUserAction } from "@/app/actions/zakatWorkflowManagementServerActions";
+import { fetchUserManagementList, deleteUserAction, updateUserRoleAction } from "@/app/actions/zakatWorkflowManagementServerActions";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
@@ -14,6 +14,7 @@ interface UserItem {
   noPekerja: string | null;
   noKP: string | null;
   fakulti: string | null;
+  role: string;
   createdAt: Date;
 }
 
@@ -31,6 +32,7 @@ export function ZakatManagementUserVerificationTableDataFeed() {
       // Ensure date objects are correctly initialized
       const formatted = data.map((u) => ({
         ...u,
+        role: u.role ?? "USER_STAFF",
         createdAt: new Date(u.createdAt),
       }));
       setUsers(formatted);
@@ -93,6 +95,23 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     if (userConfirmedEmailSent) {
       // Jalankan fungsi mutasi server action pangkalan data asal anda di sini
       executeDatabaseDeleteAction(userId);
+    }
+  };
+
+  // Incremental patch executing server-side role elevation requests inside the management table grid.
+  const handleRoleElevationToggle = async (userId: string, currentRole: string) => {
+    const targetRole = currentRole === "MANAGEMENT_STAFF" ? "USER_STAFF" : "MANAGEMENT_STAFF";
+    const userConfirmed = confirm(`Adakah anda pasti untuk menukar peranan pengguna ini kepada ${targetRole}?`);
+
+    if (userConfirmed) {
+      // Memanggil server action untuk mengemas kini peranan pengguna di dalam database Prisma
+      const result = await updateUserRoleAction(userId, targetRole);
+      if (result.success) {
+        toast.success("Peranan pengguna berjaya dikemaskini.");
+        await loadUsers(); // Refresh data feed paparan meja
+      } else {
+        toast.error(result.error || "Gagal menukar peranan pengguna.");
+      }
     }
   };
 
@@ -180,16 +199,28 @@ export function ZakatManagementUserVerificationTableDataFeed() {
                       })}
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={isPendingTransition}
-                        onClick={() => handleDefensiveDeleteInitiation(u.email, u.name || "Kakitangan", u.id)}
-                        className="text-red-650 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-bold h-8 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer ml-auto"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>Padam Akses</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-3">
+                        {/* Incremental patch: Butang tindakan tukar peranan sebelah butang Padam Akses asal */}
+                        <button
+                          onClick={() => handleRoleElevationToggle(u.id, u.role)}
+                          disabled={isPendingTransition}
+                          className="text-xs font-bold text-[#002060] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          {u.role === "MANAGEMENT_STAFF" ? "Turun Pangkat" : "Lantik Pengurusan"}
+                        </button>
+
+                        {/* Butang Padam Akses asal kekal utuh di sebelah */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={isPendingTransition}
+                          onClick={() => handleDefensiveDeleteInitiation(u.email, u.name || "Kakitangan", u.id)}
+                          className="text-red-650 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 font-bold h-8 px-3 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Padam Akses</span>
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

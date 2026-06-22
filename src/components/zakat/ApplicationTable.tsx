@@ -246,7 +246,7 @@ export function ZakatManagementApplicationWorkflowTableComponent({
       {/* Controlled Rejection Modal overlay dialog */}
       <Dialog
         open={!!appForRejection}
-        onOpenChange={(open) => !open && setAppForRejection(null)}
+        onOpenChange={(open: boolean) => !open && setAppForRejection(null)}
       >
         <DialogContent className="sm:max-w-md border-[#002060]/20 shadow-2xl">
           <DialogHeader>
@@ -262,7 +262,7 @@ export function ZakatManagementApplicationWorkflowTableComponent({
               <Textarea
                 required
                 value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectionReason(e.target.value)}
                 placeholder="Sila nyatakan alasan penolakan rasmi untuk makluman kakitangan..."
                 className="min-h-24 text-xs focus-visible:ring-[#002060] focus-visible:border-[#002060]"
                 disabled={isPendingTransition}

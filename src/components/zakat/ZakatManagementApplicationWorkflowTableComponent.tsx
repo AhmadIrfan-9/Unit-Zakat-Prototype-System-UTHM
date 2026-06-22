@@ -122,6 +122,30 @@ export function ZakatManagementApplicationWorkflowTableComponent({
     });
   };
 
+  // This database action executes user record deletion.
+  const executeDatabaseDeleteAction = async (userId: string) => {
+    console.log("Menjalankan mutasi pemadaman pangkalan data untuk userId:", userId);
+    // In a real application, a secure server action would be invoked here.
+  };
+
+  // Incremental patch protecting user removal compliance rows by forcing an explicit notification email dispatch before unlock.
+  const handleDefensiveDeleteInitiation = (userEmail: string, staffName: string, userId: string) => {
+    const emailTo = userEmail ?? "unitzakat@uthm.edu.my";
+    const subject = "Notifikasi Pembatalan Akses Portal Zakat UTHM";
+    const body = `Assalamualaikum sdr/sdri ${staffName},\n\nSila ambil maklum bahawa akaun portal zakat gaji anda akan dipadamkan daripada pangkalan data pusat berikutan kemas kini rekod struktur perkhidmatan terbaharu.\n\nSalam Pentadbiran,\nUnit Pengurusan Zakat UTHM.`;
+    
+    // 1. Lancarkan client side email handler dengan parameter teks template siap bina
+    window.location.href = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // 2. Paparkan dialog pengesahan berperingkat untuk membuka kunci butang database mutation
+    const userConfirmedEmailSent = confirm(`Sistem telah membuka pelayar emel untuk menghantar notifikasi kepada ${staffName}.\n\nAdakah anda sudah selesai menghantar emel tersebut dan pasti untuk meneruskan pemadaman akaun?`);
+    
+    if (userConfirmedEmailSent) {
+      // Jalankan fungsi mutasi server action pangkalan data asal anda di sini
+      executeDatabaseDeleteAction(userId);
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
       

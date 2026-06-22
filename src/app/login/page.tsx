@@ -57,6 +57,11 @@ function LoginForm() {
   // This state holds any validation or domain error from the reset form submission.
   const [forgotError, setForgotError] = useState<string | null>(null);
 
+  // Suntik parameter keadaan state baharu ini di dalam LoginForm()
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [registerNoPekerja, setRegisterNoPekerja] = useState("");
+  const [registerNama, setRegisterNama] = useState("");
+
   // This handler submits credentials to the auth provider and, on success, navigates to the root path for role-based dispatch.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,6 +255,59 @@ function LoginForm() {
                     {loading ? "Memproses Log Masuk..." : "LOG MASUK"}
                   </Button>
                 </form>
+
+                {/* Incremental patch rendering a toggle link to access user registration workflows natively. */}
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRegisterMode(true)}
+                    className="text-xs font-semibold text-[#002060] hover:underline cursor-pointer"
+                  >
+                    Kakitangan Baru? Daftar Akaun Portal Di Sini
+                  </button>
+                </div>
+
+                {isRegisterMode && (
+                  <div className="mt-4 p-4 border border-dashed border-[#002060]/30 rounded-lg space-y-3 bg-slate-50">
+                    <h4 className="text-xs font-bold text-[#002060]">Borang Pendaftaran Kakitangan Baru</h4>
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nama Penuh"
+                        value={registerNama}
+                        onChange={(e) => setRegisterNama(e.target.value)}
+                        className="text-xs h-8 bg-white"
+                      />
+                      <Input
+                        placeholder="No. Pekerja"
+                        value={registerNoPekerja}
+                        onChange={(e) => setRegisterNoPekerja(e.target.value)}
+                        className="text-xs h-8 bg-white"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            alert(`Pendaftaran simulasi untuk ${registerNama} (${registerNoPekerja}) telah berjaya dihantar.`);
+                            setIsRegisterMode(false);
+                            setRegisterNama("");
+                            setRegisterNoPekerja("");
+                          }}
+                          className="bg-emerald-600 text-white text-xs h-8 px-3"
+                        >
+                          Daftar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setIsRegisterMode(false)}
+                          className="text-xs h-8 px-3"
+                        >
+                          Batal
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (

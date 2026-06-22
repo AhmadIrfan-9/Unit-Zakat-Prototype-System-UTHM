@@ -129,7 +129,11 @@ export function ZakatManagementApplicationWorkflowTableComponent({
   };
 
   // Incremental patch protecting user removal compliance rows by forcing an explicit notification email dispatch before unlock.
-  const handleDefensiveDeleteInitiation = (userEmail: string, staffName: string, userId: string) => {
+  const handleDefensiveDeleteInitiation = (
+    userEmail: string | null | undefined, 
+    staffName: string, 
+    userId: string
+  ) => {
     const emailTo = userEmail ?? "unitzakat@uthm.edu.my";
     const subject = "Notifikasi Pembatalan Akses Portal Zakat UTHM";
     const body = `Assalamualaikum sdr/sdri ${staffName},\n\nSila ambil maklum bahawa akaun portal zakat gaji anda akan dipadamkan daripada pangkalan data pusat berikutan kemas kini rekod struktur perkhidmatan terbaharu.\n\nSalam Pentadbiran,\nUnit Pengurusan Zakat UTHM.`;
@@ -218,7 +222,7 @@ export function ZakatManagementApplicationWorkflowTableComponent({
                           size="sm"
                           variant="ghost"
                           disabled={isPendingTransition}
-                          onClick={() => handleDefensiveDeleteInitiation(undefined as any, app.namaPenuh, app.id)}
+                          onClick={() => handleDefensiveDeleteInitiation(undefined, app.namaPenuh, app.id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 font-bold h-8 px-3 rounded-lg flex items-center gap-1 cursor-pointer"
                         >
                           Padam

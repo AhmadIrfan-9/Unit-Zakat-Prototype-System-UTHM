@@ -252,3 +252,57 @@ export async function updateUserProfileAction(data: {
     };
   }
 }
+
+/**
+ * Membawa keluar senarai pengguna bertaraf kakitangan (USER_STAFF) untuk kegunaan tab Pengurusan Staf.
+ */
+export async function fetchUserManagementList() {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
+    throw new Error("Akses tidak dibenarkan. Hanya staf pengurusan sahaja.");
+  }
+
+  try {
+    const users = await prisma.user.findMany({
+      where: { role: "USER_STAFF" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        noPekerja: true,
+        noKP: true,
+        fakulti: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return users;
+  } catch (error) {
+    console.error("[fetchUserManagementList] Error:", error);
+    return [];
+  }
+}
+
+/**
+ * Memadam pengguna secara bersyarat dan kekal daripada pangkalan data.
+ */
+export async function deleteUserAction(userId: string) {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
+    return { success: false, error: "Akses tidak dibenarkan." };
+  }
+
+  try {
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    revalidatePath("/dashboard/pengurusan");
+    return { success: true };
+  } catch (error) {
+    console.error("[deleteUserAction] Error:", error);
+    return { success: false, error: "Gagal memadam kakitangan daripada pangkalan data." };
+  }
+}
+

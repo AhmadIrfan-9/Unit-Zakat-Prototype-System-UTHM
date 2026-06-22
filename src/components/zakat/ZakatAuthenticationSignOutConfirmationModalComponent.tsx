@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 import { signOut } from "next-auth/react";
@@ -66,12 +66,13 @@ export function ZakatAuthenticationSignOutConfirmationModalComponent({
         </div>
 
         {/* This action container layout groups the confirm and cancel buttons side-by-side. */}
-        <div className="flex items-center justify-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
           <Button
             type="button"
+            variant="outline"
             disabled={isSigningOut || isPending}
             onClick={onClose}
-            className="flex-1 bg-[#002060] hover:bg-[#002060]/90 text-white font-bold h-10 px-4 text-xs rounded-lg transition-colors cursor-pointer"
+            className="border-[#002060] text-[#002060] font-bold text-xs px-6 h-10 hover:bg-slate-50 transition-all"
           >
             Tidak, Saya Ingin Kekal
           </Button>
@@ -79,11 +80,11 @@ export function ZakatAuthenticationSignOutConfirmationModalComponent({
             type="button"
             disabled={isSigningOut || isPending}
             onClick={handleConfirmSignOut}
-            className="flex-1 border border-slate-200 bg-transparent text-slate-700 hover:text-white dark:border-slate-800 dark:text-slate-300 font-bold h-10 px-4 text-xs rounded-lg transition-all duration-200 hover:scale-105 hover:bg-red-600 hover:border-red-600 cursor-pointer"
+            className="bg-[#002060] hover:bg-red-600 text-white font-bold text-xs px-6 h-10 transition-all duration-200"
           >
             {isSigningOut || isPending ? "Memproses..." : "Ya, Log Keluar"}
           </Button>
-        </div>
+        </DialogFooter>
 
       </DialogContent>
     </Dialog>

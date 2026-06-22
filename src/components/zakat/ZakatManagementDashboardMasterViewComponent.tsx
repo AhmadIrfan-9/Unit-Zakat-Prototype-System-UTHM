@@ -10,6 +10,7 @@ import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLay
 import { ZakatStaffProfileComponent } from "./ZakatStaffProfileComponent";
 import { ZakatManagementApplicationProcessingTabComponent } from "./ZakatManagementApplicationProcessingTabComponent";
 import { ZakatManagementAnalyticsReportingTabComponent } from "./ZakatManagementAnalyticsReportingTabComponent";
+import { ZakatManagementUserVerificationTableDataFeed } from "./ZakatManagementUserVerificationTableDataFeed";
 import { Check, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,7 +70,16 @@ export function ZakatManagementDashboardMasterViewComponent({
 
 
   // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
-  const [activeTab, setActiveTab] = useState<string>(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") || "proses" : "proses");
+  const validTabs = ["proses", "analisis", "profile", "pengguna"];
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const tab = new URLSearchParams(window.location.search).get("tab");
+      if (tab && validTabs.includes(tab)) {
+        return tab;
+      }
+    }
+    return "proses";
+  });
 
   // This state hook tracks the local list of payroll deduction applications for reactive UI updates.
   const [applications, setApplications] = useState<ApplicationItem[]>(initialApplications);
@@ -258,6 +268,19 @@ export function ZakatManagementDashboardMasterViewComponent({
             applications={applications}
             chartData={chartData}
           />
+        )}
+
+        {/* Incremental patch adding the dedicated User Management directory tab into the executive dashboard container. */}
+        {activeTab === "pengguna" && (
+          <div className="animate-in fade-in duration-300 space-y-6 max-w-7xl mx-auto p-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-[#002060] mb-1">Pengurusan & Kelulusan Kakitangan</h3>
+              <p className="text-xs text-slate-500 mb-4">Sahkan akaun kakitangan baharu UTHM atau batalkan akses perkhidmatan portal secara bersyarat.</p>
+              
+              {/* Sub-komponen Meja Paparan Pengguna Baharu dijalankan di sini */}
+              <ZakatManagementUserVerificationTableDataFeed />
+            </div>
+          </div>
         )}
 
       </main>

@@ -6,8 +6,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { Info, FileText, User as UserIcon, LogOut, TrendingUp, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ZakatGlobalNotificationBellPopoverComponent } from "./ZakatGlobalNotificationBellPopoverComponent";
-import { ZakatAuthenticationSignOutConfirmationModalComponent } from "./ZakatAuthenticationSignOutConfirmationModalComponent";
+import { ZakatGlobalNotificationBellPopoverComponent } from "./NotificationBell";
+import { ZakatAuthenticationSignOutConfirmationModalComponent } from "./LogoutModal";
 
 // This data model definition outlines the personal user info structure passed into the navbar.
 interface UserInfo {

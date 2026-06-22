@@ -3,9 +3,9 @@
 
 import Image from "next/image";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ZakatStaffInformativeNisabHaulCardComponent } from "./ZakatStaffInformativeNisabHaulCardComponent";
-import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./ZakatStaffSalaryDeductionApplicationFormComponent";
-import { ZakatStaffProfileComponent } from "./ZakatStaffProfileComponent";
+import { ZakatStaffInformativeNisabHaulCardComponent } from "./NisabHaulCard";
+import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./DeductionForm";
+import { ZakatStaffProfileComponent } from "./UserProfile";
 import { Card, CardContent } from "@/components/ui/card";
 import { HelpCircle, FileCheck2, Info } from "lucide-react";
 

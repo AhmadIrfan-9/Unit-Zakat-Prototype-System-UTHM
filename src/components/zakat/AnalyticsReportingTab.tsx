@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { FileText, Cpu, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { ZakatManagementFacultyDonutChartComponent } from "./ZakatManagementFacultyDonutChartComponent";
+import { ZakatManagementFacultyDonutChartComponent } from "./FacultyDonutChart";
 import { ZakatExecutiveReportGeneratorDocument } from "@/lib/pdf/ZakatExecutiveReportGeneratorDocument";
 
 // This data model definition describes the detailed properties of user deduction entries.

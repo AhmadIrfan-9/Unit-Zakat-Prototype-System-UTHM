@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ZakatStaffProfileComponent } from "@/components/zakat/ZakatStaffProfileComponent";
+import { ZakatStaffProfileComponent } from "@/components/zakat/UserProfile";
 
 export default async function ZakatProfilePage() {
   // This statement verifies that the active session is valid and retrieves user credentials.

@@ -5,11 +5,11 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ZakatGlobalMainNavbarLayoutComponent } from "./ZakatGlobalMainNavbarLayoutComponent";
-import { ZakatStaffInformativeNisabHaulCardComponent } from "./ZakatStaffInformativeNisabHaulCardComponent";
-import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./ZakatStaffSalaryDeductionApplicationFormComponent";
-import { ZakatStaffProfileComponent } from "./ZakatStaffProfileComponent";
-import { ZakatStaffNewsAnnouncementsComponent } from "./ZakatStaffNewsAnnouncementsComponent";
+import { ZakatGlobalMainNavbarLayoutComponent } from "./Navbar";
+import { ZakatStaffInformativeNisabHaulCardComponent } from "./NisabHaulCard";
+import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./DeductionForm";
+import { ZakatStaffProfileComponent } from "./UserProfile";
+import { ZakatStaffNewsAnnouncementsComponent } from "./NewsAnnouncements";
 import { Card } from "@/components/ui/card";
 
 // This data model definition outlines the structured properties of the authenticated staff member.

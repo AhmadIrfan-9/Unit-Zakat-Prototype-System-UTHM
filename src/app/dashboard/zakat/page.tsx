@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ZakatStaffDashboardMasterViewComponent } from "@/components/zakat/ZakatStaffDashboardMasterViewComponent";
+import { ZakatStaffDashboardMasterViewComponent } from "@/components/zakat/StaffDashboard";
 import type { Metadata } from "next";
 
 // This metadata block sets the browser tab title and search description for the staff application portal.

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { fetchManagementAnalyticsDashboardData } from "@/app/actions/zakatSalaryDeductionManagementServerActions";
-import { ZakatManagementDashboardMasterViewComponent } from "@/components/zakat/ZakatManagementDashboardMasterViewComponent";
+import { ZakatManagementDashboardMasterViewComponent } from "@/components/zakat/ManagementDashboard";
 import type { Metadata } from "next";
 
 // This metadata block configures the browser tab title and description for the management analytics portal.

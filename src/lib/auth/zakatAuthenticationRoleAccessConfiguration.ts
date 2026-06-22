@@ -38,6 +38,19 @@ const credentialsSchema = z.object({
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
 
+  // Harden session token cookies to prevent XSS exfiltration and cross-site request hijacking.
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax" as const,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
+
   providers: [
     // This provider maps staff employee numbers and hashed passwords to authenticate portal sign-in requests.
     Credentials({
@@ -60,35 +73,76 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({
           where: { noPekerja },
           select: {
-            id:           true,
-            name:         true,
-            email:        true,
-            noPekerja:    true,
-            noKP:         true,
-            gajiSemasa:   true,
-            alamatRumah:  true,
-            role:         true,
-            passwordHash: true,
+            id:             true,
+            name:           true,
+            email:          true,
+            noPekerja:      true,
+            noKP:           true,
+            gajiSemasa:     true,
+            alamatRumah:    true,
+            role:           true,
+            passwordHash:   true,
+            // Security interceptor evaluating credential attempts and configuring a strict 15-minute runtime lockout window.
+            failedAttempts: true,
+            lockoutUntil:   true,
           },
         });
 
         if (!user || !user.passwordHash) return null;
 
-        // This bcrypt comparison verifies the submitted plaintext password against the stored hash.
-        const isValid = await compare(password, user.passwordHash);
-        if (!isValid) return null;
+        // 1. Semak sama ada akaun sedang berada di dalam tempoh sekatan amaran
+        if (user.lockoutUntil && new Date() < new Date(user.lockoutUntil)) {
+          const releaseTime = new Date(user.lockoutUntil).toLocaleTimeString("ms-MY", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          throw new Error(`Akaun anda dikunci sementara. Sila cuba semula selepas ${releaseTime}.`);
+        }
 
-        // This return object seeds the JWT on the first sign-in event with all required identity fields.
-        return {
-          id:          user.id,
-          name:        user.name,
-          email:       user.email,
-          noPekerja:   user.noPekerja,
-          noKP:        user.noKP,
-          gajiSemasa:  user.gajiSemasa ? Number(user.gajiSemasa) : null,
-          alamatRumah: user.alamatRumah ?? null,
-          role:        user.role,
-        };
+        // 2. Senario: Kata laluan betul — sahkan dengan bcrypt hash
+        const isValid = await compare(password, user.passwordHash);
+
+        if (isValid) {
+          // Set semula bilangan kegagalan kepada sifar jika berjaya masuk
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { failedAttempts: 0, lockoutUntil: null },
+          });
+
+          // This return object seeds the JWT on the first sign-in event with all required identity fields.
+          return {
+            id:          user.id,
+            name:        user.name,
+            email:       user.email,
+            noPekerja:   user.noPekerja,
+            noKP:        user.noKP,
+            gajiSemasa:  user.gajiSemasa ? Number(user.gajiSemasa) : null,
+            alamatRumah: user.alamatRumah ?? null,
+            role:        user.role,
+          };
+        }
+
+        // 3. Senario: Kata laluan salah — kemas kini pembilang dan kunci jika had dicapai
+        const nextAttempts = (user.failedAttempts ?? 0) + 1;
+        const MAX_ATTEMPTS = 5;
+        const shouldLock = nextAttempts >= MAX_ATTEMPTS;
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            failedAttempts: nextAttempts,
+            // Kunci 15 minit jika had dicapai, kekalkan nilai lama jika belum
+            lockoutUntil: shouldLock
+              ? new Date(Date.now() + 15 * 60 * 1000)
+              : user.lockoutUntil,
+          },
+        });
+
+        throw new Error(
+          shouldLock
+            ? "Had cubaan log masuk tamat. Akaun dikunci selama 15 minit."
+            : `Kata laluan salah. Baki cubaan: ${MAX_ATTEMPTS - nextAttempts} kali lagi.`
+        );
       },
     }),
   ],

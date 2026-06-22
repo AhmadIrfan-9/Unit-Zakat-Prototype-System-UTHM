@@ -102,7 +102,7 @@ function LoginForm() {
     }
   };
 
-  // This handler submits credentials to the auth provider and, on success, navigates to the root path for role-based dispatch.
+  // Incremental patch binding dynamic brute-force remaining count warnings directly onto the frontend portal access alert card.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noPekerja || !password) {
@@ -122,7 +122,18 @@ function LoginForm() {
       });
 
       if (response?.error) {
-        setError("No. Pekerja atau Kata Laluan tidak sah.");
+        // Read the server-propagated exception text message dynamically — carries lockout time or remaining attempts payload.
+        const rawMessage = response.error;
+        const isBruteForceMessage =
+          rawMessage.includes("Baki cubaan") ||
+          rawMessage.includes("dikunci") ||
+          rawMessage.includes("Had cubaan");
+
+        setError(
+          isBruteForceMessage
+            ? rawMessage
+            : "No. Pekerja atau Kata Laluan tidak sah."
+        );
         setLoading(false);
       } else {
         // This redirect targets the system root so the server-side role router sends each user to their correct workspace.
@@ -131,7 +142,9 @@ function LoginForm() {
       }
     } catch (err) {
       console.error("[LoginForm] signIn error:", err);
-      setError("Ralat sistem berlaku semasa log masuk.");
+      // Surface the thrown Error message if it is an instance of Error, otherwise use a generic fallback.
+      const message = err instanceof Error ? err.message : "Ralat sistem berlaku semasa log masuk.";
+      setError(message);
       setLoading(false);
     }
   };
@@ -316,10 +329,19 @@ function LoginForm() {
 
               <CardContent className="p-6 space-y-4">
                 {error && (
-                  // This banner displays credential validation errors returned from the auth handler.
-                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>{error}</span>
+                  // Incremental patch binding dynamic brute-force remaining count warnings directly onto the frontend portal access alert card.
+                  <div className={`rounded-lg border p-3 text-xs font-semibold flex items-start gap-2 ${
+                    error.includes("dikunci") || error.includes("Had cubaan")
+                      ? "border-amber-400/50 bg-amber-50 text-amber-800"
+                      : "border-destructive/30 bg-destructive/5 text-destructive"
+                  }`}>
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <span className="block">{error}</span>
+                      {(error.includes("Baki cubaan") || error.includes("dikunci") || error.includes("Had cubaan")) && (
+                        <span className="block text-[10px] font-medium opacity-75">Hubungi pentadbir sistem jika anda memerlukan bantuan segera.</span>
+                      )}
+                    </div>
                   </div>
                 )}
 

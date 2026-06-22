@@ -42,6 +42,10 @@ model User {
   // This mapping definition maps the institutional faculty attribute to the user model.
   fakulti       String?   @map("fakulti")
 
+  // Security tracking extensions added to block brute-force automation attacks at the core data layer.
+  failedAttempts Int       @default(0) @map("failed_attempts")
+  lockoutUntil   DateTime? @map("lockout_until")
+
   accounts                    Account[]
   sessions                    Session[]
   tasks                       Task[]

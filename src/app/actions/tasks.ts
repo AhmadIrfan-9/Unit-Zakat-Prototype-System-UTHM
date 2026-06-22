@@ -10,7 +10,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { taskCreateSchema, type TaskCreateInput } from "@/lib/validations/task";
 import { revalidatePath } from "next/cache";
-import { Priority, TaskStatus } from "@prisma/client";
+import { TaskStatus } from "@prisma/client";
+
+// Jika parameter Priority diperlukan sebagai string literal gred prototype, takrifkan secara lokal:
+export type Priority = "HIGH" | "MEDIUM" | "LOW";
 
 // ─── Strict Return Type ────────────────────────────────────────────────────────
 // Using a discriminated union forces the caller (client component) to

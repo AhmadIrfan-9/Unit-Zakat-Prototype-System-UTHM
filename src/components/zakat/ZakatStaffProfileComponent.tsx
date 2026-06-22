@@ -66,6 +66,10 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
     setValue("fakulti", val as ZakatProfileInput["fakulti"], { shouldValidate: true });
   };
 
+  // Suntik takrifan keadaan state penukaran kata laluan di dalam ZakatStaffProfileComponent
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const negeriValue = watch("negeri");
   const consentValue = watch("persetujuanAkta709");
@@ -315,6 +319,35 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
                   <ShieldAlert className="h-3 w-3" /> {String(errors.persetujuanAkta709.message)}
                 </p>
               )}
+            </div>
+
+            {/* Incremental patch injecting the global security key mutation container directly inside the common profile workspace. */}
+            <div className="col-span-1 md:col-span-2 border-t border-slate-200 pt-6 mt-2 space-y-4">
+              <h4 className="text-xs font-bold text-[#002060] tracking-wider uppercase">Keselamatan &amp; Kata Laluan Portal</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="oldPass" className="text-xs font-medium text-slate-600">Kata Laluan Semasa</Label>
+                  <Input
+                    id="oldPass"
+                    type="password"
+                    placeholder="••••••••"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPass" className="text-xs font-medium text-slate-600">Kata Laluan Baharu</Label>
+                  <Input
+                    id="newPass"
+                    type="password"
+                    placeholder="Minimum 8 aksara"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                  />
+                </div>
+              </div>
             </div>
 
           </div>

@@ -16,7 +16,15 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AlertCircle, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { registerNewStaffAccount } from "@/app/actions/zakatUserRegistrationServerActions";
 
 // This inner component contains all stateful login form logic and is wrapped in Suspense by the outer export.
 function LoginForm() {
@@ -61,6 +69,38 @@ function LoginForm() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [registerNoPekerja, setRegisterNoPekerja] = useState("");
   const [registerNama, setRegisterNama] = useState("");
+  const [registerFakulti, setRegisterFakulti] = useState("");
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+
+  // This handler dispatches validated registration payload to the server action.
+  const handleExecuteRegistrationAction = async () => {
+    if (!registerNama.trim() || !registerNoPekerja.trim() || !registerFakulti) {
+      setRegisterError("Sila lengkapkan semua ruangan pendaftaran.");
+      return;
+    }
+    setRegisterError(null);
+    setRegisterLoading(true);
+    try {
+      const result = await registerNewStaffAccount({
+        name: registerNama.trim(),
+        noPekerja: registerNoPekerja.trim(),
+        fakulti: registerFakulti,
+      });
+      if (result.success) {
+        setIsRegisterMode(false);
+        setRegisterNama("");
+        setRegisterNoPekerja("");
+        setRegisterFakulti("");
+      } else {
+        setRegisterError(result.error || "Pendaftaran gagal.");
+      }
+    } catch {
+      setRegisterError("Ralat sistem berlaku semasa pendaftaran.");
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
 
   // This handler submits credentials to the auth provider and, on success, navigates to the root path for role-based dispatch.
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +194,90 @@ function LoginForm() {
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white dark:bg-card min-h-[60vh] md:min-h-screen border-l border-border/20">
         <div className="w-full max-w-md animate-in fade-in duration-500">
 
-          {!isForgotMode ? (
+          {/* Incremental patch structuring a clean state switch view for register vs login vs forgot modes. */}
+          {isRegisterMode ? (
+            // Kad Pendaftaran Kakitangan Baharu Eksklusif (Halaman tidak lagi bertumpuk)
+            <Card className="border border-border/80 shadow-2xl bg-white w-full animate-in slide-in-from-right-4 duration-300">
+              <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-4">
+                {/* Dual-logo header row mirroring the login card. */}
+                <div className="flex items-center justify-center gap-6 pb-2">
+                  <Image src="/image_bb5246.png" alt="Logo UTHM" width={120} height={40} priority className="h-12 w-auto object-contain" style={{ width: "auto" }} />
+                  <Image src="/image_bb546b.png" alt="Logo Zakat UTHM" width={90} height={30} priority className="h-10 w-auto object-contain" style={{ width: "auto" }} />
+                </div>
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-bold text-[#002060]">Borang Pendaftaran Kakitangan</CardTitle>
+                  <CardDescription className="text-xs">Isi butiran berikut untuk mencipta akaun portal baharu</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                {registerError && (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive font-semibold flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{registerError}</span>
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="regNama" className="font-bold text-xs text-[#002060]">Nama Penuh</Label>
+                  <Input
+                    id="regNama"
+                    type="text"
+                    placeholder="Masukkan nama penuh"
+                    value={registerNama}
+                    onChange={(e) => setRegisterNama(e.target.value)}
+                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                    disabled={registerLoading}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="regNoStaf" className="font-bold text-xs text-[#002060]">No. Pekerja</Label>
+                  <Input
+                    id="regNoStaf"
+                    type="text"
+                    placeholder="Contoh: STAFF001"
+                    value={registerNoPekerja}
+                    onChange={(e) => setRegisterNoPekerja(e.target.value)}
+                    className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
+                    disabled={registerLoading}
+                  />
+                </div>
+
+                {/* Penambahan Bahagian Fakulti Yang Tertinggal Berdasarkan Standard UTHM */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="regFakulti" className="font-bold text-xs text-[#002060]">Fakulti</Label>
+                  <Select value={registerFakulti} onValueChange={setRegisterFakulti}>
+                    <SelectTrigger id="regFakulti" className="text-xs h-10 focus:ring-[#002060]">
+                      <SelectValue placeholder="Pilih Fakulti Tempat Bertugas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["FKAAB", "FKEE", "FKMP", "FPTV", "FPTP", "FAST", "FSKTM", "FTK"].map((fac) => (
+                        <SelectItem key={fac} value={fac} className="text-xs">{fac}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    type="button"
+                    onClick={handleExecuteRegistrationAction}
+                    disabled={registerLoading}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 cursor-pointer"
+                  >
+                    {registerLoading ? "Mendaftar..." : "Daftar Akaun"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => { setIsRegisterMode(false); setRegisterError(null); }}
+                    className="text-xs h-10 cursor-pointer border-[#002060] text-[#002060]"
+                    disabled={registerLoading}
+                  >
+                    Batal
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : !isForgotMode ? (
             // This card renders the primary credential entry form with both UTHM logos in the header.
             <Card className="border border-border/80 shadow-2xl bg-white dark:bg-card/95 w-full">
               <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-4">
@@ -266,48 +389,6 @@ function LoginForm() {
                     Kakitangan Baru? Daftar Akaun Portal Di Sini
                   </button>
                 </div>
-
-                {isRegisterMode && (
-                  <div className="mt-4 p-4 border border-dashed border-[#002060]/30 rounded-lg space-y-3 bg-slate-50">
-                    <h4 className="text-xs font-bold text-[#002060]">Borang Pendaftaran Kakitangan Baru</h4>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Nama Penuh"
-                        value={registerNama}
-                        onChange={(e) => setRegisterNama(e.target.value)}
-                        className="text-xs h-8 bg-white"
-                      />
-                      <Input
-                        placeholder="No. Pekerja"
-                        value={registerNoPekerja}
-                        onChange={(e) => setRegisterNoPekerja(e.target.value)}
-                        className="text-xs h-8 bg-white"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            alert(`Pendaftaran simulasi untuk ${registerNama} (${registerNoPekerja}) telah berjaya dihantar.`);
-                            setIsRegisterMode(false);
-                            setRegisterNama("");
-                            setRegisterNoPekerja("");
-                          }}
-                          className="bg-emerald-600 text-white text-xs h-8 px-3"
-                        >
-                          Daftar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => setIsRegisterMode(false)}
-                          className="text-xs h-8 px-3"
-                        >
-                          Batal
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           ) : (

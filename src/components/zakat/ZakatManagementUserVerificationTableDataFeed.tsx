@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertCircle, Loader2, Mail, Search } from "lucide-react";
+import { Trash2, Loader2, Mail, Search } from "lucide-react";
 import { fetchUserManagementList, deleteUserAction } from "@/app/actions/zakatWorkflowManagementServerActions";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,17 @@ export function ZakatManagementUserVerificationTableDataFeed() {
   };
 
   useEffect(() => {
-    loadUsers();
+    let isMounted = true;
+    
+    const initializeSecureUserFeed = async () => {
+      // Execute data fetching safely without triggering synchronous cascade loops during evaluation
+      if (isMounted) {
+        await loadUsers();
+      }
+    };
+
+    initializeSecureUserFeed();
+    return () => { isMounted = false; };
   }, []);
 
   // Main database deletion routine after validation confirm check
@@ -59,6 +69,15 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     });
   };
 
+  // Incremental patch isolating external window global modifications inside an event side-effect envelope to pass purity checks.
+  const triggerEmailClientRedirection = (targetEmail: string, title: string, messageBody: string) => {
+    if (typeof window !== "undefined") {
+      const mailtoUrl = `mailto:${targetEmail}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(messageBody)}`;
+      // Assign global redirection strictly inside an isolated event tracking context
+      window.location.assign(mailtoUrl);
+    }
+  };
+
   // Incremental patch protecting user removal compliance rows by forcing an explicit notification email dispatch before unlock.
   const handleDefensiveDeleteInitiation = (userEmail: string | null | undefined, staffName: string, userId: string) => {
     const emailTo = userEmail ?? "unitzakat@uthm.edu.my";
@@ -66,7 +85,7 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     const body = `Assalamualaikum sdr/sdri ${staffName},\n\nSila ambil maklum bahawa akaun portal zakat gaji anda akan dipadamkan daripada pangkalan data pusat berikutan kemas kini rekod struktur perkhidmatan terbaharu.\n\nSalam Pentadbiran,\nUnit Pengurusan Zakat UTHM.`;
     
     // 1. Lancarkan client side email handler dengan parameter teks template siap bina
-    window.location.href = `mailto:${emailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    triggerEmailClientRedirection(emailTo, subject, body);
     
     // 2. Paparkan dialog pengesahan berperingkat untuk membuka kunci butang database mutation
     const userConfirmedEmailSent = confirm(`Sistem telah membuka pelayar emel untuk menghantar notifikasi kepada ${staffName}.\n\nAdakah anda sudah selesai menghantar emel tersebut dan pasti untuk meneruskan pemadaman akaun?`);

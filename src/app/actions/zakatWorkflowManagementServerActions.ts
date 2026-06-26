@@ -43,6 +43,17 @@ export async function updateZakatApplicationStatus(
       },
     });
 
+    // Cipta notifikasi untuk staf yang memohon
+    await prisma.notification.create({
+      data: {
+        userId: updatedApplication.userId,
+        title: status === "APPROVED" ? "Permohonan DISAHKAN" : "Permohonan DITOLAK",
+        message: status === "APPROVED"
+          ? "Tahniah! Permohonan caruman zakat anda telah disahkan dan berkuat kuasa untuk penggajian."
+          : `Ditolak: ${alasanPenolakan || "Sila semak butiran atau hubungi pentadbir."}`,
+      }
+    });
+
     // This cache revalidation updates the dashboard views and status displays dynamically.
     revalidatePath("/dashboard/pengurusan");
     revalidatePath("/dashboard/zakat");
@@ -58,6 +69,53 @@ export async function updateZakatApplicationStatus(
       error: "Ralat pangkalan data berlaku semasa mengemas kini status permohonan.",
     };
   }
+}
+
+/**
+ * Incremental patch routing directly to the origin applicant with targeted notification creation.
+ */
+export async function updateZakatStatus(applicationId: string, newStatus: "DISAHKAN" | "DITOLAK", notes: string) {
+  const session = await auth();
+  
+  if (session?.user?.role !== "SUPER_ADMIN" && session?.user?.role !== "ZAKAT_OFFICER") {
+    throw new Error("Akses dinafikan");
+  }
+
+  // 1. Cari data permohonan asal untuk mendapatkan userId pemohon
+  const application = await prisma.zakatStaffSalaryDeductionApplication.findUnique({
+    where: { id: applicationId },
+    select: { userId: true } // Ambil ID staf yang memohon
+  });
+
+  if (!application) throw new Error("Permohonan tidak wujud");
+
+  // 2. Kemas kini status borang di pangkalan data
+  const dbStatus = newStatus === "DISAHKAN" ? "APPROVED" : "REJECTED";
+  await prisma.zakatStaffSalaryDeductionApplication.update({
+    where: { id: applicationId },
+    data: { 
+      status: dbStatus,
+      adminNotes: newStatus === "DITOLAK" ? notes : "Permohonan diluluskan."
+    }
+  });
+
+  // 3. KUNCI SASARAN: Hantar notifikasi KHAS kepada pemohon tersebut sahaja
+  // Injecting explicit notification target constraints routing directly to the origin applicant.
+  await prisma.notification.create({
+    data: {
+      userId: application.userId, // <--- Di sinilah notifikasi dikunci ke profil pemohon asal!
+      title: `Permohonan ${newStatus}`,
+      message: newStatus === "DISAHKAN" 
+        ? "Tahniah! Permohonan caruman zakat anda telah disahkan dan berkuat kuasa untuk penggajian."
+        : `Ditolak: ${notes}`,
+    }
+  });
+
+  // Revalidate cache to reflect status updates
+  revalidatePath("/dashboard/pengurusan");
+  revalidatePath("/dashboard/zakat");
+
+  return { success: true };
 }
 
 /**

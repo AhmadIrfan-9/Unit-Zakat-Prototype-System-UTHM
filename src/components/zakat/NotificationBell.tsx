@@ -39,10 +39,44 @@ interface PopoverNotificationItem {
 
 interface NotificationBellProps {
   role: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN";
+  userName?: string | null;
+  noPekerja?: string | null;
 }
+
+const ANNOUNCEMENTS = [
+  {
+    id: "announcement-1",
+    type: "NEWS" as const,
+    status: "NEWS",
+    title: "Pengumuman: Kemas Kini Had Paras Nisab Bulanan Negeri Johor Suku Kedua 2026",
+    desc: "Majlis Agama Islam Negeri Johor (MAINJ) secara rasmi menetapkan had paras nisab bulanan semasa pada kadar RM 2,150.00 untuk panduan taksiran caruman gaji.",
+    date: new Date("2026-06-15"),
+    app: null,
+  },
+  {
+    id: "announcement-2",
+    type: "NEWS" as const,
+    status: "NEWS",
+    title: "Pengumuman: Penyelarasan Kitaran Haul 12 Bulan Bagi Caruman Gaji Kakitangan",
+    desc: "Penyelarasan tempoh haul 12 bulan penuh kini diselaraskan secara automatik bagi memastikan potongan gaji selari dengan tempoh pemilikan harta yang sah.",
+    date: new Date("2026-06-10"),
+    app: null,
+  },
+  {
+    id: "announcement-3",
+    type: "NEWS" as const,
+    status: "NEWS",
+    title: "Pengumuman: Automasi Resit Pelepasan Cukai Pendapatan Melalui Unit Kutipan Zakat",
+    desc: "Penyatuan sistem automasi membolehkan penyata caruman tahunan digunakan terus sebagai resit pelepasan cukai pendapatan untuk urusan pemfailan LHDN.",
+    date: new Date("2026-06-05"),
+    app: null,
+  },
+];
 
 export function ZakatGlobalNotificationBellPopoverComponent({
   role,
+  userName,
+  noPekerja,
 }: NotificationBellProps) {
 
   // Menentukan sama ada pengguna adalah pegawai/pentadbir untuk penapisan notifikasi.
@@ -64,22 +98,43 @@ export function ZakatGlobalNotificationBellPopoverComponent({
   const loadNotifications = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const response = await fetch("/api/zakat/notifications");
+      const response = await fetch("/api/notifications");
       const dataset = (await response.json()) as Array<{
         id: string;
-        type: "success" | "error" | "info" | "NEWS";
-        status: string;
+        userId: string;
         title: string;
-        desc: string;
-        date: string;
-        app: NotificationAppItem | null;
+        message: string;
+        isRead: boolean;
+        createdAt: string;
       }>;
-      const refinedPayload = dataset
-        .filter((item) => item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status))
-        .map((item) => ({
-          ...item,
-          date: new Date(item.date),
-        }));
+      
+      const dbNotifications = dataset.map((item) => {
+        let type: "success" | "error" | "info" | "NEWS" = "info";
+        if (item.title.includes("DISAHKAN")) type = "success";
+        else if (item.title.includes("DITOLAK")) type = "error";
+
+        const appPayload = item.title.includes("DITOLAK") ? {
+          id: item.id,
+          namaPenuh: userName ?? "Kakitangan UTHM",
+          noPekerja: noPekerja ?? "N/A",
+          status: "REJECTED" as const,
+          submittedAt: item.createdAt,
+          adminNotes: item.message.replace("Ditolak: ", ""),
+        } : null;
+
+        return {
+          id: item.id,
+          type,
+          status: item.title.includes("DISAHKAN") ? "DISAHKAN" : (item.title.includes("DITOLAK") ? "DITOLAK" : "INFO"),
+          title: item.title,
+          desc: item.message,
+          date: new Date(item.createdAt),
+          app: appPayload,
+        };
+      });
+
+      const announcements = isManagement ? [] : ANNOUNCEMENTS;
+      const refinedPayload = [...announcements, ...dbNotifications];
       refinedPayload.sort((a, b) => b.date.getTime() - a.date.getTime());
       setNotifications(refinedPayload);
     } catch (err) {
@@ -87,30 +142,49 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [isManagement, userName, noPekerja]);
 
   // Incremental patch driving the active notification array filter based on real-time application status values.
   useEffect(() => {
     const syncLiveNotifications = async () => {
       try {
-        const response = await fetch("/api/zakat/notifications");
+        const response = await fetch("/api/notifications");
         const dataset = (await response.json()) as Array<{
           id: string;
-          type: "success" | "error" | "info" | "NEWS";
-          status: string;
+          userId: string;
           title: string;
-          desc: string;
-          date: string;
-          app: NotificationAppItem | null;
+          message: string;
+          isRead: boolean;
+          createdAt: string;
         }>;
         
-        // Menapis ralat: Hanya paparkan berita atau permohonan yang bertukar status secara rasmi
-        const refinedPayload = dataset
-          .filter((item) => item.type === "NEWS" || ["DISAHKAN", "DITOLAK"].includes(item.status))
-          .map((item) => ({
-            ...item,
-            date: new Date(item.date),
-          }));
+        const dbNotifications = dataset.map((item) => {
+          let type: "success" | "error" | "info" | "NEWS" = "info";
+          if (item.title.includes("DISAHKAN")) type = "success";
+          else if (item.title.includes("DITOLAK")) type = "error";
+
+          const appPayload = item.title.includes("DITOLAK") ? {
+            id: item.id,
+            namaPenuh: userName ?? "Kakitangan UTHM",
+            noPekerja: noPekerja ?? "N/A",
+            status: "REJECTED" as const,
+            submittedAt: item.createdAt,
+            adminNotes: item.message.replace("Ditolak: ", ""),
+          } : null;
+
+          return {
+            id: item.id,
+            type,
+            status: item.title.includes("DISAHKAN") ? "DISAHKAN" : (item.title.includes("DITOLAK") ? "DITOLAK" : "INFO"),
+            title: item.title,
+            desc: item.message,
+            date: new Date(item.createdAt),
+            app: appPayload,
+          };
+        });
+
+        const announcements = isManagement ? [] : ANNOUNCEMENTS;
+        const refinedPayload = [...announcements, ...dbNotifications];
         refinedPayload.sort((a, b) => b.date.getTime() - a.date.getTime());
         setNotifications(refinedPayload);
       } catch (error) {
@@ -119,7 +193,7 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     };
 
     syncLiveNotifications();
-  }, [isManagement]); // Fixed dependency size array node to eliminate client browser runtime variant crashes completely
+  }, [isManagement, userName, noPekerja]); // Fixed dependency size array node to eliminate client browser runtime variant crashes completely
 
   // Incremental patch wrapping external window location redirections inside clean execution event side effects.
   const handleEmailAppeal = (app: NotificationAppItem) => {

@@ -140,8 +140,21 @@ export async function updateZakatApplicationWorkflowStatus(
         status,
         adminNotes: adminNotes?.trim() || null,
       },
-      select: { id: true, status: true },
+      select: { id: true, status: true, userId: true },
     });
+
+    // Cipta notifikasi jika permohonan diluluskan (APPROVED) atau ditolak (REJECTED)
+    if (status === "APPROVED" || status === "REJECTED") {
+      await prisma.notification.create({
+        data: {
+          userId: updated.userId,
+          title: status === "APPROVED" ? "Permohonan DISAHKAN" : "Permohonan DITOLAK",
+          message: status === "APPROVED"
+            ? "Tahniah! Permohonan caruman zakat anda telah disahkan dan berkuat kuasa untuk penggajian."
+            : `Ditolak: ${adminNotes || "Sila semak butiran atau hubungi pentadbir."}`,
+        }
+      });
+    }
 
     // This revalidatePath call clears the ISR cache for both affected dashboard routes so the updated status renders immediately.
     revalidatePath("/dashboard/pengurusan");

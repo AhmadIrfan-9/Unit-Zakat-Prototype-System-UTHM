@@ -51,6 +51,7 @@ model User {
   sessions                    Session[]
   tasks                       Task[]
   zakatStaffSalaryDeductions  ZakatStaffSalaryDeductionApplication[]
+  notifications               Notification[]
 }
 
 
@@ -201,4 +202,20 @@ model AuditLog {
   @@index([userId])                // Semak rekod aktiviti pengguna tertentu
 
   @@map("audit_logs")
+}
+
+// This database model defines user notification alerts tied directly to unique employee IDs.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+
+  @@map("notifications")
 }

@@ -134,6 +134,8 @@ export function ZakatGlobalMainNavbarLayoutComponent({
           {/* This major structural component renders the role-aware notification alert bell popover. */}
           <ZakatGlobalNotificationBellPopoverComponent
             role={user.role === "ZAKAT_OFFICER" || user.role === "SUPER_ADMIN" ? user.role as "ZAKAT_OFFICER" | "SUPER_ADMIN" : "STAFF"}
+            userName={user.name}
+            noPekerja={user.noPekerja}
           />
 
           {/* This layout wrapper contains the clickable user avatar and its dropdown menu. */}

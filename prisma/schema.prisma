@@ -52,6 +52,7 @@ model User {
   tasks                       Task[]
   zakatStaffSalaryDeductions  ZakatStaffSalaryDeductionApplication[]
   notifications               Notification[]
+  passwordHistories           PasswordHistory[]
 }
 
 
@@ -218,4 +219,18 @@ model Notification {
   @@index([createdAt(sort: Desc)])
 
   @@map("notifications")
+}
+
+// This database model defines user password history alerts tied directly to unique employee IDs.
+model PasswordHistory {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+
+  @@map("password_histories")
 }

@@ -73,6 +73,14 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
   const [newPassword, setNewPassword] = useState("");
   const [submissionStatus, setSubmissionStatus] = useState<"idle" | "loading" | "success">("idle");
 
+  const validations = {
+    length: newPassword.length >= 8,
+    uppercase: /[A-Z]/.test(newPassword),
+    lowercase: /[a-z]/.test(newPassword),
+    number: /\d/.test(newPassword),
+    special: /[@$!%*?&]/.test(newPassword),
+  };
+
   const handlePasswordSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword) {
@@ -372,6 +380,25 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
                   />
+                  {newPassword.length > 0 && (
+                    <div className="mt-3 p-3 bg-slate-50 dark:bg-card border border-border rounded-lg text-[10px] grid grid-cols-2 gap-2 animate-in fade-in duration-200">
+                      <div className={`flex items-center gap-1.5 ${validations.length ? "text-green-600 font-bold" : "text-red-500 font-medium"}`}>
+                        <span>{validations.length ? "✓" : "✗"}</span> Minimum 8 Aksara
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${validations.uppercase ? "text-green-600 font-bold" : "text-red-500 font-medium"}`}>
+                        <span>{validations.uppercase ? "✓" : "✗"}</span> Huruf Besar (A-Z)
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${validations.lowercase ? "text-green-600 font-bold" : "text-red-500 font-medium"}`}>
+                        <span>{validations.lowercase ? "✓" : "✗"}</span> Huruf Kecil (a-z)
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${validations.number ? "text-green-600 font-bold" : "text-red-500 font-medium"}`}>
+                        <span>{validations.number ? "✓" : "✗"}</span> Mengandungi Nombor (0-9)
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${validations.special ? "text-green-600 font-bold" : "text-red-500 font-medium"}`}>
+                        <span>{validations.special ? "✓" : "✗"}</span> Simbol Khas (@$!%*?&)
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end pt-2">

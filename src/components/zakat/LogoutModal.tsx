@@ -65,26 +65,26 @@ export function ZakatAuthenticationSignOutConfirmationModalComponent({
           </DialogHeader>
         </div>
 
-        {/* This action container layout groups the confirm and cancel buttons side-by-side. */}
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
+        {/* This action container layout groups the confirm and cancel buttons side-by-side with Ya on the left (Red) and Tidak on the right. */}
+        <div className="flex gap-4 w-full mt-4">
+          <Button
+            type="button"
+            disabled={isSigningOut || isPending}
+            onClick={handleConfirmSignOut}
+            className="flex-1 bg-red-600 hover:bg-red-750 text-white font-bold text-xs px-6 h-10 transition-all duration-200 cursor-pointer"
+          >
+            {isSigningOut || isPending ? "Memproses..." : "Ya, Log Keluar"}
+          </Button>
           <Button
             type="button"
             variant="outline"
             disabled={isSigningOut || isPending}
             onClick={onClose}
-            className="border-[#002060] text-[#002060] font-bold text-xs px-6 h-10 hover:bg-slate-50 transition-all"
+            className="flex-1 border-[#002060] text-[#002060] font-bold text-xs px-6 h-10 hover:bg-slate-50 transition-all cursor-pointer"
           >
             Tidak, Saya Ingin Kekal
           </Button>
-          <Button
-            type="button"
-            disabled={isSigningOut || isPending}
-            onClick={handleConfirmSignOut}
-            className="bg-[#002060] hover:bg-red-600 text-white font-bold text-xs px-6 h-10 transition-all duration-200"
-          >
-            {isSigningOut || isPending ? "Memproses..." : "Ya, Log Keluar"}
-          </Button>
-        </DialogFooter>
+        </div>
 
       </DialogContent>
     </Dialog>

@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { NEGERI_LIST } from "@/lib/validations/zakatDeductionValidationSchema";
 import { zakatProfileSchema, type ZakatProfileInput } from "@/lib/validations/zakatProfileSchema";
 import { updateUserProfileAction } from "@/app/actions/zakatWorkflowManagementServerActions";
+import { updatePasswordAction } from "@/app/actions/profile";
+import ActionStatusOverlay from "./ActionStatusOverlay";
 import { toast } from "sonner";
 
 interface ProfileDefaultValues {
@@ -69,6 +71,30 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
   // Suntik takrifan keadaan state penukaran kata laluan di dalam ZakatStaffProfileComponent
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [submissionStatus, setSubmissionStatus] = useState<"idle" | "loading" | "success">("idle");
+
+  const handlePasswordSubmit = async (e: React.FormEvent | React.MouseEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      toast.error("Sila isi semua ruangan kata laluan.");
+      return;
+    }
+    setSubmissionStatus("loading"); // Langkah 1: Aktifkan skrin kabur & loading
+
+    const result = await updatePasswordAction({ currentPassword, newPassword });
+
+    if (result.success) {
+      setSubmissionStatus("success"); // Langkah 2: Tukar kepada tik hijau
+      setCurrentPassword("");
+      setNewPassword("");
+      setTimeout(() => {
+        setSubmissionStatus("idle"); // Tutup skrin selepas 3 saat
+      }, 3000);
+    } else {
+      setSubmissionStatus("idle");
+      toast.error(result.error || "Gagal mengemas kini kata laluan.");
+    }
+  };
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const negeriValue = watch("negeri");
@@ -326,7 +352,7 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
               <h4 className="text-xs font-bold text-[#002060] tracking-wider uppercase">Keselamatan &amp; Kata Laluan Portal</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="oldPass" className="text-xs font-medium text-slate-600">Kata Laluan Semasa</Label>
+                  <Label htmlFor="oldPass" className="text-xs font-medium text-slate-650">Kata Laluan Semasa</Label>
                   <Input
                     id="oldPass"
                     type="password"
@@ -337,7 +363,7 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="newPass" className="text-xs font-medium text-slate-600">Kata Laluan Baharu</Label>
+                  <Label htmlFor="newPass" className="text-xs font-medium text-slate-655">Kata Laluan Baharu</Label>
                   <Input
                     id="newPass"
                     type="password"
@@ -347,6 +373,15 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
                     className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-10"
                   />
                 </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="button"
+                  onClick={handlePasswordSubmit}
+                  className="bg-[#002060] hover:bg-[#002060]/90 text-white font-bold h-9 px-4 rounded-lg cursor-pointer text-xs uppercase"
+                >
+                  Kemaskini Kata Laluan
+                </Button>
               </div>
             </div>
 
@@ -362,6 +397,11 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
               {isPending ? "Menyimpan..." : "SIMPAN MAKLUMAT"}
             </Button>
           </div>
+
+          <ActionStatusOverlay 
+            status={submissionStatus} 
+            message="Tahniah! Profile anda telah berjaya dikemas kini" 
+          />
 
         </form>
       </CardContent>

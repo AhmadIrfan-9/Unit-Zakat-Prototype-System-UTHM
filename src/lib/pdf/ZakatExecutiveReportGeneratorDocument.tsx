@@ -163,10 +163,10 @@ export function ZakatExecutiveReportGeneratorDocument({
         <div className="flex-shrink-0">
           {/* This image renders the official round UTHM shield logo asset at the far-left letterhead position. */}
           <Image
-            src="/image_3e5165.png"
+            src="/image_bb5246.png"
             alt="Jata UTHM"
-            width={72}
-            height={72}
+            width={180}
+            height={50}
             priority
             className="h-16 w-auto object-contain select-none"
             style={{ width: "auto" }}

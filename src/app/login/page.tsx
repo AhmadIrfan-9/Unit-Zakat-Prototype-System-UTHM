@@ -2,10 +2,11 @@
 // This login component dispatches credentials and redirects the authenticated session to the system root path for automated role-based dashboard filtering.
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,9 +51,6 @@ function LoginForm() {
   // This state tracks whether the credential submission is currently in-flight.
   const [loading, setLoading] = useState(false);
 
-  // This state toggles the password reset sub-form into view.
-  const [isForgotMode, setIsForgotMode] = useState(false);
-
   // This state holds the employee number entered inside the password reset sub-form.
   const [forgotNoPekerja, setForgotNoPekerja] = useState("");
 
@@ -66,12 +64,16 @@ function LoginForm() {
   const [forgotError, setForgotError] = useState<string | null>(null);
 
   // Suntik parameter keadaan state baharu ini di dalam LoginForm()
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const mode = searchParams.get("mode");
+  const isRegisterMode = mode === "register";
+  const isForgotMode = mode === "forgot";
+
   const [registerNoPekerja, setRegisterNoPekerja] = useState("");
   const [registerNama, setRegisterNama] = useState("");
   const [registerFakulti, setRegisterFakulti] = useState("");
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
+
 
   // This handler dispatches validated registration payload to the server action.
   const handleExecuteRegistrationAction = async () => {
@@ -88,7 +90,7 @@ function LoginForm() {
         fakulti: registerFakulti,
       });
       if (result.success) {
-        setIsRegisterMode(false);
+        router.push("/login");
         setRegisterNama("");
         setRegisterNoPekerja("");
         setRegisterFakulti("");
@@ -170,7 +172,7 @@ function LoginForm() {
 
   return (
     // This wrapper renders the split-screen login layout with the mosque image on the left and the form card on the right.
-    <div className="relative min-h-screen w-full flex flex-col md:flex-row font-sans antialiased bg-background">
+    <main className="relative min-h-screen w-full flex flex-col md:flex-row font-sans antialiased bg-background">
 
       {/* Left Panel: full-height cover image with dark overlay and branded title */}
       <div
@@ -214,8 +216,8 @@ function LoginForm() {
               <CardHeader className="border-b border-border bg-muted/10 px-6 py-6 text-center space-y-4">
                 {/* Dual-logo header row mirroring the login card. */}
                 <div className="flex items-center justify-center gap-6 pb-2">
-                  <Image src="/image_bb5246.png" alt="Logo UTHM" width={120} height={40} priority className="h-12 w-auto object-contain" style={{ width: "auto" }} />
-                  <Image src="/image_bb546b.png" alt="Logo Zakat UTHM" width={90} height={30} priority className="h-10 w-auto object-contain" style={{ width: "auto" }} />
+                  <Image src="/image_bb5246.png" alt="Logo Rasmi Universiti Tun Hussein Onn Malaysia (UTHM) Johor" width={120} height={40} priority className="h-12 w-auto object-contain" style={{ width: "auto" }} />
+                  <Image src="/image_bb546b.png" alt="Logo Rasmi Unit Kutipan Zakat Pusat Islam UTHM" width={90} height={30} priority className="h-10 w-auto object-contain" style={{ width: "auto" }} />
                 </div>
                 <div className="space-y-1">
                   <CardTitle className="text-base font-bold text-[#002060]">Borang Pendaftaran Kakitangan</CardTitle>
@@ -269,7 +271,7 @@ function LoginForm() {
                   </Select>
                 </div>
 
-                <div className="flex gap-2 pt-2">
+                <nav className="flex gap-2 pt-2" aria-label="Navigasi Pendaftaran Kakitangan">
                   <Button
                     type="button"
                     onClick={handleExecuteRegistrationAction}
@@ -281,13 +283,13 @@ function LoginForm() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => { setIsRegisterMode(false); setRegisterError(null); }}
                     className="text-xs h-10 cursor-pointer border-[#002060] text-[#002060]"
                     disabled={registerLoading}
+                    asChild
                   >
-                    Batal
+                    <Link href="/login">Batal</Link>
                   </Button>
-                </div>
+                </nav>
               </CardContent>
             </Card>
           ) : !isForgotMode ? (
@@ -299,7 +301,7 @@ function LoginForm() {
                 <div className="flex items-center justify-center gap-6 pb-2">
                   <Image
                     src="/image_bb5246.png"
-                    alt="Logo UTHM"
+                    alt="Logo Rasmi Universiti Tun Hussein Onn Malaysia (UTHM) Johor"
                     width={120}
                     height={40}
                     priority
@@ -308,7 +310,7 @@ function LoginForm() {
                   />
                   <Image
                     src="/image_bb546b.png"
-                    alt="Logo Zakat UTHM"
+                    alt="Logo Rasmi Unit Kutipan Zakat Pusat Islam UTHM"
                     width={90}
                     height={30}
                     priority
@@ -368,17 +370,14 @@ function LoginForm() {
                       <Label htmlFor="password" className="font-bold text-xs text-[#002060]">
                         Kata Laluan
                       </Label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsForgotMode(true);
-                          setForgotSuccess(false);
-                          setForgotError(null);
-                        }}
-                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
-                      >
-                        Lupa Kata Laluan?
-                      </button>
+                      <nav aria-label="Navigasi Lupa Kata Laluan">
+                        <Link
+                          href="/login?mode=forgot"
+                          className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                        >
+                          Lupa Kata Laluan?
+                        </Link>
+                      </nav>
                     </div>
                     <Input
                       id="password"
@@ -402,15 +401,14 @@ function LoginForm() {
                 </form>
 
                 {/* Incremental patch rendering a toggle link to access user registration workflows natively. */}
-                <div className="text-center pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsRegisterMode(true)}
+                <nav className="text-center pt-2" aria-label="Pilihan Akses Akaun">
+                  <Link
+                    href="/login?mode=register"
                     className="text-xs font-semibold text-[#002060] hover:underline cursor-pointer"
                   >
                     Kakitangan Baru? Daftar Akaun Portal Di Sini
-                  </button>
-                </div>
+                  </Link>
+                </nav>
               </CardContent>
             </Card>
           ) : (
@@ -422,7 +420,7 @@ function LoginForm() {
                 <div className="flex items-center justify-center gap-6 pb-2">
                   <Image
                     src="/image_bb5246.png"
-                    alt="Logo UTHM"
+                    alt="Logo Rasmi Universiti Tun Hussein Onn Malaysia (UTHM) Johor"
                     width={120}
                     height={40}
                     priority
@@ -431,7 +429,7 @@ function LoginForm() {
                   />
                   <Image
                     src="/image_bb546b.png"
-                    alt="Logo Zakat UTHM"
+                    alt="Logo Rasmi Unit Kutipan Zakat Pusat Islam UTHM"
                     width={90}
                     height={30}
                     priority
@@ -465,19 +463,16 @@ function LoginForm() {
                         <span className="font-bold text-[#002060] dark:text-blue-300">{forgotEmail}</span>
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsForgotMode(false);
-                        setForgotSuccess(false);
-                        setForgotNoPekerja("");
-                        setForgotEmail("");
-                      }}
-                      className="w-full text-xs h-9 cursor-pointer"
-                    >
-                      Kembali Ke Log Masuk
-                    </Button>
+                    <nav className="w-full" aria-label="Navigasi Pengesahan Set Semula">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full text-xs h-9 cursor-pointer"
+                        asChild
+                      >
+                        <Link href="/login">Kembali Ke Log Masuk</Link>
+                      </Button>
+                    </nav>
                   </div>
                 ) : (
                   // This form collects the employee number and institutional email for the reset workflow.
@@ -529,13 +524,14 @@ function LoginForm() {
                       HANTAR PAUTAN SET SEMULA
                     </Button>
 
-                    <button
-                      type="button"
-                      onClick={() => setIsForgotMode(false)}
-                      className="flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-muted-foreground hover:text-foreground transition-all pt-1 cursor-pointer"
-                    >
-                      <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Log Masuk
-                    </button>
+                    <nav className="pt-1" aria-label="Kembali Ke Halaman Utama Log Masuk">
+                      <Link
+                        href="/login"
+                        className="flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Log Masuk
+                      </Link>
+                    </nav>
                   </form>
                 )}
               </CardContent>
@@ -543,8 +539,15 @@ function LoginForm() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
+}
+
+// This wrapper reads the URL search parameters to supply a unique key based on mode, resetting form states automatically on mode transitions.
+function LoginFormWrapper() {
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode") || "login";
+  return <LoginForm key={mode} />;
 }
 
 // This page export wraps the login form inside Suspense to allow useSearchParams without breaking static prerendering.
@@ -557,7 +560,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <LoginFormWrapper />
     </Suspense>
   );
 }

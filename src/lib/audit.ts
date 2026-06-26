@@ -5,42 +5,53 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 
-// This type enforces a structured JSON-safe payload for the details column.
-type AuditDetails = Record<string, string | number | boolean | null | undefined>;
+// Enforce a strict JSON-safe audit details type format
+type AuditDetails = Record<string, string | number | boolean | null | undefined | object>;
 
-/**
- * Merekodkan satu entri audit ke dalam pangkalan data secara latar belakang (fire-and-forget).
- * Ralat yang berlaku semasa penulisan log tidak akan meruntuhkan aliran kerja utama.
- *
- * @param action   - Pengecam tindakan dalam huruf besar, contoh: "PENTADBIR_PADAM_PENGGUNA"
- * @param details  - Objek metadata tambahan yang berkaitan dengan tindakan tersebut
- */
+// Incremental patch isolating the request context to prevent terminal termination during sign-out events.
 export async function createSystemAuditLog(
   action: string,
   details: AuditDetails = {}
 ): Promise<void> {
+  let ipAddress = "127.0.0.1";
+  let userId = null;
+  let userEmail = "ANONYMOUS_VISITOR";
+
   try {
-    const session = await auth();
-    const headerList = await headers();
+    // 1. Dinding Pertahanan 1: Selamatkan pembacaan headers
+    try {
+      const headerList = await headers();
+      ipAddress =
+        headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        headerList.get("x-real-ip") ||
+        "127.0.0.1";
+    } catch {
+      // Fallback selamat jika dicetuskan daripada konteks event sign-out NextAuth
+      ipAddress = "127.0.0.1 (SignOut Context)";
+    }
 
-    // Mengekstrak IP Address klien daripada proksi Vercel/Cloudflare, atau fallback ke localhost
-    const ipAddress =
-      headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      headerList.get("x-real-ip") ||
-      "127.0.0.1";
+    // 2. Dinding Pertahanan 2: Selamatkan pembacaan sesi pelayan
+    try {
+      const session = await auth();
+      userId = session?.user?.id || null;
+      userEmail = session?.user?.email || "ANONYMOUS_VISITOR";
+    } catch {
+      userId = null;
+      userEmail = "LOGOUT_PROCESSING";
+    }
 
-    // Rekodkan entri audit secara terus ke dalam pangkalan data
+    // 3. Rekodkan entri log ke dalam database secara selamat
     await prisma.auditLog.create({
       data: {
-        userId:    session?.user?.id    || null,
-        userEmail: session?.user?.email || "ANONYMOUS_VISITOR",
+        userId,
+        userEmail,
         action,
         details,
         ipAddress,
       },
     });
   } catch (error) {
-    // Isolasikan ralat log supaya tidak meruntuhkan aliran kerja utama sistem
-    console.error("[AUDIT_LOG_CREATION_FAILED]", { action, error });
+    // Memastikan ralat log tidak sekali-kali menghentikan thread utama Node.js
+    console.error("CRITICAL_AUDIT_LOG_EXCEPTION_HANDLED:", error);
   }
 }

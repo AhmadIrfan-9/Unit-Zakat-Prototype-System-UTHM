@@ -32,7 +32,7 @@ export function ZakatManagementUserVerificationTableDataFeed() {
       // Ensure date objects are correctly initialized
       const formatted = data.map((u) => ({
         ...u,
-        role: u.role ?? "USER_STAFF",
+        role: u.role ?? "STAFF",
         createdAt: new Date(u.createdAt),
       }));
       setUsers(formatted);
@@ -59,9 +59,9 @@ export function ZakatManagementUserVerificationTableDataFeed() {
   }, []);
 
   // Main database deletion routine after validation confirm check
-  const executeDatabaseDeleteAction = (userId: string) => {
+  const executeDatabaseDeleteAction = (userId: string, staffName: string) => {
     startTransition(async () => {
-      const res = await deleteUserAction(userId);
+      const res = await deleteUserAction(userId, staffName);
       if (res.success) {
         toast.success("Akaun kakitangan berjaya dipadamkan.");
         loadUsers();
@@ -94,21 +94,30 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     
     if (userConfirmedEmailSent) {
       // Jalankan fungsi mutasi server action pangkalan data asal anda di sini
-      executeDatabaseDeleteAction(userId);
+      executeDatabaseDeleteAction(userId, staffName);
     }
   };
 
-  // Incremental patch executing server-side role elevation requests inside the management table grid.
+  // Kitaran peranan: STAFF → ZAKAT_OFFICER → SUPER_ADMIN → STAFF
   const handleRoleElevationToggle = async (userId: string, currentRole: string) => {
-    const targetRole = currentRole === "MANAGEMENT_STAFF" ? "USER_STAFF" : "MANAGEMENT_STAFF";
-    const userConfirmed = confirm(`Adakah anda pasti untuk menukar peranan pengguna ini kepada ${targetRole}?`);
+    const roleMap: Record<string, string> = {
+      STAFF: "ZAKAT_OFFICER",
+      ZAKAT_OFFICER: "SUPER_ADMIN",
+      SUPER_ADMIN: "STAFF",
+    };
+    const targetRole = roleMap[currentRole] ?? "STAFF";
+    const roleLabelMap: Record<string, string> = {
+      STAFF: "Kakitangan (STAFF)",
+      ZAKAT_OFFICER: "Pegawai Zakat (ZAKAT_OFFICER)",
+      SUPER_ADMIN: "Pentadbir Tertinggi (SUPER_ADMIN)",
+    };
+    const userConfirmed = confirm(`Adakah anda pasti untuk menukar peranan pengguna ini kepada ${roleLabelMap[targetRole] ?? targetRole}?`);
 
     if (userConfirmed) {
-      // Memanggil server action untuk mengemas kini peranan pengguna di dalam database Prisma
       const result = await updateUserRoleAction(userId, targetRole);
       if (result.success) {
         toast.success("Peranan pengguna berjaya dikemaskini.");
-        await loadUsers(); // Refresh data feed paparan meja
+        await loadUsers();
       } else {
         toast.error(result.error || "Gagal menukar peranan pengguna.");
       }
@@ -206,7 +215,11 @@ export function ZakatManagementUserVerificationTableDataFeed() {
                           disabled={isPendingTransition}
                           className="text-xs font-bold text-[#002060] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
                         >
-                          {u.role === "MANAGEMENT_STAFF" ? "Turun Pangkat" : "Lantik Pengurusan"}
+                          {u.role === "SUPER_ADMIN"
+                            ? "Turun ke Kakitangan"
+                            : u.role === "ZAKAT_OFFICER"
+                            ? "Lantik Super Admin"
+                            : "Lantik Pegawai Zakat"}
                         </button>
 
                         {/* Butang Padam Akses asal kekal utuh di sebelah */}

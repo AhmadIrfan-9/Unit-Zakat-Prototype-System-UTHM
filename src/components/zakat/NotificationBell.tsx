@@ -38,15 +38,15 @@ interface PopoverNotificationItem {
 }
 
 interface NotificationBellProps {
-  role: "USER_STAFF" | "MANAGEMENT_STAFF";
+  role: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN";
 }
 
 export function ZakatGlobalNotificationBellPopoverComponent({
   role,
 }: NotificationBellProps) {
 
-  // This stable boolean is computed once from the role prop and never changes across renders.
-  const isManagement = role === "MANAGEMENT_STAFF";
+  // Menentukan sama ada pengguna adalah pegawai/pentadbir untuk penapisan notifikasi.
+  const isManagement = role === "ZAKAT_OFFICER" || role === "SUPER_ADMIN";
 
   // This state hook holds the current notification records.
   const [notifications, setNotifications] = useState<PopoverNotificationItem[]>([]);

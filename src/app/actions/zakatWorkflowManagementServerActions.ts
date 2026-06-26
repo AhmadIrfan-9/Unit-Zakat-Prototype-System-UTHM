@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ApplicationStatus } from "@prisma/client";
+import { createSystemAuditLog } from "@/lib/audit";
 
 /**
  * Updates the approval status of a zakat salary deduction application.
@@ -15,12 +16,12 @@ export async function updateZakatApplicationStatus(
   status: "APPROVED" | "REJECTED",
   alasanPenolakan?: string
 ) {
-  // This statement verifies that the active session belongs to an authorized management staff member.
+  // Memastikan hanya ZAKAT_OFFICER atau SUPER_ADMIN yang boleh menukar status permohonan.
   const session = await auth();
-  if (!session?.user || session.user.role !== "MANAGEMENT_STAFF") {
+  if (!session?.user || (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN")) {
     return {
       success: false,
-      error: "Akses tidak dibenarkan. Hanya staf pengurusan sahaja yang dibenarkan untuk menukar status permohonan.",
+      error: "Akses tidak dibenarkan. Hanya Pegawai Zakat atau Pentadbir sahaja yang dibenarkan untuk menukar status permohonan.",
     };
   }
 
@@ -63,9 +64,9 @@ export async function updateZakatApplicationStatus(
  * Calculates the total zakat contributions grouped by the eight UTHM faculties.
  */
 export async function fetchZakatCollectionFacultyMetrics() {
-  // This statement verifies that the active session belongs to an authorized management staff member.
+  // Memastikan hanya ZAKAT_OFFICER atau SUPER_ADMIN yang boleh melihat metrik kutipan.
   const session = await auth();
-  if (!session?.user || session.user.role !== "MANAGEMENT_STAFF") {
+  if (!session?.user || (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN")) {
     throw new Error("Akses tidak dibenarkan.");
   }
 
@@ -113,9 +114,9 @@ export async function fetchZakatCollectionFacultyMetrics() {
  * Computes historical transaction trend metrics partitioned by year.
  */
 export async function fetchZakatHistoricalTrendMetrics() {
-  // This statement verifies that the active session belongs to an authorized management staff member.
+  // Memastikan hanya ZAKAT_OFFICER atau SUPER_ADMIN yang boleh melihat metrik trend tahunan.
   const session = await auth();
-  if (!session?.user || session.user.role !== "MANAGEMENT_STAFF") {
+  if (!session?.user || (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN")) {
     throw new Error("Akses tidak dibenarkan.");
   }
 
@@ -173,7 +174,7 @@ export async function fetchNotificationDataAction() {
   }
 
   // This block queries applications depending on whether the user is a manager or regular employee.
-  if (session.user.role === "MANAGEMENT_STAFF") {
+  if (session.user.role === "ZAKAT_OFFICER" || session.user.role === "SUPER_ADMIN") {
     // This query retrieves all applications awaiting confirmation for management staff.
     return await prisma.zakatStaffSalaryDeductionApplication.findMany({
       orderBy: { submittedAt: "desc" },
@@ -258,13 +259,14 @@ export async function updateUserProfileAction(data: {
  */
 export async function fetchUserManagementList() {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
-    throw new Error("Akses tidak dibenarkan. Hanya staf pengurusan sahaja.");
+  // Memastikan hanya SUPER_ADMIN yang boleh melihat senarai pengguna bagi tujuan pengurusan.
+  if (!session?.user?.id || session.user.role !== "SUPER_ADMIN") {
+    throw new Error("Akses tidak dibenarkan. Hanya Pentadbir Tertinggi sahaja.");
   }
 
   try {
     const users = await prisma.user.findMany({
-      where: { role: "USER_STAFF" },
+      where: { role: "STAFF" },
       select: {
         id: true,
         name: true,
@@ -287,16 +289,32 @@ export async function fetchUserManagementList() {
 
 /**
  * Memadam pengguna secara bersyarat dan kekal daripada pangkalan data.
+ * Setiap percubaan (sah atau haram) direkodkan dalam jejak audit sistem.
  */
-export async function deleteUserAction(userId: string) {
+export async function deleteUserAction(userId: string, targetStaffName: string) {
+  // Memastikan hanya SUPER_ADMIN yang boleh memadam pengguna.
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
-    return { success: false, error: "Akses tidak dibenarkan." };
+
+  if (!session?.user?.id || session.user.role !== "SUPER_ADMIN") {
+    // Rakam percubaan menceroboh oleh pengguna tidak sah ke dalam sistem log
+    await createSystemAuditLog("PERCUBAAN_PADAM_HARAM", {
+      targetUserId:    userId,
+      targetStaffName,
+      percubaanOleh:   session?.user?.email ?? "UNKNOWN",
+    });
+    return { success: false, error: "Akses tidak dibenarkan. Hanya Pentadbir Tertinggi sahaja boleh memadam akaun." };
   }
 
   try {
     await prisma.user.delete({
       where: { id: userId },
+    });
+
+    // Kunci Integriti: Rekod penyingkiran rasmi bersama perincian penting untuk forensik
+    await createSystemAuditLog("PENTADBIR_PADAM_PENGGUNA", {
+      deletedStaffName: targetStaffName,
+      deletedStaffId:   userId,
+      executedBy:       session.user.email ?? "UNKNOWN",
     });
 
     revalidatePath("/dashboard/pengurusan");
@@ -313,15 +331,16 @@ export async function deleteUserAction(userId: string) {
  */
 export async function updateUserRoleAction(userId: string, newRole: string) {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
-    return { success: false, error: "Akses tidak dibenarkan." };
+  // Memastikan hanya SUPER_ADMIN yang boleh mengubah peranan pengguna.
+  if (!session?.user?.id || session.user.role !== "SUPER_ADMIN") {
+    return { success: false, error: "Akses tidak dibenarkan. Hanya Pentadbir Tertinggi sahaja boleh menukar peranan pengguna." };
   }
 
   try {
     // Mengemaskini rekod model User bersandarkan parameter ID unik yang dihantar
     await prisma.user.update({
       where: { id: userId },
-      data: { role: newRole as "USER_STAFF" | "MANAGEMENT_STAFF" },
+      data: { role: newRole as "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" },
     });
 
     revalidatePath("/dashboard/pengurusan");

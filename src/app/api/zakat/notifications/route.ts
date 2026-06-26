@@ -40,7 +40,7 @@ export async function GET() {
   }
 
   try {
-    const isManagement = session.user.role === "MANAGEMENT_STAFF";
+    const isManagement = session.user.role === "ZAKAT_OFFICER" || session.user.role === "SUPER_ADMIN";
     
     // Fetch user applications
     const apps = await prisma.zakatStaffSalaryDeductionApplication.findMany({

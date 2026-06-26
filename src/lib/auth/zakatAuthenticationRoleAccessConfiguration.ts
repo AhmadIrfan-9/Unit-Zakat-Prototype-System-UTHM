@@ -14,7 +14,7 @@ declare module "next-auth" {
     noKP?: string | null;
     gajiSemasa?: number | null;
     alamatRumah?: string | null;
-    role?: "USER_STAFF" | "MANAGEMENT_STAFF";
+    role?: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN";
   }
   interface Session {
     user: {
@@ -23,7 +23,7 @@ declare module "next-auth" {
       noKP?: string | null;
       gajiSemasa?: number | null;
       alamatRumah?: string | null;
-      role?: "USER_STAFF" | "MANAGEMENT_STAFF";
+      role?: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN";
     } & DefaultSession["user"];
   }
 }
@@ -158,7 +158,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.noKP        = (user.noKP        as string | null | undefined) ?? null;
         token.gajiSemasa  = (user.gajiSemasa  as number | null | undefined) ?? null;
         token.alamatRumah = (user.alamatRumah as string | null | undefined) ?? null;
-        token.role        = (user.role        as "USER_STAFF" | "MANAGEMENT_STAFF" | undefined) ?? "USER_STAFF";
+        token.role        = (user.role        as "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" | undefined) ?? "STAFF";
         return token;
       }
 
@@ -210,24 +210,26 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         session.user.gajiSemasa  = (token.gajiSemasa  as number | null | undefined) ?? null;
         (session.user as { alamatRumah?: string | null }).alamatRumah =
           (token.alamatRumah as string | null | undefined) ?? null;
-        session.user.role        = (token.role as "USER_STAFF" | "MANAGEMENT_STAFF" | undefined) ?? "USER_STAFF";
+        session.user.role        = (token.role as "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" | undefined) ?? "STAFF";
       }
       return session;
     },
 
     // This authorized callback acts as an edge-layer route guard, blocking unauthenticated users from dashboard paths and redirecting non-management staff away from the executive portal.
     async authorized({ auth: sessionAuth, request: { nextUrl } }) {
-      const isLoggedIn   = !!sessionAuth?.user;
-      const isDashboard  = nextUrl.pathname.startsWith("/dashboard");
-      const isManagement = nextUrl.pathname.startsWith("/dashboard/pengurusan");
+      const isLoggedIn      = !!sessionAuth?.user;
+      const isDashboard     = nextUrl.pathname.startsWith("/dashboard");
+      const isManagement    = nextUrl.pathname.startsWith("/dashboard/pengurusan");
+      const userRole        = sessionAuth?.user?.role;
+      const isOfficialStaff = userRole === "ZAKAT_OFFICER" || userRole === "SUPER_ADMIN";
 
       if (isDashboard) {
         if (!isLoggedIn) {
           // This redirect sends unauthenticated requests to the login page.
           return Response.redirect(new URL("/login", nextUrl));
         }
-        if (isManagement && sessionAuth.user?.role !== "MANAGEMENT_STAFF") {
-          // This redirect prevents non-management staff from accessing the executive dashboard.
+        if (isManagement && !isOfficialStaff) {
+          // This redirect prevents STAFF from accessing the management dashboard.
           return Response.redirect(new URL("/dashboard/zakat", nextUrl));
         }
         return true;

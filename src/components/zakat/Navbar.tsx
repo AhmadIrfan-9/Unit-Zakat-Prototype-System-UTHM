@@ -35,8 +35,11 @@ export function ZakatGlobalMainNavbarLayoutComponent({
   // This state hook tracks whether the logout confirmation modal dialog is open.
   const [signOutModalOpen, setSignOutModalOpen] = useState(false);
 
-  // This stable boolean constant determines the management role without dynamic evaluation inside hooks.
-  const isManagement = user.role === "MANAGEMENT_STAFF";
+  // Menentukan sama ada pengguna adalah pegawai/pentadbir (bukan kakitangan biasa).
+  const isManagement = user.role === "ZAKAT_OFFICER" || user.role === "SUPER_ADMIN";
+
+  // Menentukan sama ada pengguna adalah SUPER_ADMIN untuk kawalan tab Pengurusan Staf.
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
 
   // This fallback variable provides a safe display name with null-coalescing protection.
   const displayName = user.name ?? user.email ?? "Pengguna";
@@ -73,7 +76,8 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                   {[
                     { key: "proses",   label: "Proses Permohonan", Icon: FileText },
                     { key: "analisis", label: "Analisis Kutipan",  Icon: TrendingUp },
-                    { key: "pengguna", label: "Pengurusan Staf",   Icon: Users },
+                    // Tab Pengurusan Staf hanya kelihatan untuk SUPER_ADMIN
+                    ...(isSuperAdmin ? [{ key: "pengguna", label: "Pengurusan Staf", Icon: Users }] : []),
                     { key: "profile",  label: "Profil Peribadi",   Icon: UserIcon },
                   ].map(({ key, label, Icon }) => (
                     <button
@@ -129,7 +133,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
         <div className="flex items-center gap-3 shrink-0 relative">
           {/* This major structural component renders the role-aware notification alert bell popover. */}
           <ZakatGlobalNotificationBellPopoverComponent
-            role={isManagement ? "MANAGEMENT_STAFF" : "USER_STAFF"}
+            role={user.role === "ZAKAT_OFFICER" || user.role === "SUPER_ADMIN" ? user.role as "ZAKAT_OFFICER" | "SUPER_ADMIN" : "STAFF"}
           />
 
           {/* This layout wrapper contains the clickable user avatar and its dropdown menu. */}
@@ -157,7 +161,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                       ID: {user.noPekerja ?? "N/A"}
                     </p>
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-[#002060]/10 text-[#002060]">
-                      {isManagement ? "PENGURUSAN" : "Kakitangan"}
+                      {user.role === "SUPER_ADMIN" ? "SUPER ADMIN" : isManagement ? "PEGAWAI ZAKAT" : "Kakitangan"}
                     </span>
                   </div>
                   <div className="border-t border-border pt-2">

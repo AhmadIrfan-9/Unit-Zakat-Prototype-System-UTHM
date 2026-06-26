@@ -40,7 +40,7 @@ export async function registerNewStaffAccount(payload: {
         fakulti: payload.fakulti,
         passwordHash,
         email: institutionalEmail,
-        role: "USER_STAFF",
+        role: "STAFF",
       },
     });
 

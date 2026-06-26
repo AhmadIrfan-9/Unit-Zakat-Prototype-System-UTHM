@@ -15,10 +15,11 @@ datasource db {
 // These follow the exact schema expected by @auth/prisma-adapter.
 // Do NOT rename fields — the adapter maps them by convention.
 
-// This enum defines the two distinct security roles used to segregate staff and management dashboard environments.
+// This enum defines the three security roles used to govern dashboard access, operational approvals, and system administration.
 enum Role {
-  USER_STAFF
-  MANAGEMENT_STAFF
+  STAFF             // Kakitangan biasa — hantar & semak borang zakat
+  ZAKAT_OFFICER     // Pegawai Operasi — luluskan/tolak borang & lihat carta analitik
+  SUPER_ADMIN       // Pentadbir Tertinggi — urus pengguna & naik/turun pangkat
 }
 
 // This model updates the application database schema to include staff profiles, roles, and a strict connection to their submitted zakat applications.
@@ -38,7 +39,7 @@ model User {
   umur          Int?
   alamatRumah   String?   @db.Text @map("alamat_rumah")
   gajiSemasa    Decimal?  @db.Decimal(10, 2) @map("gaji_semasa")
-  role          Role      @default(USER_STAFF)
+  role          Role      @default(STAFF)
   // This mapping definition maps the institutional faculty attribute to the user model.
   fakulti       String?   @map("fakulti")
 
@@ -181,4 +182,23 @@ model ZakatStaffSalaryDeductionApplication {
   @@index([submittedAt(sort: Desc)])
 
   @@map("zakat_staff_salary_deductions")
+}
+
+// ─── Security Audit Log Module ────────────────────────────────────────────────
+
+// This immutable event log captures all critical system actions, administrative mutations, and unauthorized access attempts for forensic audit trails.
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")   // Boleh null jika penceroboh gagal log masuk
+  userEmail String?  @map("user_email") // Emel pelaku untuk semakan pantas tanpa relational join
+  action    String   // Contoh: "LOG_MASUK_SUKSES", "LOG_MASUK_GAGAL", "PENTADBIR_PADAM_PENGGUNA"
+  details   Json?    // Metadata tambahan dalam format JSON
+  ipAddress String   @map("ip_address") // IP Address asal permintaan klien
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)]) // Paparan log terbaharu dahulu
+  @@index([action])                // Tapis mengikut jenis peristiwa
+  @@index([userId])                // Semak rekod aktiviti pengguna tertentu
+
+  @@map("audit_logs")
 }

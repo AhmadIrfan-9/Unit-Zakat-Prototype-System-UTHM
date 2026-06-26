@@ -25,8 +25,8 @@ export async function fetchManagementAnalyticsDashboardData() {
 
   // This guard verifies the requesting session belongs to an authenticated management staff member before executing any query.
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
-    throw new Error("Akses tidak dibenarkan. Hanya staf pengurusan sahaja.");
+  if (!session?.user?.id || (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN")) {
+    throw new Error("Akses tidak dibenarkan. Hanya Pegawai Zakat atau Pentadbir sahaja.");
   }
 
   // This Prisma query retrieves all deduction applications and resolves the associated User record in a single relational join, eliminating any WHERE IN (NULL) exposure from upstream array mapping.
@@ -125,10 +125,10 @@ export async function updateZakatApplicationWorkflowStatus(
 ) {
   // This guard confirms the requesting session is authenticated and carries the MANAGEMENT_STAFF role before any mutation executes.
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "MANAGEMENT_STAFF") {
+  if (!session?.user?.id || (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN")) {
     return {
       success: false,
-      error: "Akses tidak dibenarkan. Hanya staf pengurusan sahaja.",
+      error: "Akses tidak dibenarkan. Hanya Pegawai Zakat atau Pentadbir sahaja.",
     };
   }
 

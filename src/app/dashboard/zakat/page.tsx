@@ -33,8 +33,8 @@ export default async function ZakatApplicationPage() {
     redirect("/login");
   }
 
-  // This role gate prevents management staff from accessing the employee submission channel by forwarding them to their correct dashboard.
-  if (dbUser.role === "MANAGEMENT_STAFF") {
+  // Redirect ZAKAT_OFFICER dan SUPER_ADMIN ke dashboard pengurusan mereka.
+  if (dbUser.role === "ZAKAT_OFFICER" || dbUser.role === "SUPER_ADMIN") {
     redirect("/dashboard/pengurusan");
   }
 

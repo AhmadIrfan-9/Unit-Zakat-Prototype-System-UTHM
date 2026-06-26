@@ -23,8 +23,8 @@ export default async function ManagementDashboardPage() {
     redirect("/login");
   }
 
-  // This role gate blocks non-management users from accessing the executive dashboard and sends them to the staff portal.
-  if (session.user.role !== "MANAGEMENT_STAFF") {
+  // Halang akses jika pengguna bukan ZAKAT_OFFICER atau SUPER_ADMIN — redirect ke portal kakitangan.
+  if (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN") {
     redirect("/dashboard/zakat");
   }
 
@@ -36,7 +36,7 @@ export default async function ManagementDashboardPage() {
     name:      session?.user?.name      ?? "",
     email:     session?.user?.email     ?? "",
     noPekerja: session?.user?.noPekerja ?? "",
-    role:      session?.user?.role      ?? "MANAGEMENT_STAFF",
+    role:      session?.user?.role      ?? "ZAKAT_OFFICER",
   };
 
   return (

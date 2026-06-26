@@ -40,9 +40,9 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
   // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
   const [activeTab, setActiveTab] = useState<string>(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") || "info" : "info");
 
-  // This effect hook redirects management staff to the correct executive dashboard route.
+  // Redirect ZAKAT_OFFICER dan SUPER_ADMIN ke dashboard pengurusan mereka.
   useEffect(() => {
-    if (user.role === "MANAGEMENT_STAFF") {
+    if (user.role === "ZAKAT_OFFICER" || user.role === "SUPER_ADMIN") {
       const tabParam = searchParams.get("tab") ?? "proses";
       router.push(`/dashboard/pengurusan?tab=${tabParam}`);
     }

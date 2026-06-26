@@ -11,8 +11,8 @@ export default async function ZakatPage() {
     redirect("/login");
   }
 
-  // Redirect users dynamically according to their administrative privileges.
-  if (session.user.role === "MANAGEMENT_STAFF") {
+  // Redirect ZAKAT_OFFICER dan SUPER_ADMIN ke dashboard pengurusan; STAFF ke portal kakitangan.
+  if (session.user.role === "ZAKAT_OFFICER" || session.user.role === "SUPER_ADMIN") {
     redirect("/dashboard/pengurusan");
   } else {
     redirect("/dashboard/zakat");

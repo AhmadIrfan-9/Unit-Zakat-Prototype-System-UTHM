@@ -11,6 +11,7 @@ import { ZakatStaffProfileComponent } from "./UserProfile";
 import { ZakatManagementApplicationProcessingTabComponent } from "./ApplicationProcessingTab";
 import { ZakatManagementAnalyticsReportingTabComponent } from "./AnalyticsReportingTab";
 import { ZakatManagementUserVerificationTableDataFeed } from "./UserVerificationTable";
+import AuditLogTableClient from "../admin/AuditLogTableClient";
 import { Check, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,7 +71,7 @@ export function ZakatManagementDashboardMasterViewComponent({
 
 
   // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
-  const validTabs = ["proses", "analisis", "profile", "pengguna"];
+  const validTabs = ["proses", "analisis", "profile", "pengguna", "audit"];
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const tab = new URLSearchParams(window.location.search).get("tab");
@@ -279,6 +280,18 @@ export function ZakatManagementDashboardMasterViewComponent({
               
               {/* Sub-komponen Meja Paparan Pengguna Baharu dijalankan di sini */}
               <ZakatManagementUserVerificationTableDataFeed />
+            </div>
+          </div>
+        )}
+
+        {/* Incremental patch adding the dedicated Security Audit Log tab into the executive dashboard container. */}
+        {activeTab === "audit" && user.role === "SUPER_ADMIN" && (
+          <div className="animate-in fade-in duration-300 space-y-6 max-w-7xl mx-auto p-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-[#002060] mb-1">Jejak Audit Keselamatan Sistem (Immutable)</h3>
+              <p className="text-xs text-slate-500 mb-6">Semak log forensik keselamatan aktiviti pengguna dan pentadbir sistem secara masa nyata.</p>
+              
+              <AuditLogTableClient />
             </div>
           </div>
         )}

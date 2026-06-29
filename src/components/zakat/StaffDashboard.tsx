@@ -138,7 +138,6 @@ export function ZakatStaffDashboardMasterViewComponent({ user, currentNisab = 50
         {/* This conditional rendering block mounts the salary deduction form exclusively when the mohon tab is strictly active; returns null otherwise. */}
         {viewScope === "mohon" ? (
           <div className="space-y-8">
-            <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
 
             {/* Suntikan UI: Kalkulator Zakat Pendapatan Rasmi MAIJ */}
             <div className="space-y-2">

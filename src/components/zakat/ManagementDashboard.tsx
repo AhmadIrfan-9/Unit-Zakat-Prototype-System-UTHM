@@ -11,7 +11,7 @@ import { ZakatManagementAnalyticsReportingTabComponent } from "./AnalyticsReport
 import { ZakatManagementUserVerificationTableDataFeed } from "./UserVerificationTable";
 import AuditLogTableClient from "../admin/AuditLogTableClient";
 import NewsCreateFormClient from "../admin/NewsCreateFormClient";
-import { Check, XCircle, Newspaper, Calendar } from "lucide-react";
+import { Check, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";

@@ -134,7 +134,7 @@ function LoginForm() {
         setError(
           isBruteForceMessage
             ? rawMessage
-            : "No. Pekerja atau Kata Laluan yang anda masukkan adalah salah!"
+            : "Log masuk gagal. Sila pastikan No. Pekerja dan kata laluan anda adalah tepat."
         );
         setLoading(false);
       } else {

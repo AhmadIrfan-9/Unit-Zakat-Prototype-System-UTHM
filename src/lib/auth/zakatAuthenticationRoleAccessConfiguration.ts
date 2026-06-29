@@ -12,7 +12,7 @@ declare module "next-auth" {
     noKP?: string | null;
     gajiSemasa?: number | null;
     alamatRumah?: string | null;
-    role?: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN";
+    role?: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" | "USER" | "MANAGEMENT";
   }
   interface Session {
     user: {
@@ -21,7 +21,7 @@ declare module "next-auth" {
       noKP?: string | null;
       gajiSemasa?: number | null;
       alamatRumah?: string | null;
-      role?: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN";
+      role?: "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" | "USER" | "MANAGEMENT";
     } & DefaultSession["user"];
   }
 }
@@ -163,7 +163,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.noKP        = (user.noKP        as string | null | undefined) ?? null;
         token.gajiSemasa  = (user.gajiSemasa  as number | null | undefined) ?? null;
         token.alamatRumah = (user.alamatRumah as string | null | undefined) ?? null;
-        token.role        = (user.role        as "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" | undefined) ?? "STAFF";
+        token.role        = (user.role        as "STAFF" | "ZAKAT_OFFICER" | "SUPER_ADMIN" | "USER" | "MANAGEMENT" | undefined) ?? "STAFF";
         return token;
       }
 

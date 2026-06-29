@@ -17,9 +17,11 @@ datasource db {
 
 // This enum defines the three security roles used to govern dashboard access, operational approvals, and system administration.
 enum Role {
-  STAFF             // Kakitangan biasa — hantar & semak borang zakat
-  ZAKAT_OFFICER     // Pegawai Operasi — luluskan/tolak borang & lihat carta analitik
-  SUPER_ADMIN       // Pentadbir Tertinggi — urus pengguna & naik/turun pangkat
+  USER
+  STAFF
+  MANAGEMENT
+  ZAKAT_OFFICER
+  SUPER_ADMIN
 }
 
 // This model updates the application database schema to include staff profiles, roles, and a strict connection to their submitted zakat applications.

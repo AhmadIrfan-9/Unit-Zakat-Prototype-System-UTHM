@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import AuditLogTableClient from "./AuditLogTableClient";
+import SystemBackupButton from "./SystemBackupButton";
 
 interface SystemDashboardClientProps {
   dbOnline: boolean;
@@ -168,13 +169,7 @@ export default function SystemDashboardClient({
             <div className="space-y-4">
               <h2 className="text-base font-bold text-blue-950 uppercase tracking-wider">Quick Actions</h2>
               <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex flex-wrap gap-4 items-center">
-                <a
-                  href="/api/admin/backup"
-                  download
-                  className="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-xl transition-all duration-150 uppercase tracking-wider shadow-sm"
-                >
-                  📥 Muat Turun Sandaran Penuh (.json)
-                </a>
+                <SystemBackupButton />
                 
                 <Link
                   href="/dashboard/pengurusan?tab=pengguna"

@@ -136,6 +136,18 @@ export async function submitZakatApplicationAction(
       const bytes = await fileEntry.arrayBuffer();
       const buffer = Buffer.from(bytes);
       
+      // Verifikasi bait kepala fail (magic bytes check) demi keselamatan sistem
+      const isPdf = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46; // %PDF
+      const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47; // PNG
+      const isJpg = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff; // JPEG
+      
+      if (!isPdf && !isPng && !isJpg) {
+        return {
+          success: false,
+          error: "Fail bukti yang dimuat naik tidak sah! Hanya dokumen format PDF, PNG, atau JPG tulen sahaja yang dibenarkan.",
+        };
+      }
+
       const uploadDir = path.join(process.cwd(), "public", "uploads");
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });

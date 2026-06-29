@@ -202,6 +202,8 @@ model AuditLog {
   @@index([createdAt(sort: Desc)]) // Paparan log terbaharu dahulu
   @@index([action])                // Tapis mengikut jenis peristiwa
   @@index([userId])                // Semak rekod aktiviti pengguna tertentu
+  @@index([userEmail])             // Tapis mengikut email pelaku
+  @@index([ipAddress])             // Tapis mengikut alamat IP
 
   @@map("audit_logs")
 }

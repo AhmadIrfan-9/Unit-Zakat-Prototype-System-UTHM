@@ -32,18 +32,18 @@ export default async function AdminSystemPage() {
   // 3. Vercel deployment status
   const isVercel = !!process.env.VERCEL;
 
-  // 4. Statistics snapshot
-  const totalUsers = await prisma.user.count();
-  const totalApplications = await prisma.zakatStaffSalaryDeductionApplication.count();
-  
-  // Pengguna pasif (tiada sebarang borang caruman)
-  const inactiveUsers = await prisma.user.count({
-    where: {
-      zakatStaffSalaryDeductions: {
-        none: {},
+  // 4. Statistics snapshot in parallel (optimized for speed)
+  const [totalUsers, totalApplications, inactiveUsers] = await Promise.all([
+    prisma.user.count(),
+    prisma.zakatStaffSalaryDeductionApplication.count(),
+    prisma.user.count({
+      where: {
+        zakatStaffSalaryDeductions: {
+          none: {},
+        },
       },
-    },
-  });
+    }),
+  ]);
 
   return (
     <SystemDashboardClient

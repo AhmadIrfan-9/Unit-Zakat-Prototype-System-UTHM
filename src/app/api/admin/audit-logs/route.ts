@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // Immutable GET endpoint scoped exclusively to SUPER_ADMIN to avoid forensic trail tampering.
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth();
 
   // 1. Sekat pengunjung yang tiada sesi aktif atau bukan bertaraf SUPER_ADMIN
@@ -15,8 +15,16 @@ export async function GET() {
   }
 
   try {
-    // 2. KUNCI SASARAN: Tarik data dari jadual AuditLog disusun mengikut tarikh terbaharu dahulu
+    // Membaca parameter had muatan (pagination) dari URL query
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const skip = (page - 1) * limit;
+
+    // 2. KUNCI SASARAN: Tarik data dari jadual AuditLog disusun mengikut tarikh terbaharu dengan had limit
     const logs = await prisma.auditLog.findMany({
+      take: limit,
+      skip: skip,
       orderBy: {
         createdAt: "desc",
       },

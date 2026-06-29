@@ -11,16 +11,21 @@ interface AuditLogRecord {
   action: string;
   details: unknown;
   ipAddress: string;
-  createdAt: string;
+  createdAt: string | Date;
 }
 
-export default function AuditLogTableClient() {
-  const [logs, setLogs] = useState<AuditLogRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface AuditLogTableClientProps {
+  initialLogs?: AuditLogRecord[];
+}
+
+export default function AuditLogTableClient({ initialLogs }: AuditLogTableClientProps = {}) {
+  const [logs, setLogs] = useState<AuditLogRecord[]>(initialLogs || []);
+  const [isLoading, setIsLoading] = useState(!initialLogs);
   const [selectedAction, setSelectedAction] = useState<string>("All");
 
   // 1. Ambil data log secara real-time daripada API selamat Next.js
   useEffect(() => {
+    if (initialLogs) return;
     async function fetchLogs() {
       try {
         const res = await fetch("/api/admin/audit-logs");

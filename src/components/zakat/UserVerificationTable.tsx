@@ -237,3 +237,5 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     </div>
   );
 }
+
+export default ZakatManagementUserVerificationTableDataFeed;

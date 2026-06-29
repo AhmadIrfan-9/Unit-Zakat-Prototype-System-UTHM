@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createSystemAuditLog } from "@/lib/audit";
+import { revalidatePath } from "next/cache";
 
 // Incremental patch verifying admin credentials before modifying global runtime security variables.
 export async function updateGlobalNisabAction(newValue: number) {
@@ -25,6 +26,10 @@ export async function updateGlobalNisabAction(newValue: number) {
       newNisabValue: newValue,
       updatedBy: session.user.email,
     });
+
+    // Revalidate paths globally to reflect changes
+    revalidatePath("/dashboard/zakat");
+    revalidatePath("/dashboard/pengurusan");
 
     return { success: true, data: updatedSetting };
   } catch (error) {

@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 interface AuditLogRecord {
   id: string;
@@ -17,6 +17,7 @@ interface AuditLogRecord {
 export default function AuditLogTableClient() {
   const [logs, setLogs] = useState<AuditLogRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAction, setSelectedAction] = useState<string>("All");
 
   // 1. Ambil data log secara real-time daripada API selamat Next.js
   useEffect(() => {
@@ -36,16 +37,31 @@ export default function AuditLogTableClient() {
     fetchLogs();
   }, []);
 
+  // Ambil senarai unik jenis aktiviti untuk ditapis
+  const uniqueActions = useMemo(() => {
+    const actions = new Set<string>();
+    logs.forEach((log) => {
+      if (log.action) actions.add(log.action);
+    });
+    return ["All", ...Array.from(actions)];
+  }, [logs]);
+
+  // Log yang telah ditapis
+  const filteredLogs = useMemo(() => {
+    if (selectedAction === "All") return logs;
+    return logs.filter((log) => log.action === selectedAction);
+  }, [logs, selectedAction]);
+
   // 2. TUGASAN 3: ENJIN UTALITI EKSPORT KE EXCEL (CSV FORMAT)
-  // Incremental patch implementing a native client-side JSON-to-CSV stream generator.
   const handleExportToCSV = () => {
-    if (logs.length === 0) return alert("Tiada data log untuk dieksport.");
+    const dataToExport = filteredLogs;
+    if (dataToExport.length === 0) return alert("Tiada data log untuk dieksport.");
 
     // Sediakan tajuk kolum utama Excel
     const headers = ["ID REKOD", "STEMPEL MASA (MYT)", "PELAKU (EMAIL)", "AKTIVITI", "ALAMAT IP", "METADATA PERINCIAN"];
     
     // Tukar baris data objek menjadi baris teks CSV yang dipisahkan oleh tanda koma
-    const csvRows = logs.map((log) => {
+    const csvRows = dataToExport.map((log) => {
       const formattedDate = new Date(log.createdAt).toLocaleString("ms-MY", { timeZone: "Asia/Kuala_Lumpur" });
       const sanitizedDetails = JSON.stringify(log.details).replace(/"/g, '""'); // Escaping tanda petik untuk Excel
 
@@ -62,7 +78,7 @@ export default function AuditLogTableClient() {
     // Gabungkan tajuk bersama baris kandungan
     const csvContent = "\uFEFF" + [headers.join(","), ...csvRows].join("\n"); // Menggunakan BOM (\uFEFF) supaya tulisan jawi/khas tidak rosak di Excel
     
-    // Cetus muat turun fail automatik ke dalam komputer komputer
+    // Cetus muat turun fail automatik ke dalam komputer
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -78,20 +94,35 @@ export default function AuditLogTableClient() {
   }
 
   return (
-    <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="bg-white rounded-2xl border border-gray-150 p-6 shadow-sm space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Jejak Audit & Log Aktiviti Global</h2>
+          <h2 className="text-lg font-bold text-blue-950">Jejak Audit & Log Aktiviti Global</h2>
           <p className="text-xs text-gray-500">Sistem arkib imutabel bagi memantau urus tadbir integriti portal.</p>
         </div>
         
-        {/* Butang Eksport CSV gred industri */}
-        <button
-          onClick={handleExportToCSV}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-lg flex items-center gap-2 transition-colors duration-200 shadow-sm"
-        >
-          📊 Eksport ke Excel (CSV)
-        </button>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Penapis Jenis Aktiviti */}
+          <select
+            value={selectedAction}
+            onChange={(e) => setSelectedAction(e.target.value)}
+            className="p-2 border rounded-lg bg-gray-50 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-950"
+          >
+            {uniqueActions.map((act) => (
+              <option key={act} value={act}>
+                Tapis: {act === "All" ? "Semua Aktiviti" : act}
+              </option>
+            ))}
+          </select>
+
+          {/* Butang Eksport CSV gred industri */}
+          <button
+            onClick={handleExportToCSV}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs rounded-lg flex items-center gap-1.5 transition-colors duration-200 shadow-sm shrink-0"
+          >
+            📊 Eksport CSV
+          </button>
+        </div>
       </div>
 
       {/* Paparan Jadual Utama (Read-Only Layout) */}
@@ -107,12 +138,12 @@ export default function AuditLogTableClient() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white text-gray-600">
-            {logs.length === 0 ? (
+            {filteredLogs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-gray-400">Pangkalan data audit log masih kosong.</td>
+                <td colSpan={5} className="p-8 text-center text-gray-400">Tiada rekod log aktiviti ditemui bagi tapisan ini.</td>
               </tr>
             ) : (
-              logs.map((log) => (
+              filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-gray-50/80 transition-colors duration-150">
                   <td className="p-4 whitespace-nowrap font-medium text-gray-900">
                     {new Date(log.createdAt).toLocaleString("ms-MY", { timeZone: "Asia/Kuala_Lumpur" })}
@@ -122,7 +153,7 @@ export default function AuditLogTableClient() {
                   </td>
                   <td className="p-4 hash-tag-zone">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                      log.action.includes("HAD") || log.action.includes("HARBI") || log.action.includes("GAGAL")
+                      log.action.includes("HAD") || log.action.includes("HARBI") || log.action.includes("GAGAL") || log.action.includes("TOLAK")
                         ? "bg-red-50 text-red-700 border border-red-100"
                         : "bg-blue-50 text-blue-700 border border-blue-100"
                     }`}>
@@ -133,7 +164,6 @@ export default function AuditLogTableClient() {
                     {log.ipAddress}
                   </td>
                   <td className="p-4 max-w-xs">
-                    {/* Menggunakan tag pre yang dikawal bagi memaparkan perincian tanpa merosakkan susun atur UI */}
                     <pre className="text-[11px] bg-gray-50 p-2 rounded-md font-mono overflow-x-auto border border-gray-200 text-gray-700 max-h-24">
                       {JSON.stringify(log.details, null, 2)}
                     </pre>

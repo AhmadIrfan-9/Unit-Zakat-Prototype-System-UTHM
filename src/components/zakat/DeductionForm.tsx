@@ -285,7 +285,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
 
   return (
     // This layout wrapper contains the complete salary deduction application form tree.
-    <form action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
+    <form action={dispatch} noValidate encType="multipart/form-data" className="space-y-8 w-full animate-in fade-in duration-300 relative">
 
       {/* These hidden inputs inject the session-sourced immutable identity values into the form payload. */}
       <input type="hidden" name="namaPenuh"  value={user.name      ?? ""} />
@@ -595,6 +595,31 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
           {err("deductionType") && (
             <p className="text-sm text-destructive font-bold mt-2">{err("deductionType")}</p>
           )}
+        </div>
+      </div>
+
+      {/* Dokumen Bukti Sokongan */}
+      <div className="space-y-4">
+        <div className="border-b border-border pb-2">
+          <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
+            BAHAGIAN DI: DOKUMEN BUKTI SOKONGAN
+          </h2>
+        </div>
+        <div className="space-y-2 max-w-md">
+          <Label htmlFor="payslipFile" className="font-semibold text-xs text-[#002060]">
+            Muat Naik Slip Gaji Terkini (PDF/Imej)
+          </Label>
+          <Input
+            id="payslipFile"
+            name="payslipFile"
+            type="file"
+            accept="image/*,application/pdf"
+            disabled={isPending}
+            className="text-xs focus-visible:ring-[#002060] h-9 cursor-pointer"
+          />
+          <p className="text-[10px] text-muted-foreground leading-normal">
+            Sila lampirkan slip gaji bulanan anda sebagai fail bukti sokongan permohonan. Format dibenarkan: JPG, PNG, PDF.
+          </p>
         </div>
       </div>
 

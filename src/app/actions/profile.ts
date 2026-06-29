@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs"; 
+import { revalidatePath } from "next/cache";
 
 // Incremental patch verifying current credential state and hashing the new target safely.
 export async function updatePasswordAction(formData: { currentPassword?: string; newPassword?: string }) {
@@ -93,6 +94,9 @@ export async function updatePasswordAction(formData: { currentPassword?: string;
         });
       }
     });
+
+    revalidatePath("/dashboard/zakat");
+    revalidatePath("/dashboard/zakat/profile");
 
     return { success: true };
   } catch (error) {

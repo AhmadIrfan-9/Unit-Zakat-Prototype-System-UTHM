@@ -173,6 +173,7 @@ model ZakatStaffSalaryDeductionApplication {
   submittedAt       DateTime          @default(now()) @map("submitted_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
   adminNotes        String?           @db.Text @map("admin_notes")
+  payslipUrl        String?           @map("payslip_url")
 
   // This block maps the relation of the submission to the authenticated user account structure.
   userId String @map("user_id")

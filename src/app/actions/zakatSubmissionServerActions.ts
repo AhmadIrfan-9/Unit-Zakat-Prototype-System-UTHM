@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { DeductionType } from "@prisma/client";
 import { z } from "zod";
+import fs from "fs";
+import path from "path";
 
 // This constant array stores the official Bahasa Melayu month names used for the deduction start date field validation.
 const VALID_MALAY_MONTHS = [
@@ -126,6 +128,28 @@ export async function submitZakatApplicationAction(
 
   const v = parsed.data;
 
+  // Sediakan folder muat naik dan tulis fail jika ada fail disertakan
+  let payslipUrl: string | undefined = undefined;
+  try {
+    const fileEntry = formData.get("payslipFile");
+    if (fileEntry && fileEntry instanceof File && fileEntry.size > 0) {
+      const bytes = await fileEntry.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      
+      const uploadDir = path.join(process.cwd(), "public", "uploads");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      const filename = `${Date.now()}-${fileEntry.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
+      const filePath = path.join(uploadDir, filename);
+      await fs.promises.writeFile(filePath, buffer);
+      payslipUrl = `/uploads/${filename}`;
+    }
+  } catch (err) {
+    console.error("Gagal menyimpan slip gaji:", err);
+  }
+
   // This try-catch block wraps the Prisma write operation to isolate and report database-layer failures without exposing internal stack traces.
   try {
     // This explicit await ensures the Prisma INSERT statement completes and returns the new record ID before this function resolves.
@@ -146,6 +170,7 @@ export async function submitZakatApplicationAction(
         tahunMula: v.tahunMula,
         pengesahanLafaz:    true,
         persetujuanAkta709: true,
+        payslipUrl: payslipUrl,
 
         // This conditional block maps optional decimal amounts to the corresponding schema columns based on the selected deduction type.
         amaunPcbAsal:

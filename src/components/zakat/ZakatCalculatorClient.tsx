@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 
 interface CalculatorProps {
   initialNisab?: number; // Menerima nilai daripada DB, lalai kepada RM 50228.51 mengikut imej 2026
 }
+
+// Kelas utiliti Tailwind untuk menyembunyikan anak panah angka (spin buttons)
+const NUM_INPUT_CLASS = "w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: CalculatorProps) {
   // A. State Bahagian Pendapatan
@@ -18,6 +21,37 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
   const [parentsSupport, setParentsSupport] = useState<number>(0);
   const [medical, setMedical] = useState<number>(0);
   const [education, setEducation] = useState<number>(0);
+
+  // Fungsi onBlur: Format angka kepada 2 titik perpuluhan secara automatik
+  const handleCurrencyBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    if (!isNaN(val)) {
+      e.target.value = val.toFixed(2);
+    } else if (e.target.value === "") {
+      e.target.value = "0.00";
+    }
+  }, []);
+
+  // Fungsi tetapan semula (Reset) semua input ke nilai asal
+  const handleReset = useCallback(() => {
+    const confirmed = window.confirm(
+      "Adakah anda pasti mahu mengosongkan semua ruangan borang kalkulator ini?\n\nSemua nilai yang telah dimasukkan akan hilang."
+    );
+    if (!confirmed) return;
+
+    setMonthlySalary(0);
+    setAllowance(0);
+    setBonus(0);
+    setWivesCount(0);
+    setChildrenCount(0);
+    setParentsSupport(0);
+    setMedical(0);
+    setEducation(0);
+
+    // Reset semua input DOM secara visual
+    const form = document.getElementById("zakat-calculator-form") as HTMLFormElement | null;
+    if (form) form.reset();
+  }, []);
 
   // ENJIN LOGIK PENGIRAAN REAL-TIME (KISS & IMMUTABLE WORKFLOW)
   // Enforcing official MAIJ calculations dynamically within the reactive state scope.
@@ -54,7 +88,7 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
   }, [monthlySalary, allowance, bonus, wivesCount, childrenCount, parentsSupport, medical, education, initialNisab]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-1 text-sm text-gray-700">
+    <div id="zakat-calculator-form" className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-1 text-sm text-gray-700">
       
       {/* RUANGAN INPUT DATA (KOLUM 1 & 2) */}
       <div className="lg:col-span-2 space-y-6">
@@ -65,15 +99,33 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Gaji Pokok Sebulan (RM)</label>
-              <input type="number" onChange={(e) => setMonthlySalary(Number(e.target.value) || 0)} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0.00" />
+              <input
+                type="number"
+                onChange={(e) => setMonthlySalary(Number(e.target.value) || 0)}
+                onBlur={handleCurrencyBlur}
+                className={NUM_INPUT_CLASS}
+                placeholder="0.00"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Elaun Sebulan (RM)</label>
-              <input type="number" onChange={(e) => setAllowance(Number(e.target.value) || 0)} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0.00" />
+              <input
+                type="number"
+                onChange={(e) => setAllowance(Number(e.target.value) || 0)}
+                onBlur={handleCurrencyBlur}
+                className={NUM_INPUT_CLASS}
+                placeholder="0.00"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Bonus/Pendapatan Lain (RM)</label>
-              <input type="number" onChange={(e) => setBonus(Number(e.target.value) || 0)} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0.00" />
+              <input
+                type="number"
+                onChange={(e) => setBonus(Number(e.target.value) || 0)}
+                onBlur={handleCurrencyBlur}
+                className={NUM_INPUT_CLASS}
+                placeholder="0.00"
+              />
             </div>
           </div>
         </div>
@@ -88,23 +140,53 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Bilangan Isteri (RM 3,000 x isteri)</label>
-              <input type="number" min="0" onChange={(e) => setWivesCount(Math.max(0, Number(e.target.value)))} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0" />
+              <input
+                type="number"
+                min="0"
+                onChange={(e) => setWivesCount(Math.max(0, Number(e.target.value)))}
+                className={NUM_INPUT_CLASS}
+                placeholder="0"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Bilangan Anak (RM 1,000 x anak)</label>
-              <input type="number" min="0" onChange={(e) => setChildrenCount(Math.max(0, Number(e.target.value)))} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0" />
+              <input
+                type="number"
+                min="0"
+                onChange={(e) => setChildrenCount(Math.max(0, Number(e.target.value)))}
+                className={NUM_INPUT_CLASS}
+                placeholder="0"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Saraan Ibu Bapa Sebulan (RM)</label>
-              <input type="number" onChange={(e) => setParentsSupport(Number(e.target.value) || 0)} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0.00" />
+              <input
+                type="number"
+                onChange={(e) => setParentsSupport(Number(e.target.value) || 0)}
+                onBlur={handleCurrencyBlur}
+                className={NUM_INPUT_CLASS}
+                placeholder="0.00"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Kos Perubatan Sebenar Setahun (RM)</label>
-              <input type="number" onChange={(e) => setMedical(Number(e.target.value) || 0)} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0.00" />
+              <input
+                type="number"
+                onChange={(e) => setMedical(Number(e.target.value) || 0)}
+                onBlur={handleCurrencyBlur}
+                className={NUM_INPUT_CLASS}
+                placeholder="0.00"
+              />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Kos Pendidikan Sebenar Setahun (RM)</label>
-              <input type="number" onChange={(e) => setEducation(Number(e.target.value) || 0)} className="w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900" placeholder="0.00" />
+              <input
+                type="number"
+                onChange={(e) => setEducation(Number(e.target.value) || 0)}
+                onBlur={handleCurrencyBlur}
+                className={NUM_INPUT_CLASS}
+                placeholder="0.00"
+              />
             </div>
           </div>
         </div>
@@ -153,19 +235,30 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
             </span>
           </div>
 
-          {/* CTA BUTTON: AUTOFILL VALUE TO OFFICIAL DEDUCTION FORM */}
-          <button
-            type="button"
-            disabled={!calculations.isEligible || calculations.monthlyZakat <= 0}
-            onClick={() => {
-              localStorage.setItem("uthm_zakat_autofill_value", calculations.monthlyZakat.toFixed(2));
-              alert(`Nilai RM ${calculations.monthlyZakat.toFixed(2)} telah dikunci masuk! Melencongkan anda ke borang caruman...`);
-              window.location.href = "/dashboard/zakat?tab=mohon";
-            }}
-            className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-800 disabled:text-gray-500 text-slate-950 font-bold text-xs rounded-xl transition-colors duration-150 uppercase tracking-wider shadow-md"
-          >
-            Isi Borang Caruman Serta-merta
-          </button>
+          {/* BUTANG TINDAKAN: CTA & KOSONGKAN BORANG */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              disabled={!calculations.isEligible || calculations.monthlyZakat <= 0}
+              onClick={() => {
+                localStorage.setItem("uthm_zakat_autofill_value", calculations.monthlyZakat.toFixed(2));
+                alert(`Nilai RM ${calculations.monthlyZakat.toFixed(2)} telah dikunci masuk! Melencongkan anda ke borang caruman...`);
+                window.location.href = "/dashboard/zakat?tab=mohon";
+              }}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-800 disabled:text-gray-500 text-slate-950 font-bold text-xs rounded-xl transition-colors duration-150 uppercase tracking-wider shadow-md"
+            >
+              Isi Borang Caruman Serta-merta
+            </button>
+
+            {/* Butang Kosongkan Borang (Reset) */}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white font-semibold text-xs rounded-xl transition-colors duration-150 border border-white/10"
+            >
+              ↺ Kosongkan Borang
+            </button>
+          </div>
         </div>
       </div>
 

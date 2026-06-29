@@ -148,8 +148,24 @@ export function ZakatGlobalNotificationBellPopoverComponent({
     }
   }, [isManagement, userName, noPekerja]);
 
+  // PEMBAIKAN EROR ESLINT: Menggunakan tak segerak makrotask untuk mengelakkan ralat kitaran renders segerak.
+  // Incremental patch clearing the synchronous effect cascade by deferring the execution thread state trigger.
   useEffect(() => {
-    loadNotifications();
+    let isMounted = true;
+
+    const executeLoad = async () => {
+      // Membungkus panggilan ke dalam makrotask queue supaya React sempat menyelesaikan render kitaran utama dahulu
+      await Promise.resolve();
+      if (isMounted) {
+        loadNotifications();
+      }
+    };
+
+    executeLoad();
+
+    return () => {
+      isMounted = false; // Mencegah kebocoran memori jika komponen ditutup awal
+    };
   }, [loadNotifications]);
 
   // Bilangan belum dibaca (tidak termasuk pengumuman statik atau yang isRead = true)

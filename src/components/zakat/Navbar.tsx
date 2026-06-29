@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Info, FileText, User as UserIcon, LogOut, TrendingUp, Users, ShieldAlert } from "lucide-react";
+import { Info, FileText, User as UserIcon, LogOut, TrendingUp, Users, ShieldAlert, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ZakatGlobalNotificationBellPopoverComponent } from "./NotificationBell";
 import { ZakatAuthenticationSignOutConfirmationModalComponent } from "./LogoutModal";
@@ -76,6 +76,7 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                   {[
                     { key: "proses",   label: "Proses Permohonan", Icon: FileText },
                     { key: "analisis", label: "Analisis Kutipan",  Icon: TrendingUp },
+                    { key: "news",     label: "Urus Berita (CMS)", Icon: Newspaper },
                     // Tab Pengurusan Staf & Audit Log hanya kelihatan untuk SUPER_ADMIN
                     ...(isSuperAdmin ? [
                       { key: "pengguna", label: "Pengurusan Staf", Icon: Users },

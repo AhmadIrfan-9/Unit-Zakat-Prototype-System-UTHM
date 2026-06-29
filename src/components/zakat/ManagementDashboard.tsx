@@ -1,5 +1,3 @@
-// This primary management cockpit securely governs data routing switches to toggle between processing queues and financial visualization maps.
-
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
@@ -12,7 +10,8 @@ import { ZakatManagementApplicationProcessingTabComponent } from "./ApplicationP
 import { ZakatManagementAnalyticsReportingTabComponent } from "./AnalyticsReportingTab";
 import { ZakatManagementUserVerificationTableDataFeed } from "./UserVerificationTable";
 import AuditLogTableClient from "../admin/AuditLogTableClient";
-import { Check, XCircle } from "lucide-react";
+import NewsCreateFormClient from "../admin/NewsCreateFormClient";
+import { Check, XCircle, Newspaper, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -57,13 +56,21 @@ interface ZakatManagementDashboardMasterViewProps {
     noPekerja?: string | null;
     role?: string | null;
   };
+  allNews: {
+    id: string;
+    title: string;
+    category: string;
+    status: string;
+    createdAt: Date | string;
+  }[];
 }
 
 export function ZakatManagementDashboardMasterViewComponent({
   stats,
   chartData,
   applications: initialApplications,
-  user
+  user,
+  allNews
 }: ZakatManagementDashboardMasterViewProps) {
   // This navigation hook provides access to Next.js routing methods.
   const router = useRouter();
@@ -71,7 +78,7 @@ export function ZakatManagementDashboardMasterViewComponent({
 
 
   // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
-  const validTabs = ["proses", "analisis", "profile", "pengguna", "audit"];
+  const validTabs = ["proses", "analisis", "profile", "pengguna", "audit", "news"];
   const [activeTab, setActiveTab] = useState<string>(() => {
     if (typeof window !== "undefined") {
       const tab = new URLSearchParams(window.location.search).get("tab");
@@ -293,6 +300,53 @@ export function ZakatManagementDashboardMasterViewComponent({
               
               <AuditLogTableClient />
             </div>
+          </div>
+        )}
+
+        {/* TUGASAN 2: PENGENDALI KANDUNGAN TAB=NEWS UNTUK MANAGEMENT */}
+        {activeTab === "news" && (
+          <div className="space-y-8 animate-in fade-in duration-200 max-w-7xl mx-auto p-4">
+            
+            {/* Borang Cipta & Upload Berita */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+              <div className="border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-blue-950">Terbitkan Maklumat & Berita Zakat Baru</h3>
+                <p className="text-xs text-gray-500">Isi borang di bawah untuk menyiarkan pekeliling rasmi UTHM atau keputusan Nisab daripada MAIJ.</p>
+              </div>
+              <NewsCreateFormClient />
+            </div>
+
+            {/* Senarai Semakan Berita Semasa oleh Pengurusan */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+              <h4 className="text-sm font-bold text-gray-800 mb-4">Senarai Artikel Arkib</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500 font-bold border-b">
+                      <th className="p-3">Tajuk Artikel</th>
+                      <th className="p-3">Kategori</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Tarikh Dicipta</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y text-gray-600">
+                    {allNews.map((news) => (
+                      <tr key={news.id} className="hover:bg-gray-50/50">
+                        <td className="p-3 font-semibold text-gray-900">{news.title}</td>
+                        <td className="p-3 uppercase"><span className="px-2 py-0.5 bg-gray-100 rounded font-mono text-[10px]">{news.category}</span></td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${news.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                            {news.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-gray-450 font-mono">{new Date(news.createdAt).toLocaleDateString("ms-MY")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         )}
 

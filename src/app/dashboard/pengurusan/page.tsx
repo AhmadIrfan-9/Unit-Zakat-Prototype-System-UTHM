@@ -1,12 +1,11 @@
-// src/app/dashboard/pengurusan/page.tsx
-// This executive page template initializes analytical data feeds and structures a type-safe user session context equipped with robust string fallbacks.
-export const dynamic = "force-dynamic";
-
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { fetchManagementAnalyticsDashboardData } from "@/app/actions/zakatSalaryDeductionManagementServerActions";
 import { ZakatManagementDashboardMasterViewComponent } from "@/components/zakat/ManagementDashboard";
+import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 // This metadata block configures the browser tab title and description for the management analytics portal.
 export const metadata: Metadata = {
@@ -28,8 +27,13 @@ export default async function ManagementDashboardPage() {
     redirect("/dashboard/zakat");
   }
 
-  // This call fetches all analytical statistics and application records required by the management dashboard layout.
-  const data = await fetchManagementAnalyticsDashboardData();
+  // Tarik data analisis dan permohonan secara selari
+  const [data, allNews] = await Promise.all([
+    fetchManagementAnalyticsDashboardData(),
+    prisma.news.findMany({
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   // This object constructs a type-safe, null-coalesced session identity record to prevent hook dependency array size shifts in child components.
   const formattedUser = {
@@ -46,6 +50,7 @@ export default async function ManagementDashboardPage() {
       chartData={data.chartData}
       applications={data.applications}
       user={formattedUser}
+      allNews={allNews}
     />
   );
 }

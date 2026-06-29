@@ -12,20 +12,39 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Determine the correct app URL based on environment
+const getAppUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  
+  if (process.env.NODE_ENV === "production") {
+    return "https://sistem-caruman-zakat-gaji-uthm.vercel.app";
+  }
+  
+  return "http://localhost:3000";
+};
+
+const appUrl = getAppUrl();
+
 export const metadata: Metadata = {
   title: {
     default: "Log Masuk Portal Caruman Zakat Gaji UTHM | Pusat Islam UTHM",
     template: "%s | Sistem Caruman Zakat Gaji UTHM"
   },
   description: "Portal rasmi kakitangan UTHM untuk urusan permohonan, potongan, dan pengurusan caruman zakat pendapatan secara bulanan melalui Unit Kutipan Zakat, Pusat Islam UTHM.",
-  metadataBase: new URL("https://zakat.uthm.edu.my"),
+  metadataBase: new URL(appUrl),
   alternates: {
-    canonical: "/login",
+    canonical: "/",
   },
   openGraph: {
     title: "Log Masuk Portal Caruman Zakat Gaji UTHM | Pusat Islam UTHM",
     description: "Uruskan permohonan potongan zakat pendapatan bulanan anda secara digital dengan selamat melalui Unit Kutipan Zakat UTHM.",
-    url: "https://zakat.uthm.edu.my/login",
+    url: `${appUrl}/login`,
     siteName: "Sistem Zakat UTHM",
     images: [
       {

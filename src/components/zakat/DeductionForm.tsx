@@ -285,7 +285,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
 
   return (
     // This layout wrapper contains the complete salary deduction application form tree.
-    <form action={dispatch} noValidate encType="multipart/form-data" className="space-y-8 w-full animate-in fade-in duration-300 relative">
+    <form action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
 
       {/* These hidden inputs inject the session-sourced immutable identity values into the form payload. */}
       <input type="hidden" name="namaPenuh"  value={user.name      ?? ""} />

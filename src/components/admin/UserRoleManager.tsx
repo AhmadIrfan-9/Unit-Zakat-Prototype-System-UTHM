@@ -72,7 +72,7 @@ export function UserRoleManager({
     }
   };
 
-  const isSubmitDisabled = !justification.trim() || newRole === currentRole || status === "loading";
+  const isSubmitDisabled = justification.trim().length < 5 || newRole === currentRole || status === "loading";
 
   return (
     <>

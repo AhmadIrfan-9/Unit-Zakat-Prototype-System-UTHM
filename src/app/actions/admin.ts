@@ -21,7 +21,7 @@ export async function updateUserRoleAction(
   if (!session?.user?.id || session.user.role !== "SUPER_ADMIN") {
     return {
       success: false,
-      error: "Akses tidak dibenarkan. Hanya Pentadbir Tertinggi (SUPER_ADMIN) sahaja yang dibenarkan.",
+      error: "Akses Ditolak! Operasi ini memerlukan kelayakan Pentadbir Utama.",
     };
   }
 
@@ -32,14 +32,16 @@ export async function updateUserRoleAction(
   if (!newRole) {
     return { success: false, error: "Peranan baharu adalah wajib." };
   }
-  if (!justification || justification.trim() === "") {
-    return { success: false, error: "Justifikasi alasan penukaran peranan adalah mandatori." };
+  if (!justification || justification.trim().length < 5) {
+    return { success: false, error: "Gagal! Anda wajib memberikan justifikasi/alasan rasmi bertulis." };
   }
 
-  // Map "MANAGEMENT" to "ZAKAT_OFFICER" if requested to ensure compatibility with Prisma schema Role enum
+  // Map input roles to database Role enum values
   let dbRole = newRole;
   if (newRole === "MANAGEMENT") {
     dbRole = "ZAKAT_OFFICER";
+  } else if (newRole === "USER") {
+    dbRole = "STAFF";
   }
 
   const validRoles = ["STAFF", "ZAKAT_OFFICER", "SUPER_ADMIN"];

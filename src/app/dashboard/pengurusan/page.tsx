@@ -22,8 +22,13 @@ export default async function ManagementDashboardPage() {
     redirect("/login");
   }
 
-  // Halang akses jika pengguna bukan ZAKAT_OFFICER atau SUPER_ADMIN — redirect ke portal kakitangan.
-  if (session.user.role !== "ZAKAT_OFFICER" && session.user.role !== "SUPER_ADMIN") {
+  // Jika pengguna adalah SUPER_ADMIN, lakukan lencongan automatik ke dashboard admin khusus
+  if (session.user.role === "SUPER_ADMIN") {
+    redirect("/dashboard/admin/system");
+  }
+
+  // Hanya peranan MANAGEMENT (ZAKAT_OFFICER) dibenarkan masuk ke dashboard pengurusan operasi
+  if (session.user.role !== "ZAKAT_OFFICER") {
     redirect("/dashboard/zakat");
   }
 

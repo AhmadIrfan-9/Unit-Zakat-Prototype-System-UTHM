@@ -76,7 +76,9 @@ export function ZakatGlobalMainNavbarLayoutComponent({
                   {[
                     { key: "proses",   label: "Proses Permohonan", Icon: FileText },
                     { key: "analisis", label: "Analisis Kutipan",  Icon: TrendingUp },
-                    { key: "news",     label: "Urus Berita (CMS)", Icon: Newspaper },
+                    ...(user.role === "ZAKAT_OFFICER" ? [
+                      { key: "news",     label: "Urus Berita (CMS)", Icon: Newspaper }
+                    ] : []),
                     // Tab Pengurusan Staf & Audit Log hanya kelihatan untuk SUPER_ADMIN
                     ...(isSuperAdmin ? [
                       { key: "pengguna", label: "Pengurusan Staf", Icon: Users },

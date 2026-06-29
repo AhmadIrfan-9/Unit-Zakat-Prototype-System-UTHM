@@ -18,10 +18,9 @@ interface NewsFormData {
 export async function createNewsAction(formData: NewsFormData) {
   const session = await auth();
 
-  // KUNCI KESELAMATAN: Sekat sepenuhnya jika peranan mereka sekadar STAFF biasa.
-  // Nota: Di dalam pangkalan data, peranan MANAGEMENT ditakrifkan sebagai ZAKAT_OFFICER.
-  if (session?.user?.role !== "ZAKAT_OFFICER" && session?.user?.role !== "SUPER_ADMIN") {
-    return { success: false, error: "Akses Ditolak! Anda tiada kebenaran untuk menerbitkan berita." };
+  // KUNCI KESELAMATAN: Hanya meluluskan peranan MANAGEMENT (ZAKAT_OFFICER) sahaja. SUPER_ADMIN dilarang.
+  if (session?.user?.role !== "ZAKAT_OFFICER") {
+    return { success: false, error: "Akses Ditolak!" };
   }
 
   try {

@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -70,13 +70,17 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
           <span className="text-xs font-bold text-blue-950 uppercase tracking-wider">Portal Pentadbir Utama</span>
         </div>
         
-        {/* Butang Log Keluar Pantas diletakkan di sudut kanan atas untuk mengekalkan kebersihan navigasi */}
-        <Link 
-          href="/api/auth/signout"
-          className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
-        >
-          <span>🚪</span> Log Keluar
-        </Link>
+        <form action={async () => {
+          "use server";
+          await signOut({ redirectTo: "/login" });
+        }}>
+          <button 
+            type="submit"
+            className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <span>🚪</span> Log Keluar
+          </button>
+        </form>
       </header>
 
       {/* BLUE EXECUTIVE HERO BANNER (Symmetry to Screenshot 2) */}

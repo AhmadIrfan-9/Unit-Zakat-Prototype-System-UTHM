@@ -35,18 +35,21 @@ const credentialsSchema = z.object({
 });
 
 // This authentication configuration registers the Credentials provider and wires all custom token-to-session mapping callbacks.
+const useSecureCookies = process.env.NODE_ENV === "production";
+const cookieName = useSecureCookies ? "__Secure-next-auth.session-token" : "next-auth.session-token";
+
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
 
-  // Harden session token cookies to prevent XSS exfiltration and cross-site request hijacking.
+  // Harden session token cookies dynamically across development and production environments.
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.session-token`,
+      name: cookieName,
       options: {
         httpOnly: true,
         sameSite: "lax" as const,
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
   },

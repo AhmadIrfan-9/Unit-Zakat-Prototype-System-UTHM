@@ -1,10 +1,8 @@
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ZakatGlobalMainNavbarLayoutComponent } from "@/components/zakat/Navbar";
-import { Megaphone, Calendar } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import NewsCreateFormClient from "@/components/admin/NewsCreateFormClient";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -14,28 +12,18 @@ export const metadata: Metadata = {
   description: "Rujukan pekeliling rasmi dan warta pengurusan zakat UTHM.",
 };
 
-export default async function NewsDashboardPage() {
+export default async function NewsHubPage() {
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  const isManagement = session?.user?.role === "ZAKAT_OFFICER" || session?.user?.role === "SUPER_ADMIN";
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
-
-  if (!dbUser) {
-    redirect("/login");
-  }
-
-  // 1. Ambil senarai berita dari pangkalan data
-  let newsList = await prisma.news.findMany({
-    where: { status: "PUBLISHED" },
+  // Tarik semua berita berstatus PUBLISHED (atau tunjuk semua termasuk DRAFT jika mereka pengurusan)
+  let articles = await prisma.news.findMany({
+    where: isManagement ? {} : { status: "PUBLISHED" },
     orderBy: { createdAt: "desc" },
   });
 
-  // 2. Jika pangkalan data kosong, lakukan auto-seeding untuk paparan visual awal yang cantik
-  if (newsList.length === 0) {
+  // Auto-seed jika pangkalan data kosong
+  if (articles.length === 0) {
     const defaultNews = [
       {
         title: "Kemas Kini Had Paras Nisab Bulanan Negeri Johor Suku Kedua 2026",
@@ -69,113 +57,102 @@ export default async function NewsDashboardPage() {
       },
     ];
 
-    await prisma.news.createMany({
-      data: defaultNews,
-    });
+    await prisma.news.createMany({ data: defaultNews });
 
-    // Re-fetch selepas seeding
-    newsList = await prisma.news.findMany({
-      where: { status: "PUBLISHED" },
+    articles = await prisma.news.findMany({
+      where: isManagement ? {} : { status: "PUBLISHED" },
       orderBy: { createdAt: "desc" },
     });
   }
 
-  const formattedUser = {
-    name: dbUser.name ?? "",
-    email: dbUser.email ?? "",
-    noPekerja: dbUser.noPekerja ?? "",
-    role: dbUser.role,
-  };
-
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans antialiased pb-16">
-      {/* Navbar Global */}
-      <ZakatGlobalMainNavbarLayoutComponent
-        activeTab="news"
-        user={formattedUser}
-      />
+    <div className="p-6 space-y-10 bg-gray-50/50 min-h-screen">
+      
+      {/* SEGMEN 1: DASHBOARD MANAGEMENT (Hanya muncul jika peranan bersesuaian) */}
+      {isManagement && (
+        <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm space-y-4">
+          <div className="border-b border-gray-100 pb-3">
+            <h2 className="text-lg font-bold text-blue-950">Panel Urus Kandungan & Berita Portal</h2>
+            <p className="text-xs text-gray-500">Tulis warta, panduan haul, atau maklumat cukai baharu untuk hebahan staf.</p>
+          </div>
+          {/* Komponen klien mengurus input penulisan berita */}
+          <NewsCreateFormClient />
+        </div>
+      )}
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 mt-10 space-y-8">
-        
-        {/* Header Seksyen */}
-        <div className="flex items-center gap-3 pb-3 border-b border-slate-200">
-          <div className="p-2.5 bg-[#002060]/10 text-[#002060] rounded-xl shadow-xs">
-            <Megaphone className="h-6 w-6" />
+      {/* SEGMEN 2: GRID PAPARAN KAD BERITA (Berdasarkan WhatsApp Image 2026-06-22 at 16.37.23.jpeg) */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 text-blue-900 rounded-lg">
+            {/* Ikon Megaphone/Mesej */}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+            </svg>
           </div>
           <div>
-            <h2 className="text-xl font-extrabold text-[#002060] tracking-tight">Pusat Maklumat Terkini</h2>
-            <p className="text-sm text-slate-500 font-medium">Rujukan pekeliling rasmi dan warta pengurusan zakat UTHM</p>
+            <h2 className="text-xl font-bold text-blue-950">Pusat Maklumat Terkini</h2>
+            <p className="text-xs text-gray-500">Rujukan pekeliling rasmi dan warta pengurusan zakat UTHM</p>
           </div>
         </div>
 
-        {/* Grid Berita */}
+        {/* Susunan Grid 3-Kolum */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {newsList.map((item) => (
-            <div
-              key={item.id}
-              className="border border-slate-200/80 rounded-2xl shadow-sm bg-white hover:shadow-md transition-all duration-300 flex flex-col justify-between overflow-hidden group"
-            >
-              <div>
-                {/* Gambar Berita (jika ada) */}
-                {item.imageUrl && (
-                  <div className="relative w-full h-48 overflow-hidden bg-slate-100 border-b border-slate-100">
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.title}
-                      width={400}
-                      height={200}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      unoptimized
-                    />
-                  </div>
-                )}
+          {articles.length === 0 ? (
+            <p className="text-sm text-gray-400 col-span-3 py-8 text-center bg-white rounded-xl border">Tiada maklumat atau berita diterbitkan buat masa ini.</p>
+          ) : (
+            articles.map((item) => (
+              <div key={item.id} className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow duration-200">
+                <div className="space-y-4">
+                  {/* Gambar Berita (jika ada) */}
+                  {item.imageUrl && (
+                    <div className="relative w-full h-48 overflow-hidden bg-slate-100 rounded-xl border border-slate-100">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        width={400}
+                        height={200}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  )}
 
-                <div className="p-6 space-y-3">
-                  {/* Badge Kategori */}
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-black tracking-wider bg-blue-50 text-blue-900 uppercase border border-blue-100/50">
+                  {/* Label Kategori - Spt WARTA NISAB 2026, PANDUAN HAUL */}
+                  <span className="inline-block px-2.5 py-1 bg-blue-50 text-blue-900 text-[10px] font-bold tracking-wider uppercase rounded">
                     {item.category}
                   </span>
                   
-                  {/* Tajuk Berita */}
-                  <h3 className="text-base font-extrabold text-slate-900 leading-snug tracking-tight group-hover:text-[#002060] transition-colors">
+                  {/* Tajuk Berita (H2) */}
+                  <h3 className="text-base font-bold text-gray-900 line-clamp-2 leading-snug">
                     {item.title}
                   </h3>
                   
-                  {/* Ringkasan AI */}
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    {item.aiSummary || item.content.substring(0, 140) + "..."}
+                  {/* Cebisan Ringkasan AI */}
+                  <p className="text-xs text-gray-500 line-clamp-3 leading-relaxed">
+                    {item.aiSummary || "Tiada ringkasan AI tersedia untuk artikel ini."}
                   </p>
                 </div>
-              </div>
 
-              {/* Footer Kad */}
-              <div className="p-6 pt-0 space-y-4">
-                <div className="flex items-center justify-between gap-1.5 text-[11px] text-slate-400 font-medium pt-4 border-t border-slate-100">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>
-                      {item.createdAt.toLocaleDateString("ms-MY", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
+                {/* Bahagian Bawah: Tarikh & Butang Navigasi Dalaman */}
+                <div className="pt-6 border-t border-gray-100 mt-6 flex items-center justify-between text-xs text-gray-400">
+                  <div className="flex items-center gap-1.5">
+                    <span>📅</span>
+                    <span>Diterbitkan: {new Date(item.createdAt).toLocaleDateString("ms-MY", { day: "numeric", month: "short", year: "numeric" })}</span>
                   </div>
-                  <span className="text-slate-400 font-mono text-[10px]">Oleh: {item.author}</span>
+                  
+                  <Link 
+                    href={`/dashboard/news/${item.id}`}
+                    className="text-blue-900 font-bold hover:underline flex items-center gap-1"
+                  >
+                    Baca Lagi <span>→</span>
+                  </Link>
                 </div>
-                
-                <Link
-                  href={`/dashboard/news/${item.id}`}
-                  className="block w-full py-2 bg-[#002060] hover:bg-[#002060]/90 text-white text-xs font-bold rounded-xl text-center shadow-xs transition-colors"
-                >
-                  Baca Lagi
-                </Link>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-      </main>
+      </div>
+
     </div>
   );
 }

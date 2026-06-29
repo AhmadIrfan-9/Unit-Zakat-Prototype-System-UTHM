@@ -234,3 +234,17 @@ model PasswordHistory {
 
   @@map("password_histories")
 }
+
+// Incremental patch generating an isolated content management registry for local and state news.
+model News {
+  id        String   @id @default(cuid())
+  title     String
+  author    String   // Menyimpan nama pegawai pengurusan yang menulis
+  content   String   @db.Text
+  aiSummary String?  @db.Text // Lajur boleh kosong (nullable) untuk simpanan rumusan AI
+  imageUrl  String?  // Pautan gambar berita jika ada
+  category  String   // Menyimpan tag seperti "WARTA NISAB 2026", "PANDUAN HAUL"
+  status    String   @default("DRAFT") // Status kawalan: DRAFT atau PUBLISHED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

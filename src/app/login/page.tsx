@@ -134,12 +134,12 @@ function LoginForm() {
         setError(
           isBruteForceMessage
             ? rawMessage
-            : "No. Pekerja atau Kata Laluan tidak sah."
+            : "No. Pekerja atau Kata Laluan yang anda masukkan adalah salah!"
         );
         setLoading(false);
       } else {
-        // This redirect targets the system root so the server-side role router sends each user to their correct workspace.
-        router.push("/");
+        // Redirect to target dashboard and refresh cache to display user information instantly
+        router.push("/dashboard/zakat?tab=info");
         router.refresh();
       }
     } catch (err) {
@@ -391,13 +391,23 @@ function LoginForm() {
                   </div>
 
                   {/* This button triggers credential verification and the subsequent root-path redirect on success. */}
-                  <Button
+                  <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#002060] hover:bg-[#002060]/95 text-white font-bold py-3 text-xs tracking-wider shadow-md cursor-pointer transition-all"
+                    className="w-full py-3 bg-[#002060] hover:bg-[#002060]/95 text-white font-bold text-xs rounded-xl transition-all duration-150 flex items-center justify-center gap-2 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
-                    {loading ? "Memproses Log Masuk..." : "LOG MASUK"}
-                  </Button>
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span>Mengesahkan Identiti...</span>
+                      </>
+                    ) : (
+                      <span>LOG MASUK</span>
+                    )}
+                  </button>
                 </form>
 
                 {/* Incremental patch rendering a toggle link to access user registration workflows natively. */}

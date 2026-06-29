@@ -10,6 +10,7 @@ import { ZakatStaffInformativeNisabHaulCardComponent } from "./NisabHaulCard";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./DeductionForm";
 import { ZakatStaffProfileComponent } from "./UserProfile";
 import { ZakatStaffNewsAnnouncementsComponent } from "./NewsAnnouncements";
+import ZakatCalculatorClient from "@/components/zakat/ZakatCalculatorClient";
 import { Card } from "@/components/ui/card";
 
 // This data model definition outlines the structured properties of the authenticated staff member.
@@ -28,9 +29,10 @@ interface AuthenticatedUserProps {
 // This data model definition describes the parameters expected by the staff dashboard view.
 interface ZakatStaffDashboardMasterViewProps {
   user: AuthenticatedUserProps;
+  currentNisab?: number;
 }
 
-export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashboardMasterViewProps) {
+export function ZakatStaffDashboardMasterViewComponent({ user, currentNisab = 50228.51 }: ZakatStaffDashboardMasterViewProps) {
   // This navigation hook provides access to Next.js routing methods.
   const router = useRouter();
 
@@ -137,6 +139,16 @@ export function ZakatStaffDashboardMasterViewComponent({ user }: ZakatStaffDashb
         {viewScope === "mohon" ? (
           <div className="space-y-8">
             <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
+
+            {/* Suntikan UI: Kalkulator Zakat Pendapatan Rasmi MAIJ */}
+            <div className="space-y-2">
+              <div className="border-b border-gray-200 pb-2">
+                <h2 className="text-lg font-bold text-gray-900">Semakan & Simulasi Kiraan Zakat</h2>
+                <p className="text-xs text-gray-500">Gunakan kalkulator rasmi di bawah sebelum menyerahkan borang caruman potongan gaji.</p>
+              </div>
+              <ZakatCalculatorClient initialNisab={currentNisab} />
+            </div>
+
             <div className="w-full max-w-3xl mx-auto">
               <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
                 <ZakatStaffSalaryDeductionApplicationFormComponent

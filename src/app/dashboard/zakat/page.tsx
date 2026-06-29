@@ -23,6 +23,12 @@ export default async function ZakatApplicationPage() {
     redirect("/login");
   }
 
+  // Tarik data nisab dinamik daripada database (jika ada), atau fallback ke nilai standard MAIJ
+  const nisabSetting = await prisma.systemSetting.findUnique({
+    where: { key: "CURRENT_NISAB" }
+  });
+  const currentNisabValue = nisabSetting?.value || 50228.51;
+
   // This query fetches the authenticated user's full database record to verify their role and populate form fields.
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -53,6 +59,6 @@ export default async function ZakatApplicationPage() {
 
   return (
     // This component mounts the full single-ribbon staff workspace including navbar, tabs, and content panels.
-    <ZakatStaffDashboardMasterViewComponent user={formattedUser} />
+    <ZakatStaffDashboardMasterViewComponent user={formattedUser} currentNisab={currentNisabValue} />
   );
 }

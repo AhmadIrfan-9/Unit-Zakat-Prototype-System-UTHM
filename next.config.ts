@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
   // Recommended for Auth.js v5: prevents the auth secret from being bundled
   // into the client-side JavaScript by marking it as server-only.
   serverExternalPackages: ["@node-rs/argon2", "bcryptjs"],
+
+  // Enable SWR for better caching and performance
+  swrDuration: 60,
+
+  // Ensure proper error handling
+  onError: async (err: any) => {
+    console.error("[Next.js Error]", err);
+  },
 };
 
 export default nextConfig;

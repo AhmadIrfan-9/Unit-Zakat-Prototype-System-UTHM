@@ -3,9 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2, Mail, Search } from "lucide-react";
-import { fetchUserManagementList, deleteUserAction, updateUserRoleAction } from "@/app/actions/zakatWorkflowManagementServerActions";
+import { fetchUserManagementList, deleteUserAction } from "@/app/actions/zakatWorkflowManagementServerActions";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { UserRoleManager } from "@/components/admin/UserRoleManager";
 
 interface UserItem {
   id: string;
@@ -23,6 +24,7 @@ export function ZakatManagementUserVerificationTableDataFeed() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [isPendingTransition, startTransition] = useTransition();
+  const [selectedUserForRole, setSelectedUserForRole] = useState<UserItem | null>(null);
 
   // Load the list of users from the server action on mount
   const loadUsers = async () => {
@@ -98,31 +100,7 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     }
   };
 
-  // Kitaran peranan: STAFF → ZAKAT_OFFICER → SUPER_ADMIN → STAFF
-  const handleRoleElevationToggle = async (userId: string, currentRole: string) => {
-    const roleMap: Record<string, string> = {
-      STAFF: "ZAKAT_OFFICER",
-      ZAKAT_OFFICER: "SUPER_ADMIN",
-      SUPER_ADMIN: "STAFF",
-    };
-    const targetRole = roleMap[currentRole] ?? "STAFF";
-    const roleLabelMap: Record<string, string> = {
-      STAFF: "Kakitangan (STAFF)",
-      ZAKAT_OFFICER: "Pegawai Zakat (ZAKAT_OFFICER)",
-      SUPER_ADMIN: "Pentadbir Tertinggi (SUPER_ADMIN)",
-    };
-    const userConfirmed = confirm(`Adakah anda pasti untuk menukar peranan pengguna ini kepada ${roleLabelMap[targetRole] ?? targetRole}?`);
-
-    if (userConfirmed) {
-      const result = await updateUserRoleAction(userId, targetRole);
-      if (result.success) {
-        toast.success("Peranan pengguna berjaya dikemaskini.");
-        await loadUsers();
-      } else {
-        toast.error(result.error || "Gagal menukar peranan pengguna.");
-      }
-    }
-  };
+  // User Role Management handled dynamically by the UserRoleManager modal component
 
   // Filter the list of users based on search string
   const filteredUsers = users.filter((u) => {
@@ -209,17 +187,13 @@ export function ZakatManagementUserVerificationTableDataFeed() {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-3">
-                        {/* Incremental patch: Butang tindakan tukar peranan sebelah butang Padam Akses asal */}
+                        {/* Interactive role update modal trigger */}
                         <button
-                          onClick={() => handleRoleElevationToggle(u.id, u.role)}
+                          onClick={() => setSelectedUserForRole(u)}
                           disabled={isPendingTransition}
                           className="text-xs font-bold text-[#002060] hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
                         >
-                          {u.role === "SUPER_ADMIN"
-                            ? "Turun ke Kakitangan"
-                            : u.role === "ZAKAT_OFFICER"
-                            ? "Lantik Super Admin"
-                            : "Lantik Pegawai Zakat"}
+                          Urus Peranan
                         </button>
 
                         {/* Butang Padam Akses asal kekal utuh di sebelah */}
@@ -248,6 +222,18 @@ export function ZakatManagementUserVerificationTableDataFeed() {
           </table>
         </div>
       </div>
+
+      {/* User Role Management Modal */}
+      {selectedUserForRole && (
+        <UserRoleManager
+          userId={selectedUserForRole.id}
+          userName={selectedUserForRole.name || selectedUserForRole.email}
+          currentRole={selectedUserForRole.role}
+          isOpen={!!selectedUserForRole}
+          onClose={() => setSelectedUserForRole(null)}
+          onSuccess={loadUsers}
+        />
+      )}
     </div>
   );
 }

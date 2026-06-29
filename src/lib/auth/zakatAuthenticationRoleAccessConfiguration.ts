@@ -2,8 +2,6 @@
 
 import NextAuth, { type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
-import { compare } from "bcryptjs";
 import { z } from "zod";
 
 // This declaration block extends the Auth.js v5 User and Session interfaces to surface staff roles, employee numbers, and address data on every server and client session object.
@@ -71,6 +69,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { noPekerja, password } = parsed.data;
+
+        // Dynamically import database and cryptography dependencies to protect Vercel Edge Runtime environment
+        const { prisma } = await import("@/lib/prisma");
+        const { compare } = await import("bcryptjs");
 
         // This query retrieves the unique user record matched by the submitted employee number.
         const user = await prisma.user.findUnique({
@@ -166,9 +168,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
 
       // Phase 2: Subsequent requests — re-sync custom fields from the database using the stable subject claim.
+      // Bypass database lookup during Vercel Edge Runtime to prevent Prisma connection errors and speed up requests.
       const lookupId = (token.id as string | undefined) ?? token.sub;
-      if (lookupId) {
+      if (lookupId && process.env.NEXT_RUNTIME !== "edge") {
         try {
+          const { prisma } = await import("@/lib/prisma");
           // This database query refreshes the JWT payload with the latest user profile values on every token rotation.
           const dbUser = await prisma.user.findUnique({
             where: { id: lookupId },

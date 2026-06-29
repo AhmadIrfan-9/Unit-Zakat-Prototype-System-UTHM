@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci",
+  "framework": "nextjs",
+  "nodeVersion": "20.x",
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "@next_public_app_url"
+  }
+}

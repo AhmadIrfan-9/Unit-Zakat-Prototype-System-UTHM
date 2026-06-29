@@ -139,8 +139,11 @@ function LoginForm() {
         setLoading(false);
       } else {
         // Redirect to target dashboard and refresh cache to display user information instantly
-        router.push("/dashboard/zakat?tab=info");
-        router.refresh();
+        router.prefetch("/dashboard/zakat");
+        setTimeout(() => {
+          router.push("/dashboard/zakat?tab=info");
+          router.refresh();
+        }, 50);
       }
     } catch (err) {
       console.error("[LoginForm] signIn error:", err);

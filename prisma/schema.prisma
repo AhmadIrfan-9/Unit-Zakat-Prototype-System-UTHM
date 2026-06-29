@@ -248,3 +248,11 @@ model News {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Incremental patch establishing a global dynamic configuration registry for yearly financial indices.
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique // Contoh: "CURRENT_NISAB", "SARA_DIRI_LIMIT"
+  value     Float
+  updatedAt DateTime @updatedAt
+}

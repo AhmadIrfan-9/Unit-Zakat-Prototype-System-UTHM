@@ -235,6 +235,7 @@ export async function fetchNotificationDataAction() {
   if (session.user.role === "ZAKAT_OFFICER" || session.user.role === "SUPER_ADMIN") {
     // This query retrieves all applications awaiting confirmation for management staff.
     return await prisma.zakatStaffSalaryDeductionApplication.findMany({
+      take: 50,
       orderBy: { submittedAt: "desc" },
       select: {
         id: true,
@@ -249,6 +250,7 @@ export async function fetchNotificationDataAction() {
     // This query retrieves all applications submitted by the regular staff member.
     return await prisma.zakatStaffSalaryDeductionApplication.findMany({
       where: { userId: session.user.id },
+      take: 50,
       orderBy: { submittedAt: "desc" },
       select: {
         id: true,
@@ -325,6 +327,7 @@ export async function fetchUserManagementList() {
   try {
     const users = await prisma.user.findMany({
       where: { role: "STAFF" },
+      take: 50,
       select: {
         id: true,
         name: true,

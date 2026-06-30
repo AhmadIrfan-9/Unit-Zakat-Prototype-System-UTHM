@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
 
   try {
     // Membaca parameter had muatan (pagination) dari URL query
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const searchParams = request.nextUrl.searchParams;
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 

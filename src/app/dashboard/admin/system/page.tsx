@@ -7,6 +7,7 @@ import AuditLogTableClient from "@/components/admin/AuditLogTableClient";
 import UserVerificationTable from "@/components/zakat/UserVerificationTable";
 import AdminProfileDropdownClient from "@/components/admin/AdminProfileDropdownClient";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -19,16 +20,32 @@ interface PageProps {
   searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function AdminSystemPage({ searchParams }: PageProps) {
-  const session = await auth();
-  const { tab = "health" } = await searchParams;
+// 1. Loading Skeletons for Core Web Vitals Optimization
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="h-32 bg-gray-200 rounded-2xl border" />
+        <div className="h-32 bg-gray-200 rounded-2xl border" />
+        <div className="h-32 bg-gray-200 rounded-2xl border" />
+      </div>
+      <div className="h-64 bg-gray-200 rounded-2xl border" />
+    </div>
+  );
+}
 
-  // DINDING PERTAHANAN: Hanya SUPER_ADMIN sahaja boleh masuk
-  if (!session?.user?.id || session?.user?.role !== "SUPER_ADMIN") {
-    redirect("/dashboard/zakat?tab=info");
-  }
+function TableSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-10 bg-gray-200 rounded-lg w-1/3" />
+      <div className="h-64 bg-gray-200 rounded-2xl border" />
+    </div>
+  );
+}
 
-  // 1. Connection check ke Database
+// 2. Server Component Wrapper for the System Dashboard
+async function SystemDashboardWrapper({ user }: { user: { name: string; email: string; role: string } }) {
+  // Connection check ke Database
   let dbOnline = false;
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -37,14 +54,14 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
     dbOnline = false;
   }
 
-  // 2. Email setup status check
+  // Email setup status check
   const emailConfigured = !!(process.env.SMTP_HOST && process.env.SMTP_USER);
 
-  // 3. Vercel deployment status
+  // Vercel deployment status
   const isVercel = !!process.env.VERCEL;
 
-  // 4. Statistics snapshot in parallel (optimized for speed)
-  const [totalUsers, totalApplications, inactiveUsers, auditLogs] = await Promise.all([
+  // Statistics snapshot in parallel (optimized for speed)
+  const [totalUsers, totalApplications, inactiveUsers] = await Promise.all([
     prisma.user.count(),
     prisma.zakatStaffSalaryDeductionApplication.count(),
     prisma.user.count({
@@ -54,11 +71,50 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
         },
       },
     }),
-    prisma.auditLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    }),
   ]);
+
+  return (
+    <SystemDashboardClient
+      dbOnline={dbOnline}
+      emailConfigured={emailConfigured}
+      isVercel={isVercel}
+      stats={{
+        totalUsers,
+        totalApplications,
+        inactiveUsers,
+      }}
+      user={user}
+    />
+  );
+}
+
+// 3. Server Component Wrapper for the Audit Logs (using selective select and take: 50)
+async function AuditLogsWrapper() {
+  const auditLogs = await prisma.auditLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      userId: true,
+      userEmail: true,
+      action: true,
+      details: true,
+      ipAddress: true,
+      createdAt: true,
+    },
+  });
+
+  return <AuditLogTableClient initialLogs={auditLogs} />;
+}
+
+export default async function AdminSystemPage({ searchParams }: PageProps) {
+  const session = await auth();
+  const { tab = "health" } = await searchParams;
+
+  // DINDING PERTAHANAN: Hanya SUPER_ADMIN sahaja boleh masuk
+  if (!session?.user?.id || session?.user?.role !== "SUPER_ADMIN") {
+    redirect("/dashboard/zakat?tab=info");
+  }
 
   return (
     <div className="w-full min-h-screen bg-gray-50/50 pb-12 font-sans">
@@ -132,21 +188,15 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
           
           {/* Sub-tab 1: Kesihatan Sistem */}
           {tab === "health" && (
-            <SystemDashboardClient 
-              dbOnline={dbOnline}
-              emailConfigured={emailConfigured}
-              isVercel={isVercel}
-              stats={{
-                totalUsers,
-                totalApplications,
-                inactiveUsers,
-              }}
-              user={{
-                name: session.user.name ?? "",
-                email: session.user.email ?? "",
-                role: session.user.role ?? "SUPER_ADMIN",
-              }}
-            />
+            <Suspense fallback={<DashboardSkeleton />}>
+              <SystemDashboardWrapper 
+                user={{
+                  name: session.user.name ?? "",
+                  email: session.user.email ?? "",
+                  role: session.user.role ?? "SUPER_ADMIN",
+                }}
+              />
+            </Suspense>
           )}
 
           {/* Sub-tab 2: Uruskan Staf */}
@@ -167,7 +217,9 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
                 <h3 className="text-sm font-bold text-gray-900">Log Forensik Keselamatan Digital</h3>
                 <p className="text-xs text-gray-400">Jejak kronologi aktiviti mutasi pangkalan data, pengiraan nisab, dan tindakan sistem.</p>
               </div>
-              <AuditLogTableClient initialLogs={auditLogs} />
+              <Suspense fallback={<TableSkeleton />}>
+                <AuditLogsWrapper />
+              </Suspense>
             </div>
           )}
 

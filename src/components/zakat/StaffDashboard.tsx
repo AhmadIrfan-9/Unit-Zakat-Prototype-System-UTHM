@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, use, Suspense } from "react";
+import { useSearchParams, useRouter, redirect } from "next/navigation";
 import Image from "next/image";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./Navbar";
 import { ZakatStaffInformativeNisabHaulCardComponent } from "./NisabHaulCard";
@@ -13,7 +13,6 @@ import { ZakatStaffNewsAnnouncementsComponent } from "./NewsAnnouncements";
 import ZakatCalculatorClient from "@/components/zakat/ZakatCalculatorClient";
 import { Card } from "@/components/ui/card";
 
-// This data model definition outlines the structured properties of the authenticated staff member.
 interface AuthenticatedUserProps {
   name?: string | null;
   email?: string | null;
@@ -26,57 +25,65 @@ interface AuthenticatedUserProps {
   umur?: number | null;
 }
 
-// This data model definition describes the parameters expected by the staff dashboard view.
 interface ZakatStaffDashboardMasterViewProps {
-  user: AuthenticatedUserProps;
-  currentNisab?: number;
+  sessionUser: {
+    name: string;
+    email: string;
+    role: string;
+  };
+  userPromise: Promise<AuthenticatedUserProps | null>;
+  nisabPromise: Promise<number>;
 }
 
-export function ZakatStaffDashboardMasterViewComponent({ user, currentNisab = 50228.51 }: ZakatStaffDashboardMasterViewProps) {
-  // This navigation hook provides access to Next.js routing methods.
-  const router = useRouter();
+// 1. Core Web Vitals Loading Skeleton
+function ZakatDashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-32 bg-gray-200 rounded-2xl border" />
+      <div className="h-96 bg-gray-200 rounded-2xl border" />
+    </div>
+  );
+}
 
-  // This navigation hook retrieves the active URL query parameters.
+export function ZakatStaffDashboardMasterViewComponent({ 
+  sessionUser, 
+  userPromise, 
+  nisabPromise 
+}: ZakatStaffDashboardMasterViewProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Incremental patch utilizing lazy state initialization to align URL parameters without cascading rendering loops.
-  const [activeTab, setActiveTab] = useState<string>(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") || "info" : "info");
+  // Lazy state initialization
+  const [activeTab, setActiveTab] = useState<string>(() => 
+    typeof window !== "undefined" 
+      ? new URLSearchParams(window.location.search).get("tab") || "info" 
+      : "info"
+  );
 
   // Redirect ZAKAT_OFFICER dan SUPER_ADMIN ke dashboard pengurusan mereka.
   useEffect(() => {
-    if (user.role === "ZAKAT_OFFICER" || user.role === "SUPER_ADMIN") {
+    if (sessionUser.role === "ZAKAT_OFFICER" || sessionUser.role === "SUPER_ADMIN") {
       const tabParam = searchParams.get("tab") ?? "proses";
       router.push(`/dashboard/pengurusan?tab=${tabParam}`);
     }
-  }, [user.role, router, searchParams]);
+  }, [sessionUser.role, router, searchParams]);
 
-
-
-  // This helper function updates both local state and the URL when a tab changes.
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     router.push(`/dashboard/zakat?tab=${tab}`, { scroll: false });
   };
 
-  // This fallback variable model resolves the active view scope from the current tab state using strict equality checks.
-  const viewScope =
-    activeTab === "form" || activeTab === "mohon"
-      ? "mohon"
-      : activeTab === "profile"
-      ? "profile"
-      : "home";
-
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col font-sans antialiased pb-10">
 
-      {/* This major structural component renders the consolidated top navigation header ribbon. */}
+      {/* Renders the top navigation header ribbon instantly from session memory */}
       <ZakatGlobalMainNavbarLayoutComponent
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        user={user}
+        user={sessionUser}
       />
 
-      {/* This layout wrapper renders the full-width navy blue corporate welcome hero banner. */}
+      {/* Renders the welcome banner instantly (<50ms) without DB block */}
       <section className="w-full bg-[#002060] text-white py-12 px-4 sm:px-6 lg:px-8 border-b border-[#002060]/10 shadow-md">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div className="space-y-2">
@@ -84,14 +91,13 @@ export function ZakatStaffDashboardMasterViewComponent({ user, currentNisab = 50
               Portal Kakitangan UTHM
             </p>
             <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">
-              Selamat Datang, {user.name ?? "Kakitangan UTHM"}
+              Selamat Datang, {sessionUser.name ?? "Kakitangan UTHM"}
             </h1>
             <p className="text-xs md:text-sm text-gray-200 font-medium">
               Sistem Caruman Zakat Gaji UTHM &bull; Sesi Potongan Gaji Kakitangan Aktif
             </p>
           </div>
 
-          {/* This layout wrapper anchors the Zakat UTHM logo in the far-right corner of the hero banner. */}
           <div className="shrink-0 flex items-center justify-start sm:justify-end">
             <Image
               src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png"
@@ -108,58 +114,93 @@ export function ZakatStaffDashboardMasterViewComponent({ user, currentNisab = 50
 
       {/* This major structural component provides the max-w-7xl container for all staff content panels. */}
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
-
-        {/* This conditional rendering block mounts the user profile card exclusively when the profile tab is strictly active; returns null otherwise. */}
-        {viewScope === "profile" ? (
-          <div className="w-full max-w-3xl mx-auto">
-            <ZakatStaffProfileComponent
-              defaultValues={{
-                namaPenuh: user.name ?? "",
-                noPekerja: user.noPekerja ?? "",
-                noKP: user.noKP ?? "",
-                gajiSemasa: user.gajiSemasa ? String(user.gajiSemasa) : "",
-                alamatRumah: user.alamatRumah ?? "",
-                fakulti: user.fakulti ?? "",
-                umur: user.umur ?? undefined,
-              }}
-            />
-          </div>
-        ) : null}
-
-        {/* This conditional rendering block mounts the news hub and Nisab metric row exclusively when the home tab is strictly active; returns null otherwise. */}
-        {viewScope === "home" ? (
-          <div className="space-y-8">
-            <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
-            {/* This conditional rendering block displays the news announcements grid only on the home/news/info scope. */}
-            <ZakatStaffNewsAnnouncementsComponent />
-          </div>
-        ) : null}
-
-        {/* This conditional rendering block mounts the salary deduction form exclusively when the mohon tab is strictly active; returns null otherwise. */}
-        {viewScope === "mohon" ? (
-          <div className="space-y-8">
-
-            {/* Suntikan UI: Kalkulator Zakat Pendapatan Rasmi MAIJ */}
-            <div className="space-y-2">
-              <div className="border-b border-gray-200 pb-2">
-                <h2 className="text-lg font-bold text-gray-900">Semakan & Simulasi Kiraan Zakat</h2>
-                <p className="text-xs text-gray-500">Gunakan kalkulator rasmi di bawah sebelum menyerahkan borang caruman potongan gaji.</p>
-              </div>
-              <ZakatCalculatorClient initialNisab={currentNisab} />
-            </div>
-
-            <div className="w-full max-w-3xl mx-auto">
-              <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
-                <ZakatStaffSalaryDeductionApplicationFormComponent
-                  user={user}
-                  onSwitchToProfile={() => handleTabChange("profile")}
-                />
-              </Card>
-            </div>
-          </div>
-        ) : null}
-
+        <Suspense fallback={<ZakatDashboardSkeleton />}>
+          <ZakatDashboardContent 
+            userPromise={userPromise} 
+            nisabPromise={nisabPromise} 
+            activeTab={activeTab} 
+            handleTabChange={handleTabChange}
+          />
+        </Suspense>
       </main>
     </div>
+  );
+}
+
+// Sub-component resolving database-reliant properties inside a Suspense boundary using React 19 use()
+function ZakatDashboardContent({
+  userPromise,
+  nisabPromise,
+  activeTab,
+  handleTabChange,
+}: {
+  userPromise: Promise<AuthenticatedUserProps | null>;
+  nisabPromise: Promise<number>;
+  activeTab: string;
+  handleTabChange: (tab: string) => void;
+}) {
+  const user = use(userPromise);
+  const currentNisab = use(nisabPromise);
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const viewScope =
+    activeTab === "form" || activeTab === "mohon"
+      ? "mohon"
+      : activeTab === "profile"
+      ? "profile"
+      : "home";
+
+  return (
+    <>
+      {/* Profile Tab */}
+      {viewScope === "profile" ? (
+        <div className="w-full max-w-3xl mx-auto">
+          <ZakatStaffProfileComponent
+            defaultValues={{
+              namaPenuh: user.name ?? "",
+              noPekerja: user.noPekerja ?? "",
+              noKP: user.noKP ?? "",
+              gajiSemasa: user.gajiSemasa ? String(user.gajiSemasa) : "",
+              alamatRumah: user.alamatRumah ?? "",
+              fakulti: user.fakulti ?? "",
+              umur: user.umur ?? undefined,
+            }}
+          />
+        </div>
+      ) : null}
+
+      {/* Home Tab */}
+      {viewScope === "home" ? (
+        <div className="space-y-8">
+          <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
+          <ZakatStaffNewsAnnouncementsComponent />
+        </div>
+      ) : null}
+
+      {/* Form/Mohon Tab */}
+      {viewScope === "mohon" ? (
+        <div className="space-y-8">
+          <div className="space-y-2">
+            <div className="border-b border-gray-200 pb-2">
+              <h2 className="text-lg font-bold text-gray-900">Semakan & Simulasi Kiraan Zakat</h2>
+              <p className="text-xs text-gray-500">Gunakan kalkulator rasmi di bawah sebelum menyerahkan borang caruman potongan gaji.</p>
+            </div>
+            <ZakatCalculatorClient initialNisab={currentNisab} />
+          </div>
+
+          <div className="w-full max-w-3xl mx-auto">
+            <Card className="border border-border/80 shadow-xl bg-white dark:bg-card/95 p-6 md:p-8">
+              <ZakatStaffSalaryDeductionApplicationFormComponent
+                user={user}
+                onSwitchToProfile={() => handleTabChange("profile")}
+              />
+            </Card>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

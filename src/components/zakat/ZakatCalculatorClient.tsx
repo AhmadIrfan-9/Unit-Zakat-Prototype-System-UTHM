@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useDeferredValue } from "react";
 
 interface CalculatorProps {
   initialNisab?: number; // Menerima nilai daripada DB, lalai kepada RM 50228.51 mengikut imej 2026
@@ -21,6 +19,16 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
   const [parentsSupport, setParentsSupport] = useState<number>(0);
   const [medical, setMedical] = useState<number>(0);
   const [education, setEducation] = useState<number>(0);
+
+  // Defer all inputs for calculations to prevent keyboard input stuttering (INP optimization)
+  const deferredMonthlySalary = useDeferredValue(monthlySalary);
+  const deferredAllowance = useDeferredValue(allowance);
+  const deferredBonus = useDeferredValue(bonus);
+  const deferredWivesCount = useDeferredValue(wivesCount);
+  const deferredChildrenCount = useDeferredValue(childrenCount);
+  const deferredParentsSupport = useDeferredValue(parentsSupport);
+  const deferredMedical = useDeferredValue(medical);
+  const deferredEducation = useDeferredValue(education);
 
   // Fungsi onBlur: Format angka kepada 2 titik perpuluhan secara automatik
   const handleCurrencyBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
@@ -56,7 +64,7 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
   // ENJIN LOGIK PENGIRAAN REAL-TIME (KISS & IMMUTABLE WORKFLOW)
   // Enforcing official MAIJ calculations dynamically within the reactive state scope.
   const calculations = useMemo(() => {
-    const annualIncome = (monthlySalary + allowance) * 12 + bonus;
+    const annualIncome = (deferredMonthlySalary + deferredAllowance) * 12 + deferredBonus;
 
     // Tetapan pemanduan kos pelepasan rasmi berdasarkan dokumen rujukan
     const SARA_DIRI = 9000;
@@ -65,11 +73,11 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
 
     const totalDeductions =
       SARA_DIRI +
-      (wivesCount * ISTERI_PER_KAPITA) +
-      (childrenCount * ANAK_PER_KAPITA) +
-      (parentsSupport * 12) +
-      medical +
-      education;
+      (deferredWivesCount * ISTERI_PER_KAPITA) +
+      (deferredChildrenCount * ANAK_PER_KAPITA) +
+      (deferredParentsSupport * 12) +
+      deferredMedical +
+      deferredEducation;
 
     const netDeductibleBalance = Math.max(0, annualIncome - totalDeductions);
     const isEligible = netDeductibleBalance >= initialNisab;
@@ -85,7 +93,17 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
       annualZakat,
       monthlyZakat
     };
-  }, [monthlySalary, allowance, bonus, wivesCount, childrenCount, parentsSupport, medical, education, initialNisab]);
+  }, [
+    deferredMonthlySalary, 
+    deferredAllowance, 
+    deferredBonus, 
+    deferredWivesCount, 
+    deferredChildrenCount, 
+    deferredParentsSupport, 
+    deferredMedical, 
+    deferredEducation, 
+    initialNisab
+  ]);
 
   return (
     <div id="zakat-calculator-form" className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-1 text-sm text-gray-700">

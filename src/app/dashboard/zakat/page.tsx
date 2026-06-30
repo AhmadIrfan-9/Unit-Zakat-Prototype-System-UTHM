@@ -23,42 +23,38 @@ export default async function ZakatApplicationPage() {
     redirect("/login");
   }
 
-  // Tarik data nisab dinamik daripada database (jika ada), atau fallback ke nilai standard MAIJ
-  const nisabSetting = await prisma.systemSetting.findUnique({
+  // Defer database lookups into parallel promises to allow instant shell rendering
+  const nisabPromise = prisma.systemSetting.findUnique({
     where: { key: "CURRENT_NISAB" }
-  });
-  const currentNisabValue = nisabSetting?.value || 50228.51;
+  }).then(setting => setting?.value || 50228.51);
 
-  // This query fetches the authenticated user's full database record to verify their role and populate form fields.
-  const dbUser = await prisma.user.findUnique({
+  const userPromise = prisma.user.findUnique({
     where: { id: session.user.id },
+  }).then(dbUser => {
+    if (!dbUser) return null;
+    return {
+      name:        dbUser.name         ?? "",
+      email:       dbUser.email        ?? "",
+      noPekerja:   dbUser.noPekerja    ?? "",
+      noKP:        dbUser.noKP         ?? "",
+      gajiSemasa:  dbUser.gajiSemasa ? Number(dbUser.gajiSemasa) : null,
+      alamatRumah: dbUser.alamatRumah  ?? "",
+      role:        dbUser.role,
+      fakulti:     dbUser.fakulti      ?? "",
+      umur:        dbUser.umur         ?? null,
+    };
   });
-
-  // This guard redirects requests whose database record no longer exists back to the login page.
-  if (!dbUser) {
-    redirect("/login");
-  }
-
-  // Redirect ZAKAT_OFFICER dan SUPER_ADMIN ke dashboard pengurusan mereka.
-  if (dbUser.role === "ZAKAT_OFFICER" || dbUser.role === "SUPER_ADMIN") {
-    redirect("/dashboard/pengurusan");
-  }
-
-  // This object maps database columns to the stable, serializable shape expected by the client dashboard component.
-  const formattedUser = {
-    name:        dbUser.name         ?? "",
-    email:       dbUser.email        ?? "",
-    noPekerja:   dbUser.noPekerja    ?? "",
-    noKP:        dbUser.noKP         ?? "",
-    gajiSemasa:  dbUser.gajiSemasa ? Number(dbUser.gajiSemasa) : null,
-    alamatRumah: dbUser.alamatRumah  ?? "",
-    role:        dbUser.role,
-    fakulti:     dbUser.fakulti      ?? "",
-    umur:        dbUser.umur         ?? null,
-  };
 
   return (
     // This component mounts the full single-ribbon staff workspace including navbar, tabs, and content panels.
-    <ZakatStaffDashboardMasterViewComponent user={formattedUser} currentNisab={currentNisabValue} />
+    <ZakatStaffDashboardMasterViewComponent 
+      sessionUser={{
+        name: session.user.name ?? "",
+        email: session.user.email ?? "",
+        role: session.user.role ?? "STAFF",
+      }}
+      userPromise={userPromise} 
+      nisabPromise={nisabPromise} 
+    />
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2, Mail, Search } from "lucide-react";
 import { fetchUserManagementList, deleteUserAction } from "@/app/actions/zakatWorkflowManagementServerActions";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { UserRoleManager } from "@/components/admin/UserRoleManager";
+import { supabase } from "@/lib/supabase";
 
 interface UserItem {
   id: string;
@@ -25,6 +26,7 @@ export function ZakatManagementUserVerificationTableDataFeed() {
   const [loading, setLoading] = useState(true);
   const [isPendingTransition, startTransition] = useTransition();
   const [selectedUserForRole, setSelectedUserForRole] = useState<UserItem | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // Load the list of users from the server action on mount
   const loadUsers = async () => {
@@ -57,7 +59,72 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     };
 
     initializeSecureUserFeed();
-    return () => { isMounted = false; };
+
+    // SUNTIKAN REALTIME: Hidupkan pendengar mutasi Postgres (Supabase Realtime Channel)
+    // Establishes persistent stateful replication channel for hot data mutations on User table.
+    const userChannel = supabase
+      .channel("live-staff-changes")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "User" },
+        (payload) => {
+          if (!isMounted) return;
+          const newUser = payload.new as Record<string, unknown>;
+          setUsers((prev) => [{
+            id: newUser.id as string,
+            name: (newUser.name as string) ?? null,
+            email: (newUser.email as string) ?? "",
+            noPekerja: (newUser.no_pekerja as string) ?? null,
+            noKP: (newUser.no_kp as string) ?? null,
+            fakulti: (newUser.fakulti as string) ?? null,
+            role: (newUser.role as string) ?? "STAFF",
+            createdAt: new Date((newUser.createdAt as string) ?? Date.now()),
+          }, ...prev]);
+          toast.info("Kakitangan baharu telah didaftarkan secara langsung.");
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "User" },
+        (payload) => {
+          if (!isMounted) return;
+          const updated = payload.new as Record<string, unknown>;
+          setUsers((prev) => prev.map((u) =>
+            u.id === (updated.id as string)
+              ? {
+                  ...u,
+                  name: (updated.name as string) ?? null,
+                  email: (updated.email as string) ?? u.email,
+                  noPekerja: (updated.no_pekerja as string) ?? null,
+                  noKP: (updated.no_kp as string) ?? null,
+                  fakulti: (updated.fakulti as string) ?? null,
+                  role: (updated.role as string) ?? u.role,
+                }
+              : u
+          ));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "User" },
+        (payload) => {
+          if (!isMounted) return;
+          const deleted = payload.old as Record<string, unknown>;
+          setUsers((prev) => prev.filter((u) => u.id !== (deleted.id as string)));
+          toast.info("Satu rekod kakitangan telah dipadamkan.");
+        }
+      )
+      .subscribe();
+
+    channelRef.current = userChannel;
+
+    return () => {
+      isMounted = false;
+      // Tutup sambungan Realtime apabila komponen di-unmount demi menjimatkan bandwidth
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
   }, []);
 
   // Main database deletion routine after validation confirm check

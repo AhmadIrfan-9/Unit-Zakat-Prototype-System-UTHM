@@ -143,6 +143,38 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           },
         });
 
+        // SUNTIKAN FORENSIK: Rekodkan percubaan log masuk gagal ke jadual AuditLog
+        if (shouldLock) {
+          await prisma.auditLog.create({
+            data: {
+              action: "AKAUN_DIKUNCI",
+              userId: user.id,
+              userEmail: user.email,
+              ipAddress: "system-auth-event",
+              details: {
+                noPekerja,
+                reason: "Had 5 cubaan gagal dicapai. Akaun dikunci 15 minit.",
+                failedAttempts: nextAttempts,
+              },
+            },
+          });
+        } else {
+          await prisma.auditLog.create({
+            data: {
+              action: "LOG_MASUK_GAGAL",
+              userId: user.id,
+              userEmail: user.email,
+              ipAddress: "system-auth-event",
+              details: {
+                noPekerja,
+                reason: "Kata laluan salah",
+                failedAttempts: nextAttempts,
+                bakiCubaan: MAX_ATTEMPTS - nextAttempts,
+              },
+            },
+          });
+        }
+
         throw new Error(
           shouldLock
             ? "Had cubaan log masuk tamat. Akaun dikunci selama 15 minit."
@@ -248,5 +280,53 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
     error:  "/login",
+  },
+
+  // SUNTIKAN KOD: Menangkap isyarat aktiviti keselamatan gred perusahaan
+  // Hooks into identity provider lifecycle events to capture terminal forensics.
+  events: {
+    async signIn({ user }) {
+      try {
+        const { prisma } = await import("@/lib/prisma");
+        await prisma.auditLog.create({
+          data: {
+            action: "LOG_MASUK_BERJAYA",
+            userId: user.id ?? null,
+            userEmail: user.email ?? null,
+            ipAddress: "system-auth-event",
+            details: {
+              name: user.name ?? "Kakitangan",
+              role: (user as { role?: string }).role ?? "STAFF",
+              resource: "Akaun Pengguna",
+            },
+          },
+        });
+      } catch (err) {
+        console.error("[auth.events.signIn] Gagal menulis audit log:", err);
+      }
+    },
+    async signOut(message) {
+      try {
+        const { prisma } = await import("@/lib/prisma");
+        // Auth.js v5 signOut event is a union: { token: JWT | null } (JWT strategy) | { session: ... } (DB strategy)
+        const tokenData = "token" in message && message.token
+          ? (message.token as { sub?: string; email?: string; name?: string })
+          : null;
+        await prisma.auditLog.create({
+          data: {
+            action: "LOG_KELUAR_SISTEM",
+            userId: tokenData?.sub ?? null,
+            userEmail: tokenData?.email ?? null,
+            ipAddress: "system-auth-event",
+            details: {
+              name: tokenData?.name ?? "Kakitangan",
+              resource: "Sesi Autentikasi",
+            },
+          },
+        });
+      } catch (err) {
+        console.error("[auth.events.signOut] Gagal menulis audit log:", err);
+      }
+    },
   },
 });

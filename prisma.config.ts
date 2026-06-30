@@ -13,7 +13,7 @@ import { defineConfig } from "prisma/config";
 
 // dotenv/config only reads `.env` by default — explicitly load `.env.local`
 // which is the convention used by Next.js for local environment overrides.
-config({ path: resolve(process.cwd(), ".env.local"), override: true });
+config({ path: resolve(process.cwd(), ".env.local"), override: true, quiet: true });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

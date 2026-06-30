@@ -7,7 +7,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 
 // Load environment variables from .env.local
-dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), quiet: true });
 
 const pool = new Pool({
   connectionString: process.env.DIRECT_URL,

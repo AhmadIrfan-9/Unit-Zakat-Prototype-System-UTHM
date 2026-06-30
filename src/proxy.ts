@@ -7,7 +7,9 @@
 // IMPORTANT: This is the first layer of defense — but always re-check auth
 // inside Server Actions and Route Handlers too (middleware can be misconfigured).
 
-export { auth as proxy } from "@/lib/auth";
+import { auth } from "./lib/auth";
+
+export const proxy = auth;
 
 export const config = {
   matcher: [
@@ -17,3 +19,5 @@ export const config = {
     "/api/((?!auth).+)",
   ],
 };
+
+

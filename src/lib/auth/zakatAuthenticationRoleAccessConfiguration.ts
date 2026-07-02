@@ -74,9 +74,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const { prisma } = await import("@/lib/prisma");
         const { compare } = await import("bcryptjs");
 
-        // This query retrieves the unique user record matched by the submitted employee number.
-        const user = await prisma.user.findUnique({
-          where: { noPekerja },
+        // This query retrieves the user record matched by either the submitted employee number or NRIC.
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { noPekerja: noPekerja },
+              { noKP: noPekerja },
+            ],
+          },
           select: {
             id:             true,
             name:           true,

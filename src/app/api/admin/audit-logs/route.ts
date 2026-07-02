@@ -30,7 +30,25 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(logs);
+    const mappedLogs = logs.map((log) => {
+      let detailsObj = {};
+      try {
+        detailsObj = JSON.parse(log.metadata);
+      } catch {
+        detailsObj = { rawMetadata: log.metadata };
+      }
+      return {
+        id: log.id,
+        userId: null,
+        userEmail: log.user,
+        action: log.action,
+        details: detailsObj,
+        ipAddress: log.ipAddress,
+        createdAt: log.createdAt,
+      };
+    });
+
+    return NextResponse.json(mappedLogs);
   } catch (error) {
     console.error("[GET /api/admin/audit-logs] Error:", error);
     return NextResponse.json(

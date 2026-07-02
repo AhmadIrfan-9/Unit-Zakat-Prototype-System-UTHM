@@ -193,18 +193,20 @@ model ZakatStaffSalaryDeductionApplication {
 
 // This immutable event log captures all critical system actions, administrative mutations, and unauthorized access attempts for forensic audit trails.
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?  @map("user_id")   // Boleh null jika penceroboh gagal log masuk
-  userEmail String?  @map("user_email") // Emel pelaku untuk semakan pantas tanpa relational join
-  action    String   // Contoh: "LOG_MASUK_SUKSES", "LOG_MASUK_GAGAL", "PENTADBIR_PADAM_PENGGUNA"
-  details   Json?    // Metadata tambahan dalam format JSON
-  ipAddress String   @map("ip_address") // IP Address asal permintaan klien
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now()) @map("created_at")
+  action       String
+  user         String
+  resource     String
+  ipAddress    String   @map("ip_address")
+  metadata     String   // Mengandungi JSON string data transaksi
+  
+  // SUNTIKAN KOD: Tiang keselamatan imutabel
+  hash         String   @unique
+  previousHash String   @map("previous_hash")
 
   @@index([createdAt(sort: Desc)]) // Paparan log terbaharu dahulu
   @@index([action])                // Tapis mengikut jenis peristiwa
-  @@index([userId])                // Semak rekod aktiviti pengguna tertentu
-  @@index([userEmail])             // Tapis mengikut email pelaku
   @@index([ipAddress])             // Tapis mengikut alamat IP
 
   @@map("audit_logs")

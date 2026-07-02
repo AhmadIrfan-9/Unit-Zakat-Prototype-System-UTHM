@@ -8,6 +8,8 @@ import UserVerificationTable from "@/components/zakat/UserVerificationTable";
 import AdminProfileDropdownClient from "@/components/admin/AdminProfileDropdownClient";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { verifyAuditLedgerIntegrity } from "@/lib/audit";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +52,7 @@ async function SystemDashboardWrapper({ user }: { user: { name: string; email: s
   try {
     await prisma.$queryRaw`SELECT 1`;
     dbOnline = true;
-  } catch (e) {
+  } catch {
     dbOnline = false;
   }
 
@@ -95,16 +97,34 @@ async function AuditLogsWrapper() {
     take: 50,
     select: {
       id: true,
-      userId: true,
-      userEmail: true,
+      user: true,
+      resource: true,
       action: true,
-      details: true,
+      metadata: true,
       ipAddress: true,
       createdAt: true,
     },
   });
 
-  return <AuditLogTableClient initialLogs={auditLogs} />;
+  const mappedLogs = auditLogs.map((log) => {
+    let detailsObj = {};
+    try {
+      detailsObj = JSON.parse(log.metadata);
+    } catch {
+      detailsObj = { rawMetadata: log.metadata };
+    }
+    return {
+      id: log.id,
+      userId: null,
+      userEmail: log.user,
+      action: log.action,
+      details: detailsObj,
+      ipAddress: log.ipAddress,
+      createdAt: log.createdAt,
+    };
+  });
+
+  return <AuditLogTableClient initialLogs={mappedLogs} />;
 }
 
 export default async function AdminSystemPage({ searchParams }: PageProps) {
@@ -116,6 +136,8 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
     redirect("/dashboard/zakat?tab=info");
   }
 
+  const integrityCheck = tab === "audit" ? await verifyAuditLedgerIntegrity() : { isValid: true, reason: "" };
+
   return (
     <div className="w-full min-h-screen bg-gray-50/50 pb-12 font-sans">
       
@@ -125,7 +147,14 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
         
         {/* Kiri: Logo UTHM Korporat */}
         <div className="flex items-center gap-3 animate-in fade-in duration-300">
-          <img src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png" alt="UTHM Logo" className="h-7 w-auto select-none" />
+          <Image
+            src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png"
+            alt="UTHM Logo"
+            width={120}
+            height={28}
+            className="h-7 w-auto select-none"
+            priority
+          />
           <div className="w-px h-5 bg-gray-200" />
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Portal Pentadbir Utama</span>
         </div>
@@ -177,7 +206,14 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
           
           {/* Kotak Logo Zakat Putih di sebelah kanan (Tepat sepadan dengan identiti visual Screenshot 3 & 4) */}
           <div className="bg-white p-2.5 rounded-2xl shadow-md hidden md:block border border-blue-900/10">
-            <img src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png" alt="Zakat UTHM" className="h-11 w-auto object-contain select-none" />
+            <Image
+              src="/6232c1fe-be22-4a39-89b1-0eb508f91e72.png"
+              alt="Zakat UTHM"
+              width={188}
+              height={44}
+              className="h-11 w-auto object-contain select-none"
+              priority
+            />
           </div>
         </div>
       </div>
@@ -212,14 +248,37 @@ export default async function AdminSystemPage({ searchParams }: PageProps) {
 
           {/* Sub-tab 3: Jejak Audit Logs */}
           {tab === "audit" && (
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-              <div>
-                <h3 className="text-sm font-bold text-gray-900">Log Forensik Keselamatan Digital</h3>
-                <p className="text-xs text-gray-400">Jejak kronologi aktiviti mutasi pangkalan data, pengiraan nisab, dan tindakan sistem.</p>
+            <div className="space-y-6">
+              
+              {/* Banner Status Integriti Kriptografi */}
+              {/* Incremental patch injecting automated system tamper-detection health banners. */}
+              {integrityCheck.isValid ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-800 text-xs font-semibold shadow-sm animate-in fade-in">
+                  <span className="text-base">🛡️</span>
+                  <div>
+                    <p className="font-bold text-emerald-950">Ledger Kriptografi Aktif</p>
+                    <p className="text-emerald-700/90 font-medium">Semua rantaian log audit disahkan imutabel. Tiada aktiviti pengubahan data dikesan di database.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-800 text-xs font-semibold shadow-sm animate-flash border-l-4 border-l-red-600">
+                  <span className="text-base">🚨</span>
+                  <div>
+                    <p className="font-bold text-red-950">AMARAN CRITICAL: INTEGRITI PORTAL PECAH!</p>
+                    <p className="text-red-700/90 font-medium">{integrityCheck.reason}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Log Forensik Keselamatan Digital</h3>
+                  <p className="text-xs text-gray-400">Jejak kronologi aktiviti mutasi pangkalan data, pengiraan nisab, dan tindakan sistem.</p>
+                </div>
+                <Suspense fallback={<TableSkeleton />}>
+                  <AuditLogsWrapper />
+                </Suspense>
               </div>
-              <Suspense fallback={<TableSkeleton />}>
-                <AuditLogsWrapper />
-              </Suspense>
             </div>
           )}
 

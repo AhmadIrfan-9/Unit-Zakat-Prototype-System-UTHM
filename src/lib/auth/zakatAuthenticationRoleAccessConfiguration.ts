@@ -144,35 +144,33 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         });
 
         // SUNTIKAN FORENSIK: Rekodkan percubaan log masuk gagal ke jadual AuditLog
+        const { createImmutableAuditLog } = await import("@/lib/audit");
         if (shouldLock) {
-          await prisma.auditLog.create({
-            data: {
-              action: "AKAUN_DIKUNCI",
+          await createImmutableAuditLog(
+            "AKAUN_DIKUNCI",
+            user.email || "UNKNOWN_USER",
+            "Akaun Pengguna",
+            JSON.stringify({
+              noPekerja,
+              reason: "Had 5 cubaan gagal dicapai. Akaun dikunci 15 minit.",
+              failedAttempts: nextAttempts,
               userId: user.id,
-              userEmail: user.email,
-              ipAddress: "system-auth-event",
-              details: {
-                noPekerja,
-                reason: "Had 5 cubaan gagal dicapai. Akaun dikunci 15 minit.",
-                failedAttempts: nextAttempts,
-              },
-            },
-          });
+            }),
+            "system-auth-event"
+          );
         } else {
-          await prisma.auditLog.create({
-            data: {
-              action: "LOG_MASUK_GAGAL",
+          await createImmutableAuditLog(
+            "LOG_MASUK_GAGAL",
+            user.email || "UNKNOWN_USER",
+            "Akaun Pengguna",
+            JSON.stringify({
+              noPekerja,
+              reason: "Kata laluan salah",
+              failedAttempts: nextAttempts,
               userId: user.id,
-              userEmail: user.email,
-              ipAddress: "system-auth-event",
-              details: {
-                noPekerja,
-                reason: "Kata laluan salah",
-                failedAttempts: nextAttempts,
-                bakiCubaan: MAX_ATTEMPTS - nextAttempts,
-              },
-            },
-          });
+            }),
+            "system-auth-event"
+          );
         }
 
         throw new Error(
@@ -287,43 +285,38 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   events: {
     async signIn({ user }) {
       try {
-        const { prisma } = await import("@/lib/prisma");
-        await prisma.auditLog.create({
-          data: {
-            action: "LOG_MASUK_BERJAYA",
+        const { createImmutableAuditLog } = await import("@/lib/audit");
+        await createImmutableAuditLog(
+          "LOG_MASUK_BERJAYA",
+          user.email ?? "ANONYMOUS",
+          "Akaun Pengguna",
+          JSON.stringify({
+            name: user.name ?? "Kakitangan",
+            role: (user as { role?: string }).role ?? "STAFF",
             userId: user.id ?? null,
-            userEmail: user.email ?? null,
-            ipAddress: "system-auth-event",
-            details: {
-              name: user.name ?? "Kakitangan",
-              role: (user as { role?: string }).role ?? "STAFF",
-              resource: "Akaun Pengguna",
-            },
-          },
-        });
+          }),
+          "system-auth-event"
+        );
       } catch (err) {
         console.error("[auth.events.signIn] Gagal menulis audit log:", err);
       }
     },
     async signOut(message) {
       try {
-        const { prisma } = await import("@/lib/prisma");
-        // Auth.js v5 signOut event is a union: { token: JWT | null } (JWT strategy) | { session: ... } (DB strategy)
+        const { createImmutableAuditLog } = await import("@/lib/audit");
         const tokenData = "token" in message && message.token
           ? (message.token as { sub?: string; email?: string; name?: string })
           : null;
-        await prisma.auditLog.create({
-          data: {
-            action: "LOG_KELUAR_SISTEM",
+        await createImmutableAuditLog(
+          "LOG_KELUAR_SISTEM",
+          tokenData?.email ?? "ANONYMOUS",
+          "Sesi Autentikasi",
+          JSON.stringify({
+            name: tokenData?.name ?? "Kakitangan",
             userId: tokenData?.sub ?? null,
-            userEmail: tokenData?.email ?? null,
-            ipAddress: "system-auth-event",
-            details: {
-              name: tokenData?.name ?? "Kakitangan",
-              resource: "Sesi Autentikasi",
-            },
-          },
-        });
+          }),
+          "system-auth-event"
+        );
       } catch (err) {
         console.error("[auth.events.signOut] Gagal menulis audit log:", err);
       }

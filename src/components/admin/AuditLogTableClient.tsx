@@ -40,7 +40,7 @@ export default function AuditLogTableClient({ initialLogs }: AuditLogTableClient
       }
     }
     fetchLogs();
-  }, []);
+  }, [initialLogs]);
 
   // Ambil senarai unik jenis aktiviti untuk ditapis
   const uniqueActions = useMemo(() => {

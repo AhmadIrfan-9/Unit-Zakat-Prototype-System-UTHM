@@ -25,7 +25,6 @@ export default function SystemDashboardClient({
   emailConfigured,
   isVercel,
   stats,
-  user,
 }: SystemDashboardClientProps) {
   return (
     <div className="space-y-8 animate-in fade-in duration-150 text-slate-800">

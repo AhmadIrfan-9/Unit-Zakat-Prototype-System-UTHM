@@ -2,7 +2,7 @@
 // This login component dispatches credentials and redirects the authenticated session to the system root path for automated role-based dashboard filtering.
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";

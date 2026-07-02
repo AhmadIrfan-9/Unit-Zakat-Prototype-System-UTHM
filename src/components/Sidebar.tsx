@@ -12,7 +12,6 @@ import {
   Activity, 
   LogOut, 
   LayoutDashboard, 
-  FileText, 
   Newspaper,
   TrendingUp,
   User as UserIcon

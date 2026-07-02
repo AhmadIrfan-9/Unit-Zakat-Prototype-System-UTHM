@@ -4,7 +4,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut, User, Shield } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
 
 interface AdminProfileDropdownClientProps {
   userEmail: string;

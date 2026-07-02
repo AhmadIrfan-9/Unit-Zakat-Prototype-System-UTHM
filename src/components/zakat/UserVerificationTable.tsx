@@ -67,7 +67,8 @@ export function ZakatManagementUserVerificationTableDataFeed() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "User" },
-        (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           if (!isMounted) return;
           const newUser = payload.new as Record<string, unknown>;
           setUsers((prev) => [{
@@ -86,7 +87,8 @@ export function ZakatManagementUserVerificationTableDataFeed() {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "User" },
-        (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           if (!isMounted) return;
           const updated = payload.new as Record<string, unknown>;
           setUsers((prev) => prev.map((u) =>
@@ -107,7 +109,8 @@ export function ZakatManagementUserVerificationTableDataFeed() {
       .on(
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "User" },
-        (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
           if (!isMounted) return;
           const deleted = payload.old as Record<string, unknown>;
           setUsers((prev) => prev.filter((u) => u.id !== (deleted.id as string)));
@@ -185,8 +188,19 @@ export function ZakatManagementUserVerificationTableDataFeed() {
     );
   });
 
+  const isSupabaseConfigured = !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
+
   return (
     <div className="space-y-4">
+      {!isSupabaseConfigured && (
+        <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-semibold shadow-xs leading-relaxed animate-in fade-in duration-200">
+          ⚠️ <strong>Mod Kemuat turun Terhad:</strong> Pembolehubah Supabase Realtime tidak dikesan pada pelayan. Kemas kini data secara automatik ditutup; sila muat semula halaman ini secara manual untuk melihat perubahan.
+        </div>
+      )}
+
       {/* Search Filter Bar */}
       <div className="flex items-center gap-2 max-w-sm">
         <div className="relative flex-1">

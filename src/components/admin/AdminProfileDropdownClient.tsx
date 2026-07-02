@@ -29,7 +29,7 @@ export default function AdminProfileDropdownClient({ userEmail, userName }: Admi
   const handleSignOut = async () => {
     const confirmSignOut = window.confirm("Adakah anda pasti mahu log keluar?");
     if (confirmSignOut) {
-      await signOut({ callbackUrl: "/login" });
+      await signOut({ callbackUrl: window.location.origin + "/login" });
     }
   };
 

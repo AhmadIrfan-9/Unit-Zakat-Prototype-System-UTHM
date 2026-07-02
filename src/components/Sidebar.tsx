@@ -37,7 +37,7 @@ function SidebarContent({ userRole, userName }: SidebarProps) {
   const handleLogout = async () => {
     const sahkan = window.confirm("Adakah anda pasti mahu log keluar?");
     if (sahkan) {
-      await signOut({ callbackUrl: "/login" });
+      await signOut({ callbackUrl: window.location.origin + "/login" });
     }
   };
 

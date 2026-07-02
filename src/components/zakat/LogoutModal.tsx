@@ -28,7 +28,7 @@ export function ZakatAuthenticationSignOutConfirmationModalComponent({
   const handleConfirmSignOut = () => {
     setIsSigningOut(true);
     startTransition(async () => {
-      await signOut({ callbackUrl: "/login" });
+      await signOut({ callbackUrl: window.location.origin + "/login" });
     });
   };
 

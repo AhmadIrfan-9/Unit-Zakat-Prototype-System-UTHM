@@ -4,7 +4,22 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const isConfigured = !!(supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith("http"));
+
+const createMockSupabase = () => {
+  const mockChannel = {
+    on: () => mockChannel,
+    subscribe: () => mockChannel,
+  };
+  return {
+    channel: () => mockChannel,
+    removeChannel: () => {},
+  } as unknown as ReturnType<typeof createClient>;
+};
+
+export const supabase = isConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : createMockSupabase();

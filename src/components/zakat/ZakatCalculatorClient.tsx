@@ -2,15 +2,15 @@ import React, { useState, useMemo, useCallback, useDeferredValue } from "react";
 import ZakatSummaryCard from "./ZakatSummaryCard";
 
 interface CalculatorProps {
-  initialNisab?: number; // Menerima nilai daripada DB, lalai kepada RM 50228.51 mengikut imej 2026
+  initialNisab?: number;
+  userProfileSalary?: number;
 }
 
 // Kelas utiliti Tailwind untuk menyembunyikan anak panah angka (spin buttons)
 const NUM_INPUT_CLASS = "w-full p-2.5 border rounded-lg focus:outline-none focus:border-blue-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
-export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: CalculatorProps) {
+export default function ZakatCalculatorClient({ initialNisab = 50228.51, userProfileSalary = 0 }: CalculatorProps) {
   // A. State Bahagian Pendapatan
-  const [monthlySalary, setMonthlySalary] = useState<number>(0);
   const [allowance, setAllowance] = useState<number>(0);
   const [bonus, setBonus] = useState<number>(0);
 
@@ -22,7 +22,6 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
   const [education, setEducation] = useState<number>(0);
 
   // Defer all inputs for calculations to prevent keyboard input stuttering (INP optimization)
-  const deferredMonthlySalary = useDeferredValue(monthlySalary);
   const deferredAllowance = useDeferredValue(allowance);
   const deferredBonus = useDeferredValue(bonus);
   const deferredWivesCount = useDeferredValue(wivesCount);
@@ -49,7 +48,7 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
     const NISAB_TAHUNAN_MAIJ = initialNisab;
     const NISAB_BULANAN_MAIJ = NISAB_TAHUNAN_MAIJ / 12; // RM 4,185.71
 
-    const jumlahPendapatanKasar = (deferredMonthlySalary + deferredAllowance) * 12 + deferredBonus;
+    const jumlahPendapatanKasar = (userProfileSalary + deferredAllowance) * 12 + deferredBonus;
 
     // Tetapan pemanduan kos pelepasan rasmi berdasarkan dokumen rujukan
     const SARA_DIRI = 9000;
@@ -83,14 +82,14 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
       monthlyZakat
     };
   }, [
-    deferredMonthlySalary, 
-    deferredAllowance, 
-    deferredBonus, 
-    deferredWivesCount, 
-    deferredChildrenCount, 
-    deferredParentsSupport, 
-    deferredMedical, 
-    deferredEducation, 
+    userProfileSalary,
+    deferredAllowance,
+    deferredBonus,
+    deferredWivesCount,
+    deferredChildrenCount,
+    deferredParentsSupport,
+    deferredMedical,
+    deferredEducation,
     initialNisab
   ]);
 
@@ -107,11 +106,10 @@ export default function ZakatCalculatorClient({ initialNisab = 50228.51 }: Calcu
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Gaji Pokok Sebulan (RM)</label>
               <input
-                type="number"
-                onChange={(e) => setMonthlySalary(Number(e.target.value) || 0)}
-                onBlur={handleCurrencyBlur}
-                className={NUM_INPUT_CLASS}
-                placeholder="0.00"
+                type="text"
+                value={userProfileSalary.toFixed(2)}
+                readOnly
+                className="w-full p-2.5 text-xs bg-gray-50 text-gray-500 border border-gray-200 rounded-xl font-mono cursor-not-allowed select-none focus:outline-none"
               />
             </div>
             <div>

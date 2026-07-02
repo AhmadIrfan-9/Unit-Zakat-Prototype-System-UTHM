@@ -45,6 +45,12 @@ model User {
   // This mapping definition maps the institutional faculty attribute to the user model.
   fakulti       String?   @map("fakulti")
 
+  // Additional profile fields for address and contact info
+  noTelefon     String?   @map("no_telefon")
+  poskod        String?   @map("poskod")
+  bandar        String?   @map("bandar")
+  negeri        String?   @map("negeri")
+
   // Security tracking extensions added to block brute-force automation attacks at the core data layer.
   failedAttempts Int       @default(0) @map("failed_attempts")
   lockoutUntil   DateTime? @map("lockout_until")

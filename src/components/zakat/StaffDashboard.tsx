@@ -22,6 +22,10 @@ interface AuthenticatedUserProps {
   role?: string | null;
   fakulti?: string | null;
   umur?: number | null;
+  noTelefon?: string | null;
+  poskod?: string | null;
+  bandar?: string | null;
+  negeri?: string | null;
 }
 
 interface ZakatStaffDashboardMasterViewProps {
@@ -166,6 +170,10 @@ function ZakatDashboardContent({
               alamatRumah: user.alamatRumah ?? "",
               fakulti: user.fakulti ?? "",
               umur: user.umur ?? undefined,
+              noTelefon: user.noTelefon ?? "",
+              poskod: user.poskod ?? "",
+              bandar: user.bandar ?? "",
+              negeri: user.negeri ?? "",
             }}
           />
         </div>
@@ -186,7 +194,7 @@ function ZakatDashboardContent({
               <h2 className="text-lg font-bold text-gray-900">Semakan & Simulasi Kiraan Zakat</h2>
               <p className="text-xs text-gray-500">Gunakan kalkulator rasmi di bawah sebelum menyerahkan borang caruman potongan gaji.</p>
             </div>
-            <ZakatCalculatorClient initialNisab={currentNisab} />
+            <ZakatCalculatorClient initialNisab={currentNisab} userProfileSalary={user.gajiSemasa ?? 0} />
           </div>
 
           <div className="w-full max-w-3xl mx-auto">

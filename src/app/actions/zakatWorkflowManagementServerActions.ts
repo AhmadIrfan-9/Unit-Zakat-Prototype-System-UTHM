@@ -275,6 +275,10 @@ export async function updateUserProfileAction(data: {
   gajiSemasa: number;
   alamatRumah: string;
   fakulti: string;
+  noTelefon?: string;
+  poskod?: string;
+  bandar?: string;
+  negeri?: string;
 }) {
   // This statement verifies that the user session is active and authentic.
   const session = await auth();
@@ -294,6 +298,10 @@ export async function updateUserProfileAction(data: {
         gajiSemasa: data.gajiSemasa,
         alamatRumah: data.alamatRumah,
         fakulti: data.fakulti,
+        noTelefon: data.noTelefon,
+        poskod: data.poskod,
+        bandar: data.bandar,
+        negeri: data.negeri,
       },
     });
 

@@ -35,12 +35,7 @@ const MALAY_MONTHS = [
   "Julai", "Ogos", "September", "Oktober", "November", "Disember",
 ] as const;
 
-// This constant array stores all valid Malaysian state names for the state dropdown selector.
-const NEGERI_LIST = [
-  "Johor", "Melaka", "Negeri Sembilan", "Pahang", "Selangor", "Terengganu",
-  "Kelantan", "Perak", "Pulau Pinang", "Kedah", "Perlis",
-  "W.P. Kuala Lumpur", "W.P. Putrajaya", "W.P. Labuan",
-] as const;
+
 
 // This data model outlines the session-sourced personal attributes passed into the application form.
 interface AuthenticatedUserProps {
@@ -50,6 +45,10 @@ interface AuthenticatedUserProps {
   noKP?: string | null;
   gajiSemasa?: number | null;
   alamatRumah?: string | null;
+  noTelefon?: string | null;
+  poskod?: string | null;
+  bandar?: string | null;
+  negeri?: string | null;
 }
 
 // This data model describes the component props structure for the salary deduction form container.
@@ -404,108 +403,64 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
         <span className="font-bold text-[#002060]">Nota:</span> Sekiranya anda perlu mengemas kini maklumat selepas penghantaran borang, anda boleh melakukannya secara terus melalui menu Profil Peribadi pada bila-bila masa bagi memastikan integriti data caruman dikemas kini dengan serta-merta.
       </div>
 
-      {/* This section header labels the personal contact and address inputs of Bahagian A. */}
-      <div className="space-y-4">
-        <div className="border-b border-border pb-2">
-          <h2 className="text-sm font-bold tracking-wider text-[#002060] uppercase">
-            BAHAGIAN A: MAKLUMAT HUBUNGAN
-          </h2>
-        </div>
+      {/* BAHAGIAN A: MAKLUMAT HUBUNGAN (100% STATIK & READ-ONLY) */}
+      {/* Incremental patch enforcing immutable read-only fields for zero-friction form completion. */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+        <h3 className="text-sm font-bold text-[#002060] uppercase tracking-wider border-b pb-2">
+          Bahagian A: Maklumat Hubungan
+        </h3>
 
-        {/* This grid lays out the editable contact number, address, postcode, city, and state fields. */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2 space-y-1">
-            <Label htmlFor="noTelefon" className="font-semibold text-xs text-[#002060]">
-              No. Telefon <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="noTelefon"
-              name="noTelefon"
-              disabled={isPending}
-              className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9"
-              placeholder="Contoh: 0123456789"
-            />
-            {err("noTelefon") && (
-              <p className="text-xs text-destructive font-medium">{err("noTelefon")}</p>
-            )}
+        {/* Hidden inputs to feed database transaction schema requirements */}
+        <input type="hidden" name="noTelefon"   value={user.noTelefon   ?? ""} />
+        <input type="hidden" name="alamatRumah" value={user.alamatRumah ?? ""} />
+        <input type="hidden" name="poskod"      value={user.poskod      ?? ""} />
+        <input type="hidden" name="bandar"      value={user.bandar      ?? ""} />
+        <input type="hidden" name="negeri"      value={user.negeri      ?? ""} />
+
+        {/* Semua data diletakkan di dalam susunan grid paparan maklumat sahaja */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50/60 p-5 rounded-xl border border-gray-100">
+          
+          <div className="md:col-span-3 space-y-0.5">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wide">No. Telefon Rasmi</span>
+              {onSwitchToProfile && (
+                <button
+                  type="button"
+                  onClick={onSwitchToProfile}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-[#002060] hover:underline transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Kemaskini Profil
+                </button>
+              )}
+            </div>
+            <p className="text-xs font-semibold text-gray-900">{user.noTelefon || "Tiada Maklumat"}</p>
           </div>
 
-          <div className="sm:col-span-2 space-y-1">
-            <Label htmlFor="alamatRumah" className="font-semibold text-xs text-[#002060]">
-              Alamat Kediaman <span className="text-destructive">*</span>
-            </Label>
-            <textarea
-              id="alamatRumah"
-              name="alamatRumah"
-              defaultValue={user.alamatRumah ?? ""}
-              disabled={isPending}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002060] focus-visible:ring-offset-2 focus-visible:border-[#002060] disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-              placeholder="Masukkan alamat kediaman lengkap"
-              rows={3}
-            />
-            {err("alamatRumah") && (
-              <p className="text-xs text-destructive font-medium">{err("alamatRumah")}</p>
-            )}
+          <div className="md:col-span-3 space-y-0.5 pt-2 border-t border-gray-200/40">
+            <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wide">Alamat Kediaman</span>
+            <p className="text-xs font-semibold text-gray-800">{user.alamatRumah || "Tiada Maklumat"}</p>
+          </div>
+          
+          <div className="space-y-0.5 pt-2 border-t border-gray-200/40 col-span-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wide">Poskod</span>
+            <p className="text-xs font-mono font-semibold text-gray-800">{user.poskod || "Tiada Maklumat"}</p>
           </div>
 
-          {/* This three-column sub-grid renders the postcode, city, and state selectors. */}
-          <div className="grid grid-cols-3 sm:col-span-2 gap-4">
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="poskod" className="font-semibold text-xs text-[#002060]">
-                Poskod <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="poskod"
-                name="poskod"
-                maxLength={5}
-                disabled={isPending}
-                className="focus-visible:ring-[#002060] text-xs h-9"
-                placeholder="86400"
-              />
-              {err("poskod") && (
-                <p className="text-xs text-destructive font-medium">{err("poskod")}</p>
-              )}
-            </div>
+          <div className="space-y-0.5 pt-2 border-t border-gray-200/40 col-span-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wide">Bandar</span>
+            <p className="text-xs font-semibold text-gray-800">{user.bandar || "Tiada Maklumat"}</p>
+          </div>
 
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="bandar" className="font-semibold text-xs text-[#002060]">
-                Bandar <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="bandar"
-                name="bandar"
-                disabled={isPending}
-                className="focus-visible:ring-[#002060] text-xs h-9"
-                placeholder="Parit Raja"
-              />
-              {err("bandar") && (
-                <p className="text-xs text-destructive font-medium">{err("bandar")}</p>
-              )}
-            </div>
-
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="negeri" className="font-semibold text-xs text-[#002060]">
-                Negeri <span className="text-destructive">*</span>
-              </Label>
-              <Select name="negeri" disabled={isPending}>
-                <SelectTrigger id="negeri" className="w-full focus:ring-[#002060] text-xs h-9">
-                  <SelectValue placeholder="Pilih Negeri" />
-                </SelectTrigger>
-                <SelectContent className="max-h-56">
-                  {/* This array map renders all valid Malaysian state options in the state dropdown. */}
-                  {NEGERI_LIST.map((neg) => (
-                    <SelectItem key={neg} value={neg}>
-                      {neg}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {err("negeri") && (
-                <p className="text-xs text-destructive font-medium">{err("negeri")}</p>
-              )}
-            </div>
+          <div className="space-y-0.5 pt-2 border-t border-gray-200/40 col-span-1">
+            <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wide">Negeri</span>
+            <p className="text-xs font-semibold text-gray-800">{user.negeri || "Tiada Maklumat"}</p>
           </div>
         </div>
+
+        <p className="text-[10px] text-gray-400 italic font-medium">
+          * Pengesahan: Hubungan dan lokasi di atas dikunci secara automatik. Sila uruskan kemas kini maklumat ini melalui segmen Profil jika terdapat perubahan data.
+        </p>
       </div>
 
       {/* This section header labels the four selectable deduction method rows of Bahagian C. */}

@@ -51,7 +51,7 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
       umur: defaultValues?.umur ?? undefined,
       noTelefon: defaultValues?.noTelefon ?? "",
       noPekerja: defaultValues?.noPekerja ?? "",
-      gajiSemasa: defaultValues?.gajiSemasa ? Number(defaultValues.gajiSemasa) : undefined,
+      gajiSemasa: defaultValues?.gajiSemasa ? Number(defaultValues.gajiSemasa).toFixed(2) as unknown as number : undefined,
       negeri: defaultValues?.negeri ?? "",
       bandar: defaultValues?.bandar ?? "",
       poskod: defaultValues?.poskod ?? "",
@@ -119,6 +119,10 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
         gajiSemasa: data.gajiSemasa,
         alamatRumah: data.alamatRumah,
         fakulti: data.fakulti,
+        noTelefon: data.noTelefon,
+        poskod: data.poskod,
+        bandar: data.bandar,
+        negeri: data.negeri,
       });
 
       if (result.success) {
@@ -239,11 +243,19 @@ export function ZakatStaffProfileComponent({ defaultValues }: ZakatStaffProfileC
                 <Label htmlFor="gajiSemasa" className="font-semibold text-xs text-[#002060]">Gaji Semasa (RM)</Label>
                 <Input
                   id="gajiSemasa"
-                  type="number"
-                  step="0.01"
+                  type="text"
                   placeholder="0.00"
-                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40"
-                  {...register("gajiSemasa")}
+                  className="focus-visible:ring-[#002060] focus-visible:border-[#002060] text-xs h-9 placeholder:text-slate-400/40 font-mono"
+                  {...register("gajiSemasa", {
+                    onBlur: (e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) {
+                        setValue("gajiSemasa", val.toFixed(2) as unknown as number, { shouldValidate: true });
+                      } else {
+                        setValue("gajiSemasa", "0.00" as unknown as number, { shouldValidate: true });
+                      }
+                    }
+                  })}
                 />
                 {errors.gajiSemasa && (
                   <p className="text-xs text-destructive font-semibold">{String(errors.gajiSemasa.message)}</p>

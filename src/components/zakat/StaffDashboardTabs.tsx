@@ -3,11 +3,10 @@
 
 import Image from "next/image";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ZakatStaffInformativeNisabHaulCardComponent } from "./NisabHaulCard";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./DeductionForm";
 import { ZakatStaffProfileComponent } from "./UserProfile";
 import { Card, CardContent } from "@/components/ui/card";
-import { HelpCircle, FileCheck2, Info } from "lucide-react";
+import { HelpCircle, FileCheck2 } from "lucide-react";
 
 interface AuthenticatedUserProps {
   name?: string | null;
@@ -74,18 +73,11 @@ export function ZakatStaffDashboardTabsContainerComponent({ user }: ZakatStaffDa
         <CardContent className="p-6 md:p-8">
           
           {/* Main workspace navigation tabs */}
-          <Tabs defaultValue="info" className="space-y-6">
+          <Tabs defaultValue="form" className="space-y-6">
             
             {/* Center aligned triggers list for cycling through dashboard modules */}
             <div className="flex justify-center border-b pb-4">
               <TabsList className="bg-muted/65 p-1 rounded-xl">
-                {/* The informational feed tab trigger button */}
-                <TabsTrigger value="info">
-                  <div className="flex items-center gap-1.5">
-                    <Info className="h-3.5 w-3.5" />
-                    <span>Maklumat Terkini</span>
-                  </div>
-                </TabsTrigger>
                 {/* The application submission form tab trigger button */}
                 <TabsTrigger value="form">
                   <div className="flex items-center gap-1.5">
@@ -102,11 +94,6 @@ export function ZakatStaffDashboardTabsContainerComponent({ user }: ZakatStaffDa
                 </TabsTrigger>
               </TabsList>
             </div>
-
-            {/* Informative indicators for Nisab levels and Haul timelines */}
-            <TabsContent value="info" className="focus-visible:outline-none">
-              <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa || null} />
-            </TabsContent>
 
             {/* Interactive salary deduction submission form */}
             <TabsContent value="form" className="focus-visible:outline-none">

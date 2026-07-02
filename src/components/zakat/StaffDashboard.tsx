@@ -6,7 +6,6 @@ import { useState, useEffect, use, Suspense } from "react";
 import { useSearchParams, useRouter, redirect } from "next/navigation";
 import Image from "next/image";
 import { ZakatGlobalMainNavbarLayoutComponent } from "./Navbar";
-import { ZakatStaffInformativeNisabHaulCardComponent } from "./NisabHaulCard";
 import { ZakatStaffSalaryDeductionApplicationFormComponent } from "./DeductionForm";
 import { ZakatStaffProfileComponent } from "./UserProfile";
 import { ZakatStaffNewsAnnouncementsComponent } from "./NewsAnnouncements";
@@ -175,7 +174,6 @@ function ZakatDashboardContent({
       {/* Home Tab */}
       {viewScope === "home" ? (
         <div className="space-y-8">
-          <ZakatStaffInformativeNisabHaulCardComponent gajiSemasa={user.gajiSemasa ?? null} />
           <ZakatStaffNewsAnnouncementsComponent />
         </div>
       ) : null}

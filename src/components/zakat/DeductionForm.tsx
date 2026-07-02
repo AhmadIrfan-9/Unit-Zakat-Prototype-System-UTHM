@@ -27,6 +27,7 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
+import ZakatFormActions from "./ZakatFormActions";
 
 // This constant array stores the official Bahasa Melayu month names rendered in the deduction start month selector.
 const MALAY_MONTHS = [
@@ -209,6 +210,39 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
 
   // This ref connects to the hidden submit button that triggers the server action form dispatch.
   const hiddenSubmitRef = useRef<HTMLButtonElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const isConfirmedRef = useRef(false);
+
+  // Intercept the native submit event to display the confirmation dialog if not validated
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    if (!isConfirmedRef.current) {
+      e.preventDefault();
+      if (selectedType && pengesahanLafaz && persetujuanAkta709) {
+        setIsConfirmOpen(true);
+      }
+    }
+  };
+
+  // Reset all local component state triggers
+  const handleReset = () => {
+    setSelectedType(null);
+    setBulanMula("");
+    setTahunMula("");
+    setTargetDeductionValue("");
+    setPengesahanLafaz(false);
+    setPersetujuanAkta709(false);
+    formRef.current?.reset();
+  };
+
+  // This function executes the hidden form submit after the confirmation modal is accepted.
+  const handleConfirmSubmit = () => {
+    isConfirmedRef.current = true;
+    setIsConfirmOpen(false);
+    setTimeout(() => {
+      hiddenSubmitRef.current?.click();
+      isConfirmedRef.current = false;
+    }, 10);
+  };
 
   // This memoized callback toggles or deselects the active deduction type option.
   const handleTypeSelect = useCallback((type: string) => {
@@ -221,12 +255,6 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
       return (state.fieldErrors as Record<string, string[]>)[field]?.[0];
     }
     return undefined;
-  };
-
-  // This function executes the hidden form submit after the confirmation modal is accepted.
-  const handleConfirmSubmit = () => {
-    setIsConfirmOpen(false);
-    hiddenSubmitRef.current?.click();
   };
 
   // This computed flag resolves whether the server action returned a successful write result.
@@ -285,7 +313,7 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
 
   return (
     // This layout wrapper contains the complete salary deduction application form tree.
-    <form action={dispatch} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
+    <form action={dispatch} ref={formRef} onSubmit={handleSubmit} noValidate className="space-y-8 w-full animate-in fade-in duration-300 relative">
 
       {/* These hidden inputs inject the session-sourced immutable identity values into the form payload. */}
       <input type="hidden" name="namaPenuh"  value={user.name      ?? ""} />
@@ -788,28 +816,11 @@ export function ZakatStaffSalaryDeductionApplicationFormComponent({ user, onSwit
       )}
 
       {/* This centered submit button area places the emerald green primary action button at the base of the form. */}
-      <div className="pt-4 flex justify-center">
-        <Button
-          type="button"
-          onClick={() => {
-            if (selectedType && pengesahanLafaz && persetujuanAkta709) {
-              setIsConfirmOpen(true);
-            }
-          }}
-          disabled={isPending || !selectedType || !pengesahanLafaz || !persetujuanAkta709}
-          aria-busy={isPending}
-          className="w-full sm:max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 text-sm tracking-wide shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50"
-        >
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              MEMPROSES...
-            </span>
-          ) : (
-            "HANTAR BORANG PERMOHONAN"
-          )}
-        </Button>
-      </div>
+      <ZakatFormActions
+        onReset={handleReset}
+        isSubmitting={isPending}
+        isValid={!!selectedType && pengesahanLafaz && persetujuanAkta709}
+      />
 
       {/* This confirmation modal overlay requires the user to explicitly accept before the form payload is dispatched. */}
       {isConfirmOpen && (

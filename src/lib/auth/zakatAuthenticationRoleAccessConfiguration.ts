@@ -257,8 +257,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const isLoggedIn      = !!sessionAuth?.user;
       const isDashboard     = nextUrl.pathname.startsWith("/dashboard");
       const isManagement    = nextUrl.pathname.startsWith("/dashboard/pengurusan");
+      const isAdmin         = nextUrl.pathname.startsWith("/dashboard/admin");
       const userRole        = sessionAuth?.user?.role;
       const isOfficialStaff = userRole === "ZAKAT_OFFICER" || userRole === "SUPER_ADMIN";
+      const isSuperAdmin    = userRole === "SUPER_ADMIN";
 
       if (isDashboard) {
         if (!isLoggedIn) {
@@ -267,6 +269,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
         if (isManagement && !isOfficialStaff) {
           // This redirect prevents STAFF from accessing the management dashboard.
+          return Response.redirect(new URL("/dashboard/zakat", nextUrl));
+        }
+        if (isAdmin && !isSuperAdmin) {
+          // This redirect prevents non-SUPER_ADMIN users from accessing the system dashboard.
           return Response.redirect(new URL("/dashboard/zakat", nextUrl));
         }
         return true;

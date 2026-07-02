@@ -4,15 +4,16 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
-import crypto from "crypto";
-
 // Enforce a strict JSON-safe audit details type format
 type AuditDetails = Record<string, string | number | boolean | null | undefined | object>;
 
-// Fungsi untuk mengira hash SHA-256 daripada data log
-function calculateHash(action: string, user: string, resource: string, metadata: string, previousHash: string): string {
+// Fungsi untuk mengira hash SHA-256 daripada data log secara tak senkron menggunakan Web Crypto API
+async function calculateHash(action: string, user: string, resource: string, metadata: string, previousHash: string): Promise<string> {
   const dataString = `${action}-${user}-${resource}-${metadata}-${previousHash}`;
-  return crypto.createHash("sha256").update(dataString).digest("hex");
+  const msgBuffer = new TextEncoder().encode(dataString);
+  const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 /**
@@ -36,7 +37,7 @@ export async function createImmutableAuditLog(
     const previousHash = lastLog ? lastLog.hash : "0000000000000000000000000000000000000000000000000000000000000000";
 
     // 2. Kira hash unik untuk log semasa
-    const currentHash = calculateHash(action, user, resource, metadata, previousHash);
+    const currentHash = await calculateHash(action, user, resource, metadata, previousHash);
 
     // 3. Tulis masuk ke database
     const secureLog = await prisma.auditLog.create({
@@ -80,7 +81,7 @@ export async function verifyAuditLedgerIntegrity() {
       }
 
       // Kira semula hash baris semasa untuk memastikan tiada data teks (cth: metadata) diubah secara manual
-      const reCalculatedHash = calculateHash(log.action, log.user, log.resource, log.metadata, log.previousHash);
+      const reCalculatedHash = await calculateHash(log.action, log.user, log.resource, log.metadata, log.previousHash);
       if (log.hash !== reCalculatedHash) {
         return { 
           isValid: false, 

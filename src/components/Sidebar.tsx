@@ -2,9 +2,9 @@
 
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { 
   ShieldAlert, 
@@ -13,7 +13,9 @@ import {
   LogOut, 
   LayoutDashboard, 
   FileText, 
-  Newspaper 
+  Newspaper,
+  TrendingUp,
+  User as UserIcon
 } from "lucide-react";
 
 interface SidebarProps {
@@ -21,8 +23,10 @@ interface SidebarProps {
   userName: string;
 }
 
-export default function Sidebar({ userRole, userName }: SidebarProps) {
+function SidebarContent({ userRole, userName }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab") || "";
 
   // Selaraskan peranan pangkalan data (Prisma/NextAuth) dengan paparan visual Sidebar
   const normalizedRole = 
@@ -62,9 +66,9 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
               </p>
               
               <Link 
-                href="/dashboard/admin/system"
+                href="/dashboard/admin/system?tab=health"
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
-                  pathname === "/dashboard/admin/system" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                  pathname === "/dashboard/admin/system" && (tab === "health" || tab === "") ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
                 }`}
               >
                 <Activity size={16} />
@@ -72,9 +76,9 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
               </Link>
 
               <Link 
-                href="/dashboard/admin/users"
+                href="/dashboard/admin/system?tab=users"
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
-                  pathname === "/dashboard/admin/users" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                  pathname === "/dashboard/admin/system" && tab === "users" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
                 }`}
               >
                 <Users size={16} />
@@ -82,9 +86,9 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
               </Link>
 
               <Link 
-                href="/dashboard/admin/audit"
+                href="/dashboard/admin/system?tab=audit"
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
-                  pathname === "/dashboard/admin/audit" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                  pathname === "/dashboard/admin/system" && tab === "audit" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
                 }`}
               >
                 <ShieldAlert size={16} />
@@ -99,17 +103,41 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
               <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest px-3 mb-2">
                 Menu Pengurusan
               </p>
-              <Link href="/dashboard/pengurusan" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-blue-200 hover:bg-blue-900">
+              <Link 
+                href="/dashboard/pengurusan?tab=proses" 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  pathname === "/dashboard/pengurusan" && (tab === "proses" || tab === "") ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                }`}
+              >
                 <LayoutDashboard size={16} />
-                <span>Dashboard Utama</span>
+                <span>Proses Permohonan</span>
               </Link>
-              <Link href="/dashboard/pengurusan/permohonan" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-blue-200 hover:bg-blue-900">
-                <FileText size={16} />
-                <span>Permohonan Zakat</span>
+              <Link 
+                href="/dashboard/pengurusan?tab=analisis" 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  pathname === "/dashboard/pengurusan" && tab === "analisis" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                }`}
+              >
+                <TrendingUp size={16} />
+                <span>Analisis Kutipan</span>
               </Link>
-              <Link href="/dashboard/pengurusan/berita" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-blue-200 hover:bg-blue-900">
+              <Link 
+                href="/dashboard/pengurusan?tab=news" 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  pathname === "/dashboard/pengurusan" && tab === "news" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                }`}
+              >
                 <Newspaper size={16} />
                 <span>Urus Berita (CMS)</span>
+              </Link>
+              <Link 
+                href="/dashboard/pengurusan?tab=profile" 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                  pathname === "/dashboard/pengurusan" && tab === "profile" ? "bg-blue-900 text-white font-bold" : "text-blue-200 hover:bg-blue-900/50"
+                }`}
+              >
+                <UserIcon size={16} />
+                <span>Profil Peribadi</span>
               </Link>
             </>
           )}
@@ -130,5 +158,13 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
       </div>
 
     </aside>
+  );
+}
+
+export default function Sidebar(props: SidebarProps) {
+  return (
+    <Suspense fallback={<div className="w-64 h-screen bg-blue-950 text-white animate-pulse" />}>
+      <SidebarContent {...props} />
+    </Suspense>
   );
 }

@@ -1,15 +1,12 @@
-// src/proxy.ts
+// src/middleware.ts
 //
-// Next.js 16 renamed "middleware" to "proxy". This file replaces middleware.ts.
-// Auth.js v5 exports an `auth` proxy factory that runs at the Vercel Edge Network
+// Auth.js v5 exports an `auth` middleware that runs at the Vercel Edge Network
 // BEFORE any RSC, Server Action, or Route Handler receives the request.
-//
-// IMPORTANT: This is the first layer of defense — but always re-check auth
-// inside Server Actions and Route Handlers too (middleware can be misconfigured).
+// This is Next.js's standard entrypoint for edge-level route protection.
 
 import { auth } from "./lib/auth";
 
-export const proxy = auth;
+export default auth;
 
 export const config = {
   matcher: [
@@ -19,5 +16,3 @@ export const config = {
     "/api/((?!auth).+)",
   ],
 };
-
-
